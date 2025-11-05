@@ -14,7 +14,6 @@ import ThemeToggle from '@/widgets/theme-toggle'
 
 import { getDictionary, getDirection } from '../_dictionaries/get-dictionary'
 import { ThemeProvider } from './_components/ThemeProvider'
-import { organizationSchema, websiteSchema, softwareApplicationSchema, generateStructuredData } from '@/lib/json-ld'
 import './styles/index.css'
 
 export const metadata = {
@@ -106,15 +105,6 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
 
   const { t } = await useServerLocale(lang)
 
-  const baseUrl = 'https://docs.xpay.sh'
-  const currentUrl = `${baseUrl}/${lang}`
-  
-  const structuredData = generateStructuredData([
-    organizationSchema,
-    websiteSchema,
-    softwareApplicationSchema
-  ])
-
   return (
     <html
       // Not required, but good for SEO
@@ -133,12 +123,6 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
         <meta name="description" content={description} />
         <meta property="og:description" content={description} />
         <link rel="canonical" href={repo} />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
-          }}
-        />
       </Head>
       <body>
         <ThemeProvider
