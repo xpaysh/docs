@@ -3,6 +3,5 @@ export default {
   "getting-started": "Getting Started",
   "x402-protocol": "x402 Protocol",
   "products": "Products",
-  "developer-resources": "Developer Resources",
-  "community": "Community"
+  "developer-resources": "Developer Resources"
 }
