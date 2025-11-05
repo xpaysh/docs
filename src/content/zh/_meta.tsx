@@ -9,6 +9,7 @@ export default {
       timestamp: false,
       layout: 'full',
       toc: false,
+      copyPage: false,
     },
   },
   introduction: {
@@ -16,6 +17,7 @@ export default {
     theme: {
       navbar: true,
       toc: false,
+      copyPage: false,
     },
   },
   docs: {

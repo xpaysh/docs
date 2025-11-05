@@ -12,7 +12,7 @@ export async function GET(): Promise<Response> {
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${sitemap.map(item => `  <url>
     <loc>${item.url}</loc>
-    <lastmod>${item.lastModified.toISOString()}</lastmod>
+    <lastmod>${item.lastModified instanceof Date ? item.lastModified.toISOString() : item.lastModified}</lastmod>
     <changefreq>${item.changeFrequency}</changefreq>
     <priority>${item.priority}</priority>
   </url>`).join('\n')}
