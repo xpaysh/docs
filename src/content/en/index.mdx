@@ -1,0 +1,100 @@
+# Welcome to \{xpay✦\}
+
+<div className="nx-text-center nx-mt-8 nx-mb-12">
+  <p className="nx-text-lg nx-text-gray-600 nx-max-w-2xl nx-mx-auto">
+    Dedicated infrastructure for the x402 payment protocol ecosystem. Essential tools that sit between AI agents and autonomous payments, ensuring agents never overspend while enabling instant API monetization.
+  </p>
+</div>
+
+## What is \{xpay✦\}?
+
+\{xpay✦\} is building the essential infrastructure for the x402 payment protocol ecosystem. We provide developers and businesses with the tools they need to safely integrate autonomous payments while enabling instant API monetization.
+
+### Our Mission
+
+**Helping the agentic community get paid and pay safely.**
+
+As AI agents become more autonomous, they need secure, reliable payment infrastructure. \{xpay✦\} bridges this gap by providing:
+
+- 🛡️ **Safety-first payment controls** for autonomous agents
+- ⚡ **Instant API monetization** with zero setup complexity  
+- 📊 **Complete observability** into agent spending and revenue
+- 🔧 **Developer-friendly tools** built for the modern web
+
+## Core Products
+
+### 🛡️ x402 Agent Firewall
+**Cost Control Dashboard**
+
+Developers are concerned about their agents getting stuck in spending loops. Our firewall provides AWS proxy endpoints with hard spending limits, real-time alerts, and per-agent budgets.
+
+[Learn more →](/products/agent-firewall)
+
+### ⚡ x402 Paywall-as-a-Service  
+**Easy Monetization**
+
+Turn any API into a revenue stream. Paste your endpoint, get an x402-monetized URL, and start earning immediately with our managed payment infrastructure.
+
+[Learn more →](/products/paywall-service)
+
+### 📊 x402 Transaction Explorer
+**Observability**
+
+Complete visibility into agent spending patterns, API performance, and transaction flows. The "Datadog for x402" that every agent developer needs.
+
+[Learn more →](/products/transaction-explorer)
+
+## Quick Start
+
+Get started with \{xpay✦\} in under 5 minutes:
+
+```bash
+npm install @xpay/agent-kit
+```
+
+```typescript
+import { XpayFirewall } from '@xpay/agent-kit'
+
+// Set spending limits for your agent
+const firewall = new XpayFirewall({
+  maxDailySpend: 100, // $100 USD
+  maxPerRequest: 5,   // $5 USD per request
+  alertThreshold: 0.8 // Alert at 80% of limits
+})
+
+// Your agent's API calls are now protected
+await firewall.protectedFetch('https://api.example.com/expensive-ai-service')
+```
+
+[Full Quick Start Guide →](/getting-started)
+
+## Why x402?
+
+The x402 protocol enables a new paradigm for internet payments:
+
+- **Micropayments**: Pay per API call, per token, per second
+- **Agent-native**: Designed for autonomous machine-to-machine payments  
+- **Instant settlement**: Payments settle in ~2 seconds on Base network
+- **Zero subscription friction**: No signups, no monthly fees
+
+## Open Source Ecosystem
+
+\{xpay✦\} actively contributes to the x402 ecosystem with open source tools:
+
+- [**awesome-x402**](https://github.com/xpaysh/awesome-x402) - Curated resources for x402 developers
+- [**x402-agent-kit**](https://github.com/xpaysh/x402-agent-kit) - Build x402-paying agents in 5 minutes
+- [**x402-local**](https://github.com/xpaysh/x402-local) - Local x402 development environment
+- [**x402-sdk**](https://github.com/xpaysh/x402-sdk) - TypeScript-first x402 SDK
+
+## Community
+
+Join our growing community of x402 developers:
+
+- [GitHub](https://github.com/xpaysh) - Contribute to our open source projects
+- [Discord](https://discord.gg/xpay) - Connect with other developers
+- [Twitter](https://twitter.com/xpaysh) - Follow our updates
+- [Blog](https://www.xpay.sh/blog) - Read about x402 and autonomous payments
+
+---
+
+Ready to start building? [Get started →](/getting-started) or explore our [product documentation →](/products).

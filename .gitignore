@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env
+.DS_Store
+*.log
+.vercel
+.turbo
+dist/
+build/
