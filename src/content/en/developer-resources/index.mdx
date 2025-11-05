@@ -1,0 +1,329 @@
+# Developer Resources
+
+Everything you need to build with \{xpay✦\} and the x402 protocol. From SDKs and code examples to testing tools and open source projects.
+
+## SDKs & Libraries
+
+### Official \{xpay✦\} SDKs
+
+| Package | Description | Install |
+|---------|-------------|---------|
+| `@xpay/agent-kit` | Complete toolkit for agent developers | `npm install @xpay/agent-kit` |
+| `@xpay/firewall` | Agent spending protection | `npm install @xpay/firewall` |
+| `@xpay/paywall` | API monetization tools | `npm install @xpay/paywall` |
+| `@xpay/explorer` | Transaction monitoring | `npm install @xpay/explorer` |
+| `@xpay/sdk` | Core x402 utilities | `npm install @xpay/sdk` |
+
+### x402 Protocol SDKs
+
+| Language | Package | Description |
+|----------|---------|-------------|
+| TypeScript | `@x402/sdk` | Official TypeScript SDK |
+| Python | `x402-python` | Python implementation |
+| Go | `x402-go` | Go implementation |
+| Rust | `x402-rust` | Rust implementation |
+
+## Code Examples
+
+### Quick Start Examples
+
+```typescript
+// Agent with spending limits
+import { XpayFirewall } from '@xpay/agent-kit'
+
+const firewall = new XpayFirewall({
+  maxDailySpend: 100,
+  maxPerRequest: 5
+})
+
+const response = await firewall.protectedFetch('https://api.openai.com/v1/chat/completions', {
+  method: 'POST',
+  body: JSON.stringify({
+    model: 'gpt-4',
+    messages: [{ role: 'user', content: 'Hello' }]
+  })
+})
+```
+
+```typescript
+// API monetization
+import { XpayPaywall } from '@xpay/agent-kit'
+import express from 'express'
+
+const app = express()
+const paywall = new XpayPaywall({
+  pricePerRequest: 0.10,
+  receivingWallet: '0x...'
+})
+
+app.get('/api/premium', paywall.middleware, (req, res) => {
+  res.json({ data: 'Premium content' })
+})
+```
+
+### Framework Integrations
+
+#### Next.js
+
+```typescript
+// pages/api/protected.ts
+import { NextApiRequest, NextApiResponse } from 'next'
+import { XpayPaywall } from '@xpay/agent-kit'
+
+const paywall = new XpayPaywall({
+  pricePerRequest: 0.05,
+  receivingWallet: process.env.RECEIVING_WALLET
+})
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const paymentResult = await paywall.verifyPayment(req)
+  
+  if (!paymentResult.success) {
+    return res.status(402).json({
+      error: 'Payment required',
+      payment: paymentResult.paymentInstructions
+    })
+  }
+  
+  res.json({ message: 'Access granted' })
+}
+```
+
+#### LangChain
+
+```typescript
+import { ChatOpenAI } from 'langchain/chat_models/openai'
+import { XpayFirewall } from '@xpay/agent-kit'
+
+const firewall = new XpayFirewall({
+  maxDailySpend: 50,
+  agentId: 'langchain-agent'
+})
+
+const chat = new ChatOpenAI({
+  openAIApiKey: process.env.OPENAI_API_KEY,
+  configuration: {
+    fetch: firewall.protectedFetch.bind(firewall)
+  }
+})
+```
+
+#### Vercel Edge Functions
+
+```typescript
+import { NextRequest } from 'next/server'
+import { XpayPaywall } from '@xpay/agent-kit'
+
+export const config = {
+  runtime: 'edge'
+}
+
+const paywall = new XpayPaywall({
+  pricePerRequest: 0.01,
+  receivingWallet: process.env.RECEIVING_WALLET
+})
+
+export default async function handler(req: NextRequest) {
+  return await paywall.handleEdgeRequest(req)
+}
+```
+
+## Open Source Projects
+
+\{xpay✦\} actively contributes to the x402 ecosystem with open source tools:
+
+### Core Projects
+
+#### [awesome-x402](https://github.com/xpaysh/awesome-x402)
+**Curated list of x402 resources**
+- Protocol documentation and tutorials
+- SDK implementations in multiple languages
+- Real-world examples and case studies
+- Community tools and resources
+
+#### [x402-agent-kit](https://github.com/xpaysh/x402-agent-kit)
+**Build x402-paying agents in 5 minutes**
+- Sample LangChain agent with x402 payments
+- Mock x402-protected API for testing
+- Docker compose for instant local development
+- Integration guides for popular agent frameworks
+
+#### [x402-local](https://github.com/xpaysh/x402-local)
+**Local x402 development environment**
+- `npx x402-local` for instant setup
+- Local facilitator simulation
+- CLI for generating test wallets
+- Browser extension for payment injection
+
+#### [x402-sdk](https://github.com/xpaysh/x402-sdk)
+**TypeScript-first x402 SDK**
+- Zero-dependency implementation
+- Full TypeScript types
+- React hooks for x402 payments
+- Excellent documentation and examples
+
+## Development Tools
+
+### CLI Tools
+
+#### \{xpay✦\} CLI
+```bash
+# Install globally
+npm install -g @xpay/cli
+
+# Create new firewall
+xpay firewall create --name "my-agents"
+
+# Configure agent limits
+xpay agent configure my-bot --max-daily 100 --max-request 5
+
+# Monitor spending
+xpay monitor --agent my-bot --live
+```
+
+#### x402 Local Development
+```bash
+# Start local x402 environment
+npx x402-local start
+
+# Generate test wallets with funds
+npx x402-local wallet create --fund 100
+
+# Mock API with x402 protection
+npx x402-local mock-api --price 0.05 --port 3001
+```
+
+### Browser Extensions
+
+#### \{xpay✦\} DevTools
+Browser extension for debugging x402 payments:
+- Monitor payment flows in real-time
+- Inspect payment instructions and responses
+- Test payment scenarios without real funds
+- Debug agent spending patterns
+
+### Testing Tools
+
+#### Payment Simulation
+```typescript
+import { MockX402Server } from '@xpay/testing'
+
+const mockServer = new MockX402Server({
+  port: 3001,
+  price: 0.05,
+  currency: 'USDC'
+})
+
+await mockServer.start()
+
+// Test your agent against mock API
+const response = await agent.callAPI('http://localhost:3001/api/test')
+```
+
+#### Spending Simulation
+```typescript
+import { SpendingSimulator } from '@xpay/testing'
+
+const simulator = new SpendingSimulator({
+  agent: 'test-agent',
+  maxDailySpend: 100
+})
+
+// Simulate various spending patterns
+await simulator.simulatePattern('steady', { requestsPerHour: 10 })
+await simulator.simulatePattern('burst', { peakRequestsPerSecond: 5 })
+await simulator.simulatePattern('random', { averageRequestsPerMinute: 2 })
+```
+
+## Testing & Debugging
+
+### Test Networks
+
+| Network | Purpose | USDC Contract | Faucet |
+|---------|---------|---------------|--------|
+| Base Sepolia | Testing | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | [Circle Faucet](https://faucet.circle.com/) |
+| Ethereum Sepolia | Testing | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | [Circle Faucet](https://faucet.circle.com/) |
+| Polygon Amoy | Testing | `0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582` | [Circle Faucet](https://faucet.circle.com/) |
+
+### Debugging Common Issues
+
+#### Payment Verification Failures
+```typescript
+import { X402Debug } from '@xpay/sdk'
+
+const debug = new X402Debug({
+  facilitator: 'https://facilitator.base.org',
+  network: 'base-sepolia'
+})
+
+// Debug payment verification
+const result = await debug.verifyPayment('payment_123')
+console.log('Payment status:', result.status)
+console.log('Failure reason:', result.failureReason)
+console.log('Transaction hash:', result.txHash)
+```
+
+#### Agent Spending Analysis
+```typescript
+import { XpayAnalytics } from '@xpay/agent-kit'
+
+const analytics = new XpayAnalytics({
+  apiKey: process.env.XPAY_API_KEY
+})
+
+// Analyze agent spending patterns
+const report = await analytics.analyzeAgent('my-bot', {
+  timeframe: '7d',
+  includeFailures: true
+})
+
+console.log('Total spend:', report.totalSpend)
+console.log('Average per request:', report.averagePerRequest)
+console.log('Failure rate:', report.failureRate)
+```
+
+## API References
+
+### REST APIs
+
+- **[\{xpay✦\} API Reference](/api-reference)** - Complete API documentation
+- **[x402 Facilitator API](https://docs.cdp.coinbase.com/x402/reference/)** - Coinbase facilitator API
+- **[Base Network API](https://docs.base.org/api)** - Base blockchain API
+
+### WebSocket APIs
+
+```typescript
+import { XpayWebSocket } from '@xpay/agent-kit'
+
+const ws = new XpayWebSocket({
+  apiKey: process.env.XPAY_API_KEY,
+  projectId: 'proj_123'
+})
+
+// Real-time agent spending updates
+ws.subscribe('agent.spending', (event) => {
+  console.log('Agent spending update:', event)
+})
+```
+
+## Community Resources
+
+### Discord Channels
+
+Join our Discord server for real-time help:
+
+- **#general** - General discussion
+- **#developer-help** - Get help with integration
+- **#agent-dev** - Agent development discussion
+- **#api-monetization** - API provider discussion
+- **#showcase** - Show off your projects
+
+### GitHub Discussions
+
+- **[Feature Requests](https://github.com/xpaysh/xpay-agent-kit/discussions/categories/feature-requests)**
+- **[Help & Support](https://github.com/xpaysh/xpay-agent-kit/discussions/categories/help-support)**
+- **[Show and Tell](https://github.com/xpaysh/xpay-agent-kit/discussions/categories/show-and-tell)**
+
+---
+
+Need more help? Check out our [community support options →](/community/support)

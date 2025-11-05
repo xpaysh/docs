@@ -1,0 +1,285 @@
+# Installation
+
+This guide covers everything you need to install and configure \{xpay✦\} for your project.
+
+## System Requirements
+
+- **Node.js**: Version 18.0 or higher
+- **Package Manager**: npm, yarn, or pnpm
+- **Crypto Wallet**: MetaMask, Coinbase Wallet, or any Web3 wallet
+- **Network**: Base mainnet or testnet
+
+## Package Installation
+
+### Full Agent Kit (Recommended)
+
+For most developers, installing the complete agent kit is the easiest way to get started:
+
+```bash npm2yarn
+npm install @xpay/agent-kit
+```
+
+This includes all \{xpay✦\} components:
+- `@xpay/firewall` - Agent spending protection
+- `@xpay/paywall` - API monetization  
+- `@xpay/explorer` - Transaction monitoring
+- `@xpay/sdk` - Core x402 utilities
+
+### Individual Packages
+
+Install only what you need:
+
+**Agent protection only:**
+```bash npm2yarn
+npm install @xpay/firewall
+```
+
+**API monetization only:**
+```bash npm2yarn
+npm install @xpay/paywall
+```
+
+**Transaction monitoring only:**
+```bash npm2yarn
+npm install @xpay/explorer
+```
+
+**Core SDK only:**
+```bash npm2yarn
+npm install @xpay/sdk
+```
+
+## Environment Setup
+
+### 1. Environment Variables
+
+Create a `.env.local` file in your project root:
+
+```bash
+# \{xpay✦\} Configuration
+XPAY_API_KEY=xpay_test_...
+XPAY_PROJECT_ID=proj_...
+
+# Wallet Configuration  
+AGENT_WALLET_PRIVATE_KEY=0x...
+RECEIVING_WALLET_ADDRESS=0x...
+
+# x402 Network
+X402_NETWORK=base-sepolia  # or 'base-mainnet' for production
+X402_FACILITATOR_URL=https://facilitator.base.org
+
+# Optional: Custom RPC
+BASE_RPC_URL=https://base-sepolia.g.alchemy.com/v2/...
+```
+
+### 2. TypeScript Configuration
+
+Add types to your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "node_modules/@xpay/*/types/**/*"
+  ]
+}
+```
+
+### 3. Next.js Configuration (if using Next.js)
+
+Update your `next.config.js`:
+
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ['@xpay/agent-kit']
+  },
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+    }
+    return config
+  }
+}
+
+module.exports = nextConfig
+```
+
+## Wallet Setup
+
+### Getting Test Funds
+
+For development and testing:
+
+1. **Base Sepolia Testnet**:
+   - Get ETH: [Base Sepolia Faucet](https://faucet.quicknode.com/base/sepolia)
+   - Get USDC: [Circle Faucet](https://faucet.circle.com/)
+
+2. **Add Base Sepolia to your wallet**:
+   ```
+   Network Name: Base Sepolia
+   RPC URL: https://sepolia.base.org
+   Chain ID: 84532
+   Currency Symbol: ETH
+   ```
+
+### Production Wallets
+
+For production deployments:
+
+1. **Agent Wallets**: Use HD wallets or hardware wallets for agent private keys
+2. **Receiving Wallets**: Use multisig wallets for receiving payments
+3. **Key Management**: Never commit private keys to version control
+
+## Framework-Specific Setup
+
+### Express.js
+
+```javascript
+import express from 'express'
+import { XpayPaywall } from '@xpay/agent-kit'
+
+const app = express()
+app.use(express.json())
+
+// Initialize \{xpay✦\} middleware
+const paywall = new XpayPaywall({
+  pricePerRequest: 0.10,
+  receivingWallet: process.env.RECEIVING_WALLET_ADDRESS
+})
+
+app.use('/api/premium', paywall.middleware)
+```
+
+### Fastify
+
+```javascript
+import Fastify from 'fastify'
+import { XpayFirewall } from '@xpay/agent-kit'
+
+const fastify = Fastify()
+
+// Register \{xpay✦\} plugin
+fastify.register(async function (fastify) {
+  const firewall = new XpayFirewall({
+    maxDailySpend: 100
+  })
+  
+  fastify.decorateRequest('firewall', firewall)
+})
+```
+
+### Vercel Edge Functions
+
+```typescript
+import { NextRequest } from 'next/server'
+import { XpayPaywall } from '@xpay/agent-kit'
+
+export const config = {
+  runtime: 'edge'
+}
+
+const paywall = new XpayPaywall({
+  pricePerRequest: 0.05,
+  receivingWallet: process.env.RECEIVING_WALLET_ADDRESS
+})
+
+export default async function handler(req: NextRequest) {
+  return await paywall.handleRequest(req)
+}
+```
+
+## Verification
+
+Test your installation:
+
+```typescript
+import { XpaySDK } from '@xpay/agent-kit'
+
+async function verifyInstallation() {
+  try {
+    const sdk = new XpaySDK({
+      apiKey: process.env.XPAY_API_KEY,
+      projectId: process.env.XPAY_PROJECT_ID
+    })
+    
+    const status = await sdk.healthCheck()
+    console.log('✅ \{xpay✦\} installation verified:', status)
+    
+  } catch (error) {
+    console.error('❌ Installation verification failed:', error)
+  }
+}
+
+verifyInstallation()
+```
+
+Expected output:
+```
+✅ \{xpay✦\} installation verified: {
+  status: 'healthy',
+  network: 'base-sepolia',
+  facilitator: 'connected',
+  version: '1.0.0'
+}
+```
+
+## Common Issues
+
+### Module Resolution Errors
+
+If you see `Cannot resolve module '@xpay/agent-kit'`:
+
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Or with yarn
+yarn cache clean
+yarn install
+```
+
+### Wallet Connection Issues
+
+If wallet connections fail:
+
+1. Ensure you're on the correct network (Base Sepolia for testing)
+2. Check that your wallet has sufficient ETH for gas fees
+3. Verify the RPC URL is accessible
+
+### TypeScript Errors
+
+Add type declarations if needed:
+
+```typescript
+// types/xpay.d.ts
+declare module '@xpay/agent-kit' {
+  export * from '@xpay/agent-kit/types'
+}
+```
+
+## Next Steps
+
+Now that \{xpay✦\} is installed:
+
+1. [Make your first payment →](/getting-started/first-payment)
+2. [Integrate with your agent →](/getting-started/agent-integration)  
+3. [Monetize your API →](/getting-started/api-monetization)
+
+## Need Help?
+
+- 📚 **Troubleshooting Guide**: [Common issues and solutions](/guides/troubleshooting)
+- 💬 **Discord**: Get help from our [community](https://discord.gg/xpay)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/xpaysh/xpay-agent-kit/issues)
