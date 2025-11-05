@@ -26,11 +26,13 @@ export default withNextra({
     silenceDeprecations: ['legacy-js-api'],
   },
   async rewrites() {
-    return [
-      {
-        source: '/:locale/logo-:path.png',
-        destination: '/logo-:path.png',
-      },
-    ];
+    return {
+      afterFiles: [
+        {
+          source: '/:locale/logo-:path.png',
+          destination: '/logo-:path.png',
+        },
+      ],
+    };
   },
 })

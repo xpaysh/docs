@@ -1,4 +1,10 @@
-export { middleware } from 'nextra/locales'
+import { NextRequest } from 'next/server'
+import { middleware as nextraMiddleware } from 'nextra/locales'
+
+export function middleware(request: NextRequest) {
+  // Use Nextra's i18n middleware
+  return nextraMiddleware(request)
+}
 
 export const config = {
   matcher: [
@@ -11,7 +17,8 @@ export const config = {
      * - img (image files)
      * - *.xml (XML files like sitemap.xml, RSS feeds, etc.)
      * - robots.txt (robots file)
+     * - llms.txt (LLM training file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|img|_pagefind|.*\\.xml|robots.txt).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|img|_pagefind|.*\\.xml|robots.txt|llms.txt).*)',
   ],
 }
