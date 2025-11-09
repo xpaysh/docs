@@ -1,0 +1,1231 @@
+# Advanced Integration Patterns
+
+Real-world integration patterns for complex Xpay deployments, based on production experience and customer use cases.
+
+import { Callout } from 'nextra/components'
+
+<Callout type="info">
+**Production-Tested**: These patterns are based on real customer deployments and have been battle-tested in production environments.
+</Callout>
+
+## Multi-Tenant Agent Management
+
+### SaaS Application Pattern
+
+For SaaS applications serving multiple customers, each with their own agents:
+
+```typescript
+import { XpayFirewall } from '@xpay/agent-kit'
+
+class MultiTenantAgentManager {
+  private firewalls: Map<string, XpayFirewall> = new Map()
+  
+  constructor(private config: {
+    defaultLimits: AgentLimits
+    tierConfigs: Record<string, TierConfig>
+  }) {}
+  
+  async initializeTenant(tenantId: string, tier: string = 'basic') {
+    const tierConfig = this.config.tierConfigs[tier]
+    
+    const firewall = new XpayFirewall({
+      endpoint: `https://firewall-${tenantId}.xpay.sh`,
+      apiKey: process.env.XPAY_API_KEY!,
+      
+      // Tenant-specific configuration
+      defaultLimits: {
+        dailyLimit: tierConfig.dailyLimit,
+        perCallLimit: tierConfig.perCallLimit,
+        monthlyLimit: tierConfig.monthlyLimit
+      },
+      
+      // Isolated webhook endpoints
+      webhookEndpoint: `https://api.yourapp.com/webhooks/xpay/${tenantId}`,
+      
+      // Tenant-specific caching
+      cachePrefix: `tenant:${tenantId}`
+    })
+    
+    this.firewalls.set(tenantId, firewall)
+    return firewall
+  }
+  
+  async createAgentForTenant(
+    tenantId: string, 
+    userId: string, 
+    agentConfig: Partial<AgentConfig>
+  ): Promise<Agent> {
+    const firewall = this.getFirewallForTenant(tenantId)
+    const tier = await this.getTenantTier(tenantId)
+    const tierLimits = this.config.tierConfigs[tier]
+    
+    // Apply tenant-specific limits and branding
+    const agent = await firewall.createAgent({
+      ...agentConfig,
+      id: `${tenantId}-${agentConfig.id}`,
+      userId: `${tenantId}-${userId}`,
+      customerId: tenantId,
+      
+      // Apply tier limits
+      dailyLimit: Math.min(agentConfig.dailyLimit || Infinity, tierLimits.dailyLimit),
+      perCallLimit: Math.min(agentConfig.perCallLimit || Infinity, tierLimits.perCallLimit),
+      monthlyLimit: Math.min(agentConfig.monthlyLimit || Infinity, tierLimits.monthlyLimit),
+      
+      // Tenant-specific metadata
+      metadata: {
+        tenant: tenantId,
+        tier: tier,
+        createdBy: userId
+      }
+    })
+    
+    // Track tenant usage
+    await this.trackTenantUsage(tenantId, 'agent_created')
+    
+    return agent
+  }
+  
+  async getAgentsForTenant(tenantId: string, userId?: string): Promise<Agent[]> {
+    const firewall = this.getFirewallForTenant(tenantId)
+    
+    const agents = await firewall.listAgents({
+      search: userId ? `${tenantId}-${userId}` : tenantId
+    })
+    
+    return agents.agents
+  }
+  
+  private getFirewallForTenant(tenantId: string): XpayFirewall {
+    const firewall = this.firewalls.get(tenantId)
+    if (!firewall) {
+      throw new Error(`Tenant ${tenantId} not initialized`)
+    }
+    return firewall
+  }
+  
+  private async getTenantTier(tenantId: string): Promise<string> {
+    // Query your database for tenant subscription tier
+    const tenant = await db.query('SELECT tier FROM tenants WHERE id = $1', [tenantId])
+    return tenant.rows[0]?.tier || 'basic'
+  }
+  
+  private async trackTenantUsage(tenantId: string, event: string) {
+    // Track usage for billing/analytics
+    await analytics.track({
+      event,
+      tenantId,
+      timestamp: new Date()
+    })
+  }
+}
+
+// Usage in your SaaS application
+const agentManager = new MultiTenantAgentManager({
+  defaultLimits: {
+    dailyLimit: 10,
+    perCallLimit: 0.50,
+    monthlyLimit: 200
+  },
+  tierConfigs: {
+    basic: { dailyLimit: 25, perCallLimit: 1, monthlyLimit: 500 },
+    professional: { dailyLimit: 100, perCallLimit: 5, monthlyLimit: 2000 },
+    enterprise: { dailyLimit: 1000, perCallLimit: 20, monthlyLimit: 20000 }
+  }
+})
+
+// Initialize tenant when they sign up
+app.post('/api/tenants/:tenantId/initialize', async (req, res) => {
+  const { tenantId } = req.params
+  const { tier } = req.body
+  
+  await agentManager.initializeTenant(tenantId, tier)
+  res.json({ success: true })
+})
+
+// Create agent for tenant user
+app.post('/api/tenants/:tenantId/agents', async (req, res) => {
+  const { tenantId } = req.params
+  const { userId, agentConfig } = req.body
+  
+  const agent = await agentManager.createAgentForTenant(tenantId, userId, agentConfig)
+  res.json(agent)
+})
+```
+
+## Custom Webhook Processing
+
+### Complex Event Handling
+
+Handle multiple event types with sophisticated business logic:
+
+```typescript
+import crypto from 'crypto'
+import { EventEmitter } from 'events'
+
+class XpayWebhookProcessor extends EventEmitter {
+  private processors: Map<string, EventProcessor> = new Map()
+  
+  constructor(private config: {
+    secret: string
+    retryAttempts: number
+    retryDelay: number
+  }) {
+    super()
+    this.setupEventProcessors()
+  }
+  
+  private setupEventProcessors() {
+    // Agent spending warning
+    this.processors.set('agent.spending.warning', new AgentSpendingProcessor())
+    
+    // Payment confirmation with business logic
+    this.processors.set('transaction.confirmed', new PaymentConfirmationProcessor())
+    
+    // Fraud detection
+    this.processors.set('agent.unusual_pattern', new FraudDetectionProcessor())
+    
+    // Customer lifecycle
+    this.processors.set('customer.first_payment', new CustomerOnboardingProcessor())
+  }
+  
+  async processWebhook(req: express.Request, res: express.Response) {
+    try {
+      // Verify webhook signature
+      const signature = req.headers['x-xpay-signature'] as string
+      const payload = JSON.stringify(req.body)
+      
+      if (!this.verifySignature(payload, signature)) {
+        return res.status(401).json({ error: 'Invalid signature' })
+      }
+      
+      const { event, data, timestamp } = req.body
+      
+      // Check for replay attacks
+      if (this.isReplayAttack(timestamp)) {
+        return res.status(400).json({ error: 'Request too old' })
+      }
+      
+      // Process event with appropriate handler
+      const processor = this.processors.get(event)
+      if (processor) {
+        await processor.process(data, event)
+        this.emit('webhook.processed', { event, data })
+      } else {
+        console.warn(`Unknown webhook event: ${event}`)
+      }
+      
+      res.status(200).json({ received: true })
+      
+    } catch (error) {
+      console.error('Webhook processing error:', error)
+      res.status(500).json({ error: 'Processing failed' })
+      
+      // Queue for retry
+      await this.queueForRetry(req.body)
+    }
+  }
+  
+  private verifySignature(payload: string, signature: string): boolean {
+    const expectedSignature = crypto
+      .createHmac('sha256', this.config.secret)
+      .update(payload)
+      .digest('hex')
+    
+    return crypto.timingSafeEqual(
+      Buffer.from(`sha256=${expectedSignature}`),
+      Buffer.from(signature)
+    )
+  }
+  
+  private isReplayAttack(timestamp: number): boolean {
+    const now = Date.now()
+    const eventTime = new Date(timestamp).getTime()
+    const maxAge = 5 * 60 * 1000 // 5 minutes
+    
+    return (now - eventTime) > maxAge
+  }
+  
+  private async queueForRetry(webhookData: any) {
+    // Use a queue system like Bull or SQS for retry logic
+    await retryQueue.add('webhook-retry', webhookData, {
+      attempts: this.config.retryAttempts,
+      backoff: {
+        type: 'exponential',
+        settings: {
+          delay: this.config.retryDelay
+        }
+      }
+    })
+  }
+}
+
+// Event processor implementations
+class AgentSpendingProcessor implements EventProcessor {
+  async process(data: any, event: string) {
+    const { agentId, percentUsed, dailyLimit, currentSpent } = data
+    
+    if (percentUsed >= 90) {
+      // Critical alert - near limit
+      await this.sendCriticalAlert(agentId, percentUsed)
+      
+      // Auto-pause if configured
+      const agent = await getAgent(agentId)
+      if (agent.autoShutoff?.enabled && percentUsed >= agent.autoShutoff.threshold * 100) {
+        await pauseAgent(agentId)
+      }
+    } else if (percentUsed >= 80) {
+      // Warning alert
+      await this.sendWarningAlert(agentId, percentUsed)
+    }
+    
+    // Update internal metrics
+    await updateAgentMetrics(agentId, {
+      lastSpendingWarning: new Date(),
+      percentUsed,
+      currentSpent
+    })
+  }
+  
+  private async sendCriticalAlert(agentId: string, percentUsed: number) {
+    await notifications.send({
+      type: 'critical',
+      channel: 'slack',
+      message: `🚨 Agent ${agentId} at ${percentUsed}% of daily limit`,
+      actions: [
+        { label: 'Pause Agent', action: 'pause_agent', agentId },
+        { label: 'Increase Limit', action: 'increase_limit', agentId }
+      ]
+    })
+  }
+  
+  private async sendWarningAlert(agentId: string, percentUsed: number) {
+    await notifications.send({
+      type: 'warning',
+      channel: 'email',
+      message: `Agent ${agentId} at ${percentUsed}% of daily limit`,
+      template: 'spending_warning'
+    })
+  }
+}
+
+class PaymentConfirmationProcessor implements EventProcessor {
+  async process(data: any, event: string) {
+    const { transactionId, agentId, amount, endpointId } = data
+    
+    try {
+      // Update transaction status
+      await updateTransactionStatus(transactionId, 'confirmed')
+      
+      // Update agent spending totals
+      await incrementAgentSpending(agentId, amount)
+      
+      // Update endpoint revenue (if applicable)
+      if (endpointId) {
+        await incrementEndpointRevenue(endpointId, amount)
+      }
+      
+      // Trigger business logic
+      await this.processBusinessLogic(data)
+      
+      // Analytics tracking
+      await analytics.track('payment_confirmed', {
+        agentId,
+        amount,
+        endpointId,
+        transactionId
+      })
+      
+    } catch (error) {
+      console.error('Payment confirmation processing failed:', error)
+      throw error
+    }
+  }
+  
+  private async processBusinessLogic(data: any) {
+    const { agentId, amount, metadata } = data
+    
+    // Check for milestone achievements
+    const agentStats = await getAgentStats(agentId)
+    
+    if (agentStats.totalSpent >= 100 && !agentStats.milestonePaid) {
+      // Agent reached $100 milestone
+      await this.triggerMilestone(agentId, 100)
+    }
+    
+    // Dynamic limit adjustments based on usage pattern
+    if (agentStats.successRate > 0.95 && agentStats.totalCalls > 50) {
+      await this.considerLimitIncrease(agentId)
+    }
+  }
+  
+  private async triggerMilestone(agentId: string, milestone: number) {
+    await db.query(`
+      UPDATE agents 
+      SET milestone_paid = $1, updated_at = NOW() 
+      WHERE id = $2
+    `, [milestone, agentId])
+    
+    // Send congratulations
+    await notifications.send({
+      type: 'milestone',
+      message: `🎉 Agent ${agentId} reached $${milestone} in total spending!`
+    })
+  }
+  
+  private async considerLimitIncrease(agentId: string) {
+    // AI-powered limit optimization based on usage patterns
+    const recommendation = await aiOptimizer.recommendLimits(agentId)
+    
+    if (recommendation.confidence > 0.8) {
+      await notifications.send({
+        type: 'optimization',
+        message: `Consider increasing limits for agent ${agentId}`,
+        recommendation
+      })
+    }
+  }
+}
+```
+
+## Batch Transaction Processing
+
+### High-Volume Payment Processing
+
+Handle thousands of transactions efficiently:
+
+```typescript
+interface BatchProcessor {
+  processBatch(transactions: PendingTransaction[]): Promise<BatchResult>
+}
+
+class XpayBatchProcessor implements BatchProcessor {
+  private readonly BATCH_SIZE = 100
+  private readonly CONCURRENT_BATCHES = 5
+  
+  constructor(
+    private firewall: XpayFirewall,
+    private config: {
+      retryAttempts: number
+      retryDelay: number
+      successThreshold: number
+    }
+  ) {}
+  
+  async processBatch(transactions: PendingTransaction[]): Promise<BatchResult> {
+    const startTime = Date.now()
+    const results: TransactionResult[] = []
+    
+    // Split into smaller batches for processing
+    const batches = this.chunkArray(transactions, this.BATCH_SIZE)
+    
+    // Process batches concurrently with limit
+    const batchPromises = batches.map((batch, index) => 
+      this.processSingleBatch(batch, index)
+    )
+    
+    const batchResults = await this.executeWithConcurrencyLimit(
+      batchPromises, 
+      this.CONCURRENT_BATCHES
+    )
+    
+    // Aggregate results
+    for (const batchResult of batchResults) {
+      results.push(...batchResult.results)
+    }
+    
+    const summary = this.calculateSummary(results, startTime)
+    
+    // Handle failed transactions
+    if (summary.failedCount > 0) {
+      await this.handleFailedTransactions(
+        results.filter(r => !r.success)
+      )
+    }
+    
+    return {
+      summary,
+      results,
+      processedAt: new Date()
+    }
+  }
+  
+  private async processSingleBatch(
+    transactions: PendingTransaction[], 
+    batchIndex: number
+  ): Promise<{ results: TransactionResult[] }> {
+    const results: TransactionResult[] = []
+    
+    console.log(`Processing batch ${batchIndex} with ${transactions.length} transactions`)
+    
+    // Prepare batch request for Xpay
+    const batchRequest = transactions.map(tx => ({
+      agentId: tx.agentId,
+      url: tx.endpoint,
+      options: {
+        method: 'POST',
+        headers: tx.headers,
+        body: JSON.stringify(tx.payload)
+      },
+      metadata: {
+        transactionId: tx.id,
+        batchIndex,
+        timestamp: Date.now()
+      }
+    }))
+    
+    try {
+      // Execute batch request
+      const batchResults = await this.firewall.batchRequests(batchRequest)
+      
+      // Process individual results
+      for (let i = 0; i < batchResults.length; i++) {
+        const result = batchResults[i]
+        const transaction = transactions[i]
+        
+        if (result.success) {
+          results.push({
+            transactionId: transaction.id,
+            success: true,
+            cost: result.cost,
+            response: result.response,
+            processingTime: Date.now() - transaction.createdAt
+          })
+          
+          // Update transaction in database
+          await this.updateTransactionStatus(transaction.id, 'confirmed', result.cost)
+          
+        } else {
+          results.push({
+            transactionId: transaction.id,
+            success: false,
+            error: result.error,
+            retryable: this.isRetryableError(result.error)
+          })
+          
+          // Mark for retry if appropriate
+          if (this.isRetryableError(result.error)) {
+            await this.scheduleRetry(transaction)
+          } else {
+            await this.updateTransactionStatus(transaction.id, 'failed', 0)
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error(`Batch ${batchIndex} failed:`, error)
+      
+      // Mark all transactions as failed with retry
+      for (const transaction of transactions) {
+        results.push({
+          transactionId: transaction.id,
+          success: false,
+          error: error.message,
+          retryable: true
+        })
+        
+        await this.scheduleRetry(transaction)
+      }
+    }
+    
+    return { results }
+  }
+  
+  private async executeWithConcurrencyLimit<T>(
+    promises: Promise<T>[], 
+    limit: number
+  ): Promise<T[]> {
+    const results: T[] = []
+    
+    for (let i = 0; i < promises.length; i += limit) {
+      const batch = promises.slice(i, i + limit)
+      const batchResults = await Promise.allSettled(batch)
+      
+      for (const result of batchResults) {
+        if (result.status === 'fulfilled') {
+          results.push(result.value)
+        } else {
+          console.error('Batch promise failed:', result.reason)
+          throw result.reason
+        }
+      }
+    }
+    
+    return results
+  }
+  
+  private calculateSummary(results: TransactionResult[], startTime: number): BatchSummary {
+    const successCount = results.filter(r => r.success).length
+    const failedCount = results.filter(r => !r.success).length
+    const totalCost = results
+      .filter(r => r.success)
+      .reduce((sum, r) => sum + (r.cost || 0), 0)
+    
+    return {
+      totalTransactions: results.length,
+      successCount,
+      failedCount,
+      successRate: successCount / results.length,
+      totalCost,
+      processingTime: Date.now() - startTime,
+      averageTransactionTime: results
+        .filter(r => r.success && r.processingTime)
+        .reduce((sum, r) => sum + r.processingTime!, 0) / successCount
+    }
+  }
+  
+  private async handleFailedTransactions(failed: TransactionResult[]) {
+    const retryable = failed.filter(f => f.retryable)
+    const permanent = failed.filter(f => !f.retryable)
+    
+    if (retryable.length > 0) {
+      console.log(`Scheduling ${retryable.length} transactions for retry`)
+      // These will be picked up by the retry processor
+    }
+    
+    if (permanent.length > 0) {
+      console.log(`${permanent.length} transactions permanently failed`)
+      
+      // Notify administrators of permanent failures
+      await notifications.send({
+        type: 'error',
+        message: `${permanent.length} transactions permanently failed`,
+        details: permanent.map(f => ({ id: f.transactionId, error: f.error }))
+      })
+    }
+  }
+  
+  private chunkArray<T>(array: T[], size: number): T[][] {
+    const chunks: T[][] = []
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size))
+    }
+    return chunks
+  }
+  
+  private isRetryableError(error: any): boolean {
+    if (!error) return false
+    
+    const retryableCodes = [
+      'NETWORK_ERROR',
+      'TIMEOUT',
+      'RATE_LIMITED',
+      'SERVICE_UNAVAILABLE',
+      'TEMPORARY_FAILURE'
+    ]
+    
+    return retryableCodes.includes(error.code) || 
+           (error.status >= 500 && error.status < 600)
+  }
+  
+  private async scheduleRetry(transaction: PendingTransaction) {
+    await retryQueue.add('transaction-retry', transaction, {
+      attempts: this.config.retryAttempts,
+      backoff: {
+        type: 'exponential',
+        settings: { delay: this.config.retryDelay }
+      }
+    })
+  }
+  
+  private async updateTransactionStatus(
+    transactionId: string, 
+    status: string, 
+    cost: number
+  ) {
+    await db.query(`
+      UPDATE transactions 
+      SET status = $1, amount = $2, updated_at = NOW()
+      WHERE id = $3
+    `, [status, cost, transactionId])
+  }
+}
+
+// Usage example
+const batchProcessor = new XpayBatchProcessor(firewall, {
+  retryAttempts: 3,
+  retryDelay: 1000,
+  successThreshold: 0.95
+})
+
+// Process pending transactions every minute
+setInterval(async () => {
+  const pendingTransactions = await getPendingTransactions(1000) // Get up to 1000 pending
+  
+  if (pendingTransactions.length > 0) {
+    const result = await batchProcessor.processBatch(pendingTransactions)
+    
+    console.log(`Batch completed: ${result.summary.successCount}/${result.summary.totalTransactions} successful`)
+    
+    if (result.summary.successRate < 0.95) {
+      // Alert if success rate is too low
+      await notifications.send({
+        type: 'warning',
+        message: `Low batch success rate: ${result.summary.successRate * 100}%`
+      })
+    }
+  }
+}, 60000) // Run every minute
+```
+
+## Custom Analytics and Reporting
+
+### Advanced Analytics Pipeline
+
+Build sophisticated analytics for agent performance and revenue optimization:
+
+```typescript
+class XpayAnalyticsEngine {
+  private metricsCollector: MetricsCollector
+  private dataProcessor: DataProcessor
+  private reportGenerator: ReportGenerator
+  
+  constructor(
+    private firewall: XpayFirewall,
+    private config: AnalyticsConfig
+  ) {
+    this.metricsCollector = new MetricsCollector(firewall)
+    this.dataProcessor = new DataProcessor()
+    this.reportGenerator = new ReportGenerator()
+  }
+  
+  async generateCustomerReport(customerId: string, timeframe: string): Promise<CustomerReport> {
+    // Collect raw data
+    const rawData = await this.metricsCollector.collectCustomerData(customerId, timeframe)
+    
+    // Process and analyze
+    const processedData = await this.dataProcessor.processCustomerData(rawData)
+    
+    // Generate insights
+    const insights = await this.generateCustomerInsights(processedData)
+    
+    // Create report
+    return this.reportGenerator.generateCustomerReport({
+      customerId,
+      timeframe,
+      data: processedData,
+      insights
+    })
+  }
+  
+  async generateRevenueOptimizationReport(endpointId: string): Promise<OptimizationReport> {
+    const data = await this.metricsCollector.collectEndpointData(endpointId, '30d')
+    
+    // Analyze pricing elasticity
+    const elasticity = await this.analyzePriceElasticity(data)
+    
+    // Predict optimal pricing
+    const optimalPricing = await this.predictOptimalPricing(data, elasticity)
+    
+    // A/B testing recommendations
+    const testingRecommendations = await this.generateTestingRecommendations(optimalPricing)
+    
+    return {
+      endpointId,
+      currentMetrics: data.summary,
+      elasticity,
+      optimalPricing,
+      testingRecommendations,
+      projectedIncrease: this.calculateProjectedIncrease(data, optimalPricing)
+    }
+  }
+  
+  async predictAgentBehavior(agentId: string): Promise<BehaviorPrediction> {
+    // Collect historical data
+    const history = await this.metricsCollector.collectAgentHistory(agentId, '90d')
+    
+    // Machine learning prediction
+    const prediction = await this.mlPredictor.predict({
+      features: this.extractFeatures(history),
+      model: 'agent_behavior_v2'
+    })
+    
+    return {
+      agentId,
+      predictions: {
+        nextDaySpending: prediction.nextDaySpending,
+        monthlySpending: prediction.monthlySpending,
+        riskScore: prediction.riskScore,
+        optimalLimits: prediction.optimalLimits
+      },
+      confidence: prediction.confidence,
+      recommendations: this.generateBehaviorRecommendations(prediction)
+    }
+  }
+  
+  private async generateCustomerInsights(data: ProcessedCustomerData): Promise<CustomerInsights> {
+    const insights: CustomerInsights = {
+      spendingTrends: [],
+      anomalies: [],
+      opportunities: [],
+      risks: []
+    }
+    
+    // Spending trend analysis
+    if (data.spendingGrowthRate > 0.2) {
+      insights.spendingTrends.push({
+        type: 'growth',
+        description: `Spending increased by ${(data.spendingGrowthRate * 100).toFixed(1)}%`,
+        impact: 'positive'
+      })
+    }
+    
+    // Anomaly detection
+    for (const anomaly of data.anomalies) {
+      if (anomaly.severity > 0.7) {
+        insights.anomalies.push({
+          type: anomaly.type,
+          description: anomaly.description,
+          severity: anomaly.severity,
+          recommendedAction: anomaly.recommendedAction
+        })
+      }
+    }
+    
+    // Optimization opportunities
+    if (data.efficiencyScore < 0.8) {
+      insights.opportunities.push({
+        type: 'efficiency',
+        description: 'Agent efficiency could be improved',
+        potentialSavings: data.projectedSavings,
+        actionItems: [
+          'Review agent configurations',
+          'Optimize API call patterns',
+          'Consider batch processing'
+        ]
+      })
+    }
+    
+    // Risk assessment
+    if (data.riskScore > 0.6) {
+      insights.risks.push({
+        type: 'spending',
+        description: 'High risk of budget overrun',
+        probability: data.riskScore,
+        mitigation: [
+          'Reduce daily limits',
+          'Enable auto-shutoff',
+          'Increase monitoring frequency'
+        ]
+      })
+    }
+    
+    return insights
+  }
+  
+  private async analyzePriceElasticity(data: EndpointData): Promise<PriceElasticity> {
+    // Analyze how demand changes with price
+    const pricePoints = data.historicalPricing
+    const demandData = data.usageByPrice
+    
+    // Calculate elasticity coefficient
+    const elasticity = this.calculateElasticity(pricePoints, demandData)
+    
+    return {
+      coefficient: elasticity,
+      interpretation: this.interpretElasticity(elasticity),
+      confidenceInterval: this.calculateConfidenceInterval(pricePoints, demandData),
+      recommendations: this.generateElasticityRecommendations(elasticity)
+    }
+  }
+  
+  private async predictOptimalPricing(
+    data: EndpointData, 
+    elasticity: PriceElasticity
+  ): Promise<OptimalPricing> {
+    // Use revenue maximization algorithm
+    const revenueFunction = (price: number) => {
+      const demand = this.predictDemand(price, elasticity)
+      return price * demand
+    }
+    
+    // Find optimal price point
+    const optimalPrice = this.findOptimalPrice(revenueFunction, data.currentPrice)
+    
+    return {
+      currentPrice: data.currentPrice,
+      optimalPrice,
+      projectedRevenue: revenueFunction(optimalPrice),
+      confidence: this.calculatePricingConfidence(data, elasticity),
+      priceRange: {
+        min: optimalPrice * 0.9,
+        max: optimalPrice * 1.1
+      }
+    }
+  }
+  
+  // Helper methods for calculations
+  private calculateElasticity(pricePoints: number[], demandData: number[]): number {
+    // Simplified elasticity calculation
+    const priceChanges = pricePoints.slice(1).map((price, i) => 
+      (price - pricePoints[i]) / pricePoints[i]
+    )
+    const demandChanges = demandData.slice(1).map((demand, i) => 
+      (demand - demandData[i]) / demandData[i]
+    )
+    
+    // Calculate average elasticity
+    const elasticities = demandChanges.map((demandChange, i) => 
+      demandChange / priceChanges[i]
+    )
+    
+    return elasticities.reduce((sum, e) => sum + e, 0) / elasticities.length
+  }
+  
+  private interpretElasticity(elasticity: number): string {
+    if (elasticity < -1) return 'elastic'
+    if (elasticity > -1 && elasticity < 0) return 'inelastic'
+    return 'unit_elastic'
+  }
+  
+  private findOptimalPrice(revenueFunction: (price: number) => number, currentPrice: number): number {
+    // Simple optimization using golden section search
+    let a = currentPrice * 0.5
+    let b = currentPrice * 2
+    const phi = (1 + Math.sqrt(5)) / 2
+    
+    // Golden section search iterations
+    for (let i = 0; i < 20; i++) {
+      const c = b - (b - a) / phi
+      const d = a + (b - a) / phi
+      
+      if (revenueFunction(c) > revenueFunction(d)) {
+        b = d
+      } else {
+        a = c
+      }
+    }
+    
+    return (a + b) / 2
+  }
+}
+
+// Usage example
+const analytics = new XpayAnalyticsEngine(firewall, {
+  enableMachineLearning: true,
+  dataRetentionDays: 365,
+  reportingFrequency: 'daily'
+})
+
+// Generate daily reports
+cron.schedule('0 6 * * *', async () => {
+  const customers = await getActiveCustomers()
+  
+  for (const customer of customers) {
+    const report = await analytics.generateCustomerReport(customer.id, '24h')
+    
+    if (report.insights.risks.length > 0) {
+      await notifications.send({
+        type: 'risk_alert',
+        customerId: customer.id,
+        risks: report.insights.risks
+      })
+    }
+  }
+})
+
+// Weekly optimization reports
+cron.schedule('0 9 * * 1', async () => {
+  const endpoints = await getActiveEndpoints()
+  
+  for (const endpoint of endpoints) {
+    const optimization = await analytics.generateRevenueOptimizationReport(endpoint.id)
+    
+    if (optimization.projectedIncrease > 0.1) {
+      await notifications.send({
+        type: 'optimization_opportunity',
+        endpointId: endpoint.id,
+        opportunity: optimization
+      })
+    }
+  }
+})
+```
+
+## Integration Testing Patterns
+
+### Comprehensive Testing Strategy
+
+```typescript
+import { describe, it, beforeEach, afterEach, expect } from '@jest/globals'
+import { XpayFirewall } from '@xpay/agent-kit'
+
+describe('Xpay Integration Tests', () => {
+  let firewall: XpayFirewall
+  let testAgent: Agent
+  
+  beforeEach(async () => {
+    // Initialize test firewall
+    firewall = new XpayFirewall({
+      endpoint: process.env.XPAY_TEST_ENDPOINT!,
+      apiKey: process.env.XPAY_TEST_API_KEY!,
+      
+      // Test-specific configuration
+      timeout: 5000,
+      retries: 1
+    })
+    
+    // Create test agent
+    testAgent = await firewall.createAgent({
+      id: `test-agent-${Date.now()}`,
+      name: 'Test Agent',
+      walletAddress: process.env.TEST_WALLET_ADDRESS!,
+      dailyLimit: 10,
+      perCallLimit: 1
+    })
+  })
+  
+  afterEach(async () => {
+    // Cleanup
+    if (testAgent) {
+      await firewall.deleteAgent(testAgent.id)
+    }
+  })
+  
+  describe('Agent Lifecycle', () => {
+    it('should create agent with proper configuration', async () => {
+      expect(testAgent.id).toBeTruthy()
+      expect(testAgent.dailyLimit).toBe(10)
+      expect(testAgent.status).toBe('active')
+    })
+    
+    it('should update agent limits', async () => {
+      const updated = await firewall.updateAgent(testAgent.id, {
+        dailyLimit: 20,
+        perCallLimit: 2
+      })
+      
+      expect(updated.dailyLimit).toBe(20)
+      expect(updated.perCallLimit).toBe(2)
+    })
+    
+    it('should pause and resume agent', async () => {
+      await firewall.pauseAgent(testAgent.id)
+      let agent = await firewall.getAgent(testAgent.id)
+      expect(agent.status).toBe('paused')
+      
+      await firewall.resumeAgent(testAgent.id)
+      agent = await firewall.getAgent(testAgent.id)
+      expect(agent.status).toBe('active')
+    })
+  })
+  
+  describe('Payment Processing', () => {
+    it('should process successful payment', async () => {
+      const response = await firewall.protectedFetch('https://api.example.com/test', {
+        agentId: testAgent.id,
+        method: 'POST',
+        body: JSON.stringify({ test: true })
+      })
+      
+      expect(response.ok).toBe(true)
+      
+      // Verify agent spending updated
+      const updatedAgent = await firewall.getAgent(testAgent.id)
+      expect(updatedAgent.totalSpent).toBeGreaterThan(0)
+      expect(updatedAgent.totalCalls).toBe(1)
+    })
+    
+    it('should reject payment when limit exceeded', async () => {
+      // Set very low limit
+      await firewall.updateAgent(testAgent.id, { perCallLimit: 0.001 })
+      
+      await expect(
+        firewall.protectedFetch('https://api.example.com/expensive', {
+          agentId: testAgent.id,
+          method: 'POST'
+        })
+      ).rejects.toThrow('Spending limit exceeded')
+    })
+    
+    it('should handle batch requests correctly', async () => {
+      const requests = Array.from({ length: 5 }, (_, i) => ({
+        agentId: testAgent.id,
+        url: `https://api.example.com/test/${i}`,
+        options: { method: 'GET' }
+      }))
+      
+      const results = await firewall.batchRequests(requests)
+      
+      expect(results).toHaveLength(5)
+      expect(results.every(r => r.success)).toBe(true)
+      
+      // Verify total spending
+      const updatedAgent = await firewall.getAgent(testAgent.id)
+      expect(updatedAgent.totalCalls).toBe(5)
+    })
+  })
+  
+  describe('Error Handling', () => {
+    it('should handle network timeouts gracefully', async () => {
+      // Mock timeout scenario
+      jest.setTimeout(10000)
+      
+      await expect(
+        firewall.protectedFetch('https://httpstat.us/200?sleep=8000', {
+          agentId: testAgent.id,
+          timeout: 2000
+        })
+      ).rejects.toThrow('timeout')
+    })
+    
+    it('should retry failed requests', async () => {
+      const retryFirewall = new XpayFirewall({
+        endpoint: process.env.XPAY_TEST_ENDPOINT!,
+        apiKey: process.env.XPAY_TEST_API_KEY!,
+        retries: 3,
+        retryDelay: 100
+      })
+      
+      // Mock intermittent failure
+      let attempts = 0
+      const mockFetch = jest.fn().mockImplementation(() => {
+        attempts++
+        if (attempts < 3) {
+          throw new Error('Temporary failure')
+        }
+        return Promise.resolve(new Response('Success'))
+      })
+      
+      // Test retry mechanism
+      const response = await retryFirewall.protectedFetch('https://api.example.com/retry', {
+        agentId: testAgent.id
+      })
+      
+      expect(response.ok).toBe(true)
+      expect(attempts).toBe(3)
+    })
+  })
+  
+  describe('Analytics and Monitoring', () => {
+    it('should track spending analytics correctly', async () => {
+      // Make several test requests
+      for (let i = 0; i < 3; i++) {
+        await firewall.protectedFetch('https://api.example.com/analytics', {
+          agentId: testAgent.id
+        })
+      }
+      
+      const analytics = await firewall.getSpendingAnalytics({
+        agentIds: [testAgent.id],
+        timeframe: '1h'
+      })
+      
+      expect(analytics.totalCalls).toBe(3)
+      expect(analytics.totalSpent).toBeGreaterThan(0)
+      expect(analytics.breakdown).toHaveLength(1)
+    })
+    
+    it('should retrieve transaction history', async () => {
+      // Make a test transaction
+      await firewall.protectedFetch('https://api.example.com/history', {
+        agentId: testAgent.id
+      })
+      
+      const history = await firewall.getTransactionHistory({
+        agentIds: [testAgent.id],
+        limit: 10
+      })
+      
+      expect(history.transactions).toHaveLength(1)
+      expect(history.transactions[0].agentId).toBe(testAgent.id)
+      expect(history.transactions[0].status).toBe('confirmed')
+    })
+  })
+})
+
+// Load testing utilities
+export class LoadTestRunner {
+  constructor(private firewall: XpayFirewall) {}
+  
+  async runLoadTest(config: LoadTestConfig): Promise<LoadTestResults> {
+    const startTime = Date.now()
+    const results: RequestResult[] = []
+    
+    // Create test agents
+    const agents = await Promise.all(
+      Array.from({ length: config.agentCount }, (_, i) =>
+        this.firewall.createAgent({
+          id: `load-test-agent-${i}`,
+          name: `Load Test Agent ${i}`,
+          walletAddress: process.env.TEST_WALLET_ADDRESS!,
+          dailyLimit: 100,
+          perCallLimit: 5
+        })
+      )
+    )
+    
+    try {
+      // Generate load
+      const promises: Promise<RequestResult>[] = []
+      
+      for (let i = 0; i < config.totalRequests; i++) {
+        const agent = agents[i % agents.length]
+        const delay = (i / config.requestsPerSecond) * 1000
+        
+        promises.push(
+          new Promise(resolve => {
+            setTimeout(async () => {
+              const requestStart = Date.now()
+              try {
+                await this.firewall.protectedFetch(config.targetUrl, {
+                  agentId: agent.id
+                })
+                resolve({
+                  success: true,
+                  duration: Date.now() - requestStart,
+                  agentId: agent.id
+                })
+              } catch (error) {
+                resolve({
+                  success: false,
+                  duration: Date.now() - requestStart,
+                  agentId: agent.id,
+                  error: error.message
+                })
+              }
+            }, delay)
+          })
+        )
+      }
+      
+      const requestResults = await Promise.all(promises)
+      results.push(...requestResults)
+      
+    } finally {
+      // Cleanup test agents
+      await Promise.all(
+        agents.map(agent => this.firewall.deleteAgent(agent.id))
+      )
+    }
+    
+    return this.analyzeResults(results, Date.now() - startTime)
+  }
+  
+  private analyzeResults(results: RequestResult[], totalTime: number): LoadTestResults {
+    const successful = results.filter(r => r.success)
+    const failed = results.filter(r => !r.success)
+    
+    const durations = successful.map(r => r.duration)
+    durations.sort((a, b) => a - b)
+    
+    return {
+      totalRequests: results.length,
+      successfulRequests: successful.length,
+      failedRequests: failed.length,
+      successRate: successful.length / results.length,
+      totalTime,
+      requestsPerSecond: results.length / (totalTime / 1000),
+      averageResponseTime: durations.reduce((sum, d) => sum + d, 0) / durations.length,
+      medianResponseTime: durations[Math.floor(durations.length / 2)],
+      p95ResponseTime: durations[Math.floor(durations.length * 0.95)],
+      p99ResponseTime: durations[Math.floor(durations.length * 0.99)],
+      errors: failed.reduce((acc, f) => {
+        acc[f.error!] = (acc[f.error!] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+    }
+  }
+}
+```
+
+These advanced integration patterns provide production-ready solutions for complex Xpay deployments. They cover multi-tenancy, webhook processing, batch operations, analytics, and comprehensive testing strategies that scale with your application needs.

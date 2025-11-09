@@ -1,16 +1,16 @@
 # Quick Start
 
-Get up and running with \{xpay✦\} in under 5 minutes. This guide will help you make your first x402 payment and integrate agent spending controls.
+Get up and running with \{xpay✦\} in under 10 minutes. This guide will help you make your first x402 payment and set up comprehensive agent spending controls.
 
 ## Overview
 
-\{xpay✦\} provides three main ways to get started:
+\{xpay✦\} provides a complete platform for secure AI agent payments:
 
-1. **🛡️ Agent Firewall** - Protect your agents from overspending
-2. **⚡ API Monetization** - Start earning from your APIs immediately  
-3. **📊 Transaction Monitoring** - Get visibility into agent payments
+1. **🛡️ Agent Firewall** - Enterprise-grade spending controls and monitoring
+2. **⚡ Paywall Service** - Instant API monetization with x402 payments  
+3. **📊 Analytics & Monitoring** - Real-time transaction tracking and insights
 
-Choose your path based on your primary use case:
+Choose your integration path:
 
 import { Callout } from 'nextra/components'
 
@@ -22,9 +22,13 @@ import { Callout } from 'nextra/components'
 
 Before you begin, ensure you have:
 
-- Node.js 18+ installed
-- A crypto wallet (MetaMask, Coinbase Wallet, etc.)
-- Some USDC on Base network for testing ([get free testnet USDC](https://faucet.circle.com/))
+- Node.js 18+ or Python 3.8+ installed
+- A wallet with USDC on Base network ([get testnet USDC](https://faucet.circle.com/))
+- Your Xpay API key ([sign up for free](https://app.xpay.sh/signup))
+
+<Callout type="warning">
+**Production Ready**: All examples use mainnet configurations. For testing, use Base Sepolia testnet.
+</Callout>
 
 ## Installation
 
@@ -42,131 +46,295 @@ npm install @xpay/paywall
 npm install @xpay/explorer
 ```
 
-## Your First Protected Agent Call
+## Step 1: Create Your First Protected Agent
 
-Let's create an agent that can make API calls safely with spending limits:
+Set up an agent with enterprise-grade spending controls:
 
 ```typescript
 import { XpayFirewall } from '@xpay/agent-kit'
 
-// Initialize the firewall with spending limits
 const firewall = new XpayFirewall({
-  maxDailySpend: 100,     // Maximum $100 per day
-  maxPerRequest: 5,       // Maximum $5 per request
-  alertThreshold: 0.8,    // Alert at 80% of limits
-  walletAddress: '0x...'  // Your agent's wallet
+  endpoint: 'https://firewall-abc123.xpay.sh',
+  apiKey: 'xpay_fw_...'
 })
 
-// Make a protected API call
-async function callExpensiveAPI() {
+// Create an agent with comprehensive controls
+const agent = await firewall.createAgent({
+  id: 'my-first-agent',
+  name: 'Customer Support Agent',
+  description: 'Handles customer inquiries with AI',
+  walletAddress: '0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555',
+  dailyLimit: 50,         // $50 daily limit
+  perCallLimit: 2,        // $2 per request limit
+  monthlyLimit: 1000,     // $1000 monthly limit
+  allowedAPIs: ['openai.com', 'anthropic.com'],
+  businessHours: {
+    enabled: true,
+    timezone: 'America/New_York',
+    schedule: '09:00-17:00',
+    weekdays: [1, 2, 3, 4, 5] // Monday-Friday
+  },
+  autoShutoff: {
+    enabled: true,
+    threshold: 0.9,         // Stop at 90% of limit
+    action: 'pause'
+  }
+})
+
+console.log('Agent created:', agent.id)
+```
+
+## Step 2: Make Protected API Calls
+
+Now use your agent to make safe, monitored API calls:
+
+```typescript
+// Make a protected AI API call
+async function askAI(question: string) {
   try {
     const response = await firewall.protectedFetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer YOUR_API_KEY',
+        'Authorization': 'Bearer YOUR_OPENAI_KEY',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: 'gpt-4',
-        messages: [{ role: 'user', content: 'Hello world' }]
-      })
+        messages: [{ role: 'user', content: question }]
+      }),
+      agentId: 'my-first-agent',
+      maxCost: 1.50,         // Override per-request limit for this call
+      metadata: { 
+        requestType: 'customer_support',
+        priority: 'high'
+      }
     })
     
+    if (!response.ok) {
+      throw new Error(`API call failed: ${response.statusText}`)
+    }
+    
     const data = await response.json()
-    console.log('AI Response:', data)
+    return data.choices[0].message.content
     
   } catch (error) {
-    if (error.code === 'SPENDING_LIMIT_EXCEEDED') {
-      console.log('Agent spending limit reached!')
+    if (error instanceof SpendingLimitError) {
+      console.log(`Spending limit reached: ${error.limitType}`)
+      console.log(`Resets at: ${error.resetTime}`)
+      return "I'm currently at my spending limit. Please try again later."
     }
+    throw error
   }
 }
+
+// Usage
+const answer = await askAI("How can I help you today?")
+console.log('AI Response:', answer)
 ```
 
-## Your First Monetized API
+## Step 3: Set Up API Monetization
 
-Turn any existing API into a revenue stream:
+Turn your existing APIs into revenue streams with x402 payments:
 
 ```typescript
 import { XpayPaywall } from '@xpay/agent-kit'
 import express from 'express'
 
 const app = express()
+app.use(express.json())
 
-// Initialize paywall
 const paywall = new XpayPaywall({
-  pricePerRequest: 0.10,        // $0.10 per request
-  receivingWallet: '0x...',     // Your wallet address
-  facilitatorUrl: 'https://facilitator.base.org'
+  receivingWallet: '0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555',
+  facilitatorUrl: 'https://facilitator.base.org',
+  apiKey: 'xpay_pw_...'
 })
 
-// Protect your API endpoint
-app.get('/api/premium-data', paywall.middleware, (req, res) => {
-  // This code only runs after payment is verified
-  res.json({
-    data: 'This is premium data worth $0.10',
-    timestamp: new Date().toISOString()
-  })
+// Create different pricing tiers
+const endpoints = [
+  {
+    path: '/api/basic-data',
+    price: 0.05,
+    description: 'Basic market data'
+  },
+  {
+    path: '/api/premium-analysis', 
+    price: 0.25,
+    description: 'AI-powered market analysis'
+  },
+  {
+    path: '/api/enterprise-insights',
+    price: 1.00,
+    description: 'Real-time enterprise analytics'
+  }
+]
+
+// Set up paywalled endpoints
+endpoints.forEach(endpoint => {
+  app.get(endpoint.path, 
+    paywall.middleware({
+      price: endpoint.price,
+      description: endpoint.description,
+      metadata: { 
+        tier: endpoint.path.includes('enterprise') ? 'enterprise' : 'standard',
+        version: 'v1'
+      }
+    }), 
+    (req, res) => {
+      // Your API logic here - only runs after successful payment
+      res.json({
+        message: `${endpoint.description} - Payment verified!`,
+        data: generateMockData(endpoint.path),
+        cost: endpoint.price,
+        timestamp: new Date().toISOString()
+      })
+    }
+  )
 })
+
+// Revenue analytics endpoint
+app.get('/api/analytics', async (req, res) => {
+  const analytics = await paywall.getRevenueAnalytics({
+    timeframe: '24h',
+    groupBy: 'endpoint'
+  })
+  res.json(analytics)
+})
+
+function generateMockData(path: string) {
+  // Return appropriate mock data based on endpoint
+  if (path.includes('basic')) {
+    return { price: 50000, volume: 1234567 }
+  } else if (path.includes('premium')) {
+    return { 
+      analysis: 'Bullish trend detected',
+      confidence: 0.87,
+      signals: ['RSI oversold', 'Volume increase']
+    }
+  } else {
+    return {
+      insights: ['Market volatility increasing', 'Institutional buying detected'],
+      riskScore: 0.23,
+      recommendations: ['Reduce position size', 'Monitor closely']
+    }
+  }
+}
 
 app.listen(3000, () => {
-  console.log('Monetized API running on port 3000')
+  console.log('🚀 Monetized API server running on port 3000')
+  console.log('💰 Revenue tracking enabled')
 })
 ```
 
-## Monitor Agent Transactions
+## Step 4: Monitor and Analyze
 
-Track all x402 payments in real-time:
+Get comprehensive insights into your agent spending and API revenue:
 
 ```typescript
-import { XpayExplorer } from '@xpay/agent-kit'
-
-const explorer = new XpayExplorer({
-  apiKey: 'your-xpay-api-key',
-  projectId: 'your-project-id'
-})
-
-// Track all agent payments
-explorer.trackAgent('agent-id-1', {
-  name: 'Customer Support Bot',
-  maxDailySpend: 50
-})
-
-// Get spending analytics
-const analytics = await explorer.getSpendingAnalytics({
+// Monitor agent spending patterns
+const spendingAnalytics = await firewall.getSpendingAnalytics({
+  agentIds: ['my-first-agent'],
   timeframe: '24h',
-  groupBy: 'agent'
+  groupBy: 'agent',
+  includeMetadata: true
 })
 
-console.log('Agent spending:', analytics)
+console.log('Spending Analytics:')
+console.log(`Total spent: $${spendingAnalytics.totalSpent}`)
+console.log(`Total calls: ${spendingAnalytics.totalCalls}`)
+console.log(`Average cost per call: $${spendingAnalytics.averageCostPerCall}`)
+
+spendingAnalytics.breakdown.forEach(item => {
+  console.log(`${item.key}: $${item.spent} (${item.percentage}%)`)
+})
+
+// Track transaction history
+const transactions = await firewall.getTransactionHistory({
+  agentIds: ['my-first-agent'],
+  limit: 10,
+  status: 'confirmed'
+})
+
+console.log('\nRecent Transactions:')
+transactions.transactions.forEach(tx => {
+  console.log(`${tx.createdAt}: $${tx.amount} - ${tx.status}`)
+})
+
+// Set up real-time webhooks for monitoring
+await firewall.configureWebhooks({
+  endpoint: 'https://your-app.com/webhooks/xpay',
+  events: [
+    'agent.spending.warning',    // 80% of limit reached
+    'agent.spending.exceeded',   // Limit hit
+    'agent.unusual_pattern',     // Suspicious activity
+    'transaction.failed'         // Failed payments
+  ],
+  secret: 'webhook_secret_key',
+  retries: 3
+})
+
+// Monitor paywall revenue
+const revenueAnalytics = await paywall.getRevenueAnalytics({
+  timeframe: '7d',
+  groupBy: 'endpoint'
+})
+
+console.log('\nRevenue Analytics:')
+console.log(`Total revenue: $${revenueAnalytics.totalRevenue}`)
+console.log(`Unique customers: ${revenueAnalytics.uniqueCustomers}`)
+
+revenueAnalytics.breakdown.forEach(endpoint => {
+  console.log(`${endpoint.path}: $${endpoint.revenue} (${endpoint.requests} requests)`)
+})
 ```
 
-## What's Next?
+## 🎉 Success! You're Now Xpay-Enabled
 
-Now that you've made your first x402 payment, explore these topics:
+You've successfully set up:
+- ✅ Agent with enterprise spending controls
+- ✅ Protected API calls with automatic monitoring  
+- ✅ Monetized endpoints earning x402 payments
+- ✅ Real-time analytics and webhook notifications
 
-### For Agent Developers
-- [Agent Integration Guide](/getting-started/agent-integration) - Deep dive into agent payment patterns
-- [Spending Controls](/products/agent-firewall) - Advanced firewall configuration
-- [Error Handling](/guides/error-handling) - Handle payment failures gracefully
+## Next Steps
 
-### For API Providers  
-- [API Monetization Guide](/getting-started/api-monetization) - Maximize your API revenue
-- [Pricing Strategies](/guides/pricing-strategies) - Optimize your x402 pricing
-- [Payment Analytics](/products/transaction-explorer) - Track your API earnings
+### 🛡️ **Advanced Agent Security**
+- **[Agent Firewall](/products/agent-firewall)** - Multi-agent management, custom rules, and circuit breakers
+- **[Production Deployment](/getting-started/production-deployment)** - Docker, Kubernetes, and CI/CD pipelines
+- **[Integration Patterns](/developer-resources/integration-patterns)** - Complex scenarios and best practices
 
-### For Everyone
-- [x402 Protocol Fundamentals](/x402-protocol) - Understand the underlying technology
-- [Best Practices](/guides/best-practices) - Production-ready patterns
-- [Community Resources](/community) - Join our developer community
+### ⚡ **Scale Your Revenue**  
+- **[Paywall Service](/products/paywall-service)** - Advanced pricing models and subscription management
+- **[Revenue Optimization](/guides/revenue-optimization)** - Maximize earnings with dynamic pricing
+- **[API Marketplace](/marketplace)** - List your APIs for discovery
 
-## Need Help?
+### 📊 **Production Monitoring**
+- **[Analytics Dashboard](https://app.xpay.sh/analytics)** - Visual insights and reports
+- **[Alerts & Notifications](/guides/monitoring-alerts)** - Proactive issue detection  
+- **[SDK Reference](/developer-resources/sdk-reference)** - Complete API documentation
 
-- 📖 **Documentation** - Explore our comprehensive [guides](/guides)
-- 💬 **Discord** - Join our [developer community](https://discord.gg/xpay)  
-- 🐛 **Issues** - Report bugs on [GitHub](https://github.com/xpaysh/xpay-docs/issues)
-- 📧 **Support** - Email us at support@xpay.sh
+### 🔧 **Developer Resources**
+- **[Troubleshooting Guide](/developer-resources/troubleshooting)** - Common issues and solutions
+- **[Testing Patterns](/guides/testing)** - Unit tests and integration testing
+- **[Migration Guide](/guides/migration)** - Upgrade from legacy payment systems
+
+## Get Support
+
+<Callout type="info">
+**Enterprise Support**: Need dedicated support? [Contact our enterprise team](https://xpay.sh/enterprise) for priority assistance, custom integrations, and SLA guarantees.
+</Callout>
+
+### Community & Support Channels
+- 💬 **[Discord Community](https://discord.gg/xpay)** - Chat with developers and get real-time help
+- 📚 **[Documentation](/)** - Comprehensive guides and API reference
+- 🐛 **[GitHub Issues](https://github.com/xpaysh/xpay-docs/issues)** - Bug reports and feature requests
+- 📧 **[Support Email](mailto:support@xpay.sh)** - Direct support for technical issues
+
+### Quick Links
+- 🎮 **[Interactive Playground](https://playground.xpay.sh)** - Test API calls in your browser
+- 📊 **[Status Page](https://status.xpay.sh)** - Real-time service status and incident history  
+- 🔧 **[Postman Collection](https://www.postman.com/xpay-team/workspace/xpay-public)** - Ready-to-use API requests
+- 📱 **[Mobile SDKs](https://github.com/xpaysh/mobile-sdks)** - iOS and Android integration libraries
 
 ---
 
-Ready for more advanced patterns? Continue to [Agent Integration →](/getting-started/agent-integration)
+**Ready to build production systems?** Continue to [Production Deployment →](/getting-started/production-deployment)

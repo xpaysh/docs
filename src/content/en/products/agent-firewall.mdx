@@ -39,7 +39,7 @@ The Agent Firewall provides an AWS-hosted proxy endpoint that sits between your 
 
 ### Multi-Agent Management
 
-Manage multiple agents from a single dashboard:
+Manage multiple agents from a single dashboard with complete lifecycle control:
 
 ```typescript
 import { XpayFirewall } from '@xpay/agent-kit'
@@ -49,18 +49,43 @@ const firewall = new XpayFirewall({
   apiKey: 'xpay_fw_...'
 })
 
-// Configure different agents with different limits
-await firewall.configureAgent('customer-support-bot', {
-  maxDailySpend: 50,
-  maxPerRequest: 2,
-  allowedAPIs: ['openai.com', 'anthropic.com']
+// Create agents with complete configuration
+await firewall.createAgent({
+  id: 'customer-support-bot',
+  name: 'Customer Support Agent',
+  description: 'Handles customer inquiries and support tickets',
+  walletAddress: '0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555',
+  dailyLimit: 50,      // $50 USDC per day
+  perCallLimit: 2,     // $2 USDC per API call
+  monthlyLimit: 1000,  // $1000 USDC per month
+  allowedAPIs: ['openai.com', 'anthropic.com'],
+  status: 'active'
 })
 
-await firewall.configureAgent('data-analysis-bot', {
-  maxDailySpend: 200,
-  maxPerRequest: 10,
-  allowedAPIs: ['*'] // Allow all APIs
+await firewall.createAgent({
+  id: 'data-analysis-bot', 
+  name: 'Data Analysis Agent',
+  description: 'Processes large datasets and generates reports',
+  walletAddress: '0x853d46Dd7744C3dC23c3e8F3Bd2dF1e6fc1e8666',
+  dailyLimit: 200,
+  perCallLimit: 10,
+  monthlyLimit: 5000,
+  allowedAPIs: ['*'], // Allow all x402-enabled APIs
+  status: 'active'
 })
+
+// Update agent configuration
+await firewall.updateAgent('customer-support-bot', {
+  dailyLimit: 75, // Increase daily limit
+  perCallLimit: 3
+})
+
+// Pause agent temporarily  
+await firewall.pauseAgent('data-analysis-bot')
+
+// Get agent status and spending
+const agent = await firewall.getAgent('customer-support-bot')
+console.log(`Agent spent: $${agent.totalSpent} / $${agent.dailyLimit}`)
 ```
 
 ### Intelligent Routing
@@ -80,6 +105,66 @@ const response = await fetch('https://api.openai.com/v1/chat/completions', {
     model: 'gpt-4',
     messages: [{ role: 'user', content: 'Hello' }]
   })
+})
+```
+
+### Real-World Configuration Examples
+
+Here are common agent configuration patterns for different use cases:
+
+#### Customer Service Agent
+```typescript
+await firewall.createAgent({
+  id: 'customer-service-v1',
+  name: 'Customer Service Bot',
+  description: 'Handles customer inquiries during business hours',
+  walletAddress: '0x...',
+  dailyLimit: 25,      // Conservative limit for customer interactions
+  perCallLimit: 0.50,  // Small cost per interaction
+  monthlyLimit: 500,   // Monthly budget control
+  allowedAPIs: ['openai.com'], // Only trusted LLM provider
+  emergencyContact: 'devops@company.com',
+  businessHours: {
+    enabled: true,
+    timezone: 'America/New_York',
+    schedule: '09:00-17:00' // Only active during business hours
+  }
+})
+```
+
+#### Data Processing Agent
+```typescript
+await firewall.createAgent({
+  id: 'data-processor-prod',
+  name: 'Production Data Processor',
+  description: 'Processes customer data and generates reports',
+  walletAddress: '0x...',
+  dailyLimit: 100,     // Higher limit for data processing
+  perCallLimit: 5,     // Larger requests for bulk processing
+  monthlyLimit: 2000,  // Monthly budget for data operations
+  allowedAPIs: ['*'],  // Allow various data processing APIs
+  rateLimiting: {
+    maxConcurrentRequests: 3, // Prevent overwhelming APIs
+    requestsPerMinute: 30
+  }
+})
+```
+
+#### Development/Testing Agent
+```typescript
+await firewall.createAgent({
+  id: 'dev-test-agent',
+  name: 'Development Testing Agent',
+  description: 'Agent for development and testing purposes',
+  walletAddress: '0x...',
+  dailyLimit: 10,      // Low limit for testing
+  perCallLimit: 1,     // Small requests during development
+  monthlyLimit: 200,   // Development budget
+  allowedAPIs: ['openai.com', 'anthropic.com'],
+  autoShutoff: {
+    enabled: true,
+    threshold: 0.9 // Auto-pause at 90% of daily limit
+  }
 })
 ```
 
@@ -237,6 +322,98 @@ const response = await firewall.protectedFetch('https://api.openai.com/v1/chat/c
 
 Visit your dashboard to see real-time spending: `https://dashboard.xpay.sh/firewall/abc123`
 
+## Error Handling & Recovery
+
+### Handling Spending Limit Errors
+
+```typescript
+import { XpayFirewall, SpendingLimitError } from '@xpay/agent-kit'
+
+async function makeProtectedRequest(agentId: string, apiCall: () => Promise<Response>) {
+  try {
+    return await firewall.protectedFetch(apiCall, { agentId })
+  } catch (error) {
+    if (error instanceof SpendingLimitError) {
+      switch (error.limitType) {
+        case 'daily':
+          console.log(`Agent ${agentId} hit daily limit. Retry tomorrow.`)
+          // Queue request for next day
+          await scheduleRetryTomorrow(agentId, apiCall)
+          break
+        
+        case 'per_request':
+          console.log(`Request too expensive for agent ${agentId}`)
+          // Try with a cheaper model or reduce request size
+          return await fallbackToSmallerModel(agentId, apiCall)
+          
+        case 'monthly':
+          console.log(`Agent ${agentId} hit monthly budget`)
+          // Alert administrators and pause agent
+          await notifyAdmins(agentId, 'monthly_limit_exceeded')
+          await firewall.pauseAgent(agentId)
+          break
+      }
+    }
+    throw error
+  }
+}
+```
+
+### Automatic Fallback Strategies
+
+```typescript
+// Configure agents with fallback chains
+await firewall.createAgent({
+  id: 'smart-agent',
+  name: 'Cost-Optimized Agent',
+  walletAddress: '0x...',
+  dailyLimit: 50,
+  fallbackChain: [
+    { provider: 'openai.com', model: 'gpt-3.5-turbo', maxCost: 0.01 },
+    { provider: 'anthropic.com', model: 'claude-haiku', maxCost: 0.02 },
+    { provider: 'openai.com', model: 'gpt-4', maxCost: 0.05 }
+  ],
+  onLimitExceeded: 'pause_and_notify'
+})
+```
+
+### Real-time Monitoring
+
+```typescript
+// Set up webhooks for real-time monitoring
+await firewall.configureWebhooks({
+  endpoint: 'https://your-app.com/webhooks/xpay',
+  events: [
+    'agent.spending.warning',    // 80% of limit reached
+    'agent.spending.exceeded',   // Limit exceeded
+    'agent.paused',             // Agent automatically paused
+    'agent.request.failed',     // Request failed
+    'agent.unusual_pattern'     // Unusual spending pattern detected
+  ],
+  secret: 'webhook_secret_key'
+})
+
+// Handle webhook in your application
+app.post('/webhooks/xpay', (req, res) => {
+  const { event, data } = req.body
+  
+  switch (event) {
+    case 'agent.spending.warning':
+      // Notify team that agent is approaching limits
+      notifySlack(`Agent ${data.agentId} at ${data.percentUsed}% of daily limit`)
+      break
+      
+    case 'agent.spending.exceeded':
+      // Log incident and review agent configuration
+      logger.warn('Agent spending limit exceeded', data)
+      reviewAgentLimits(data.agentId)
+      break
+  }
+  
+  res.status(200).send('OK')
+})
+```
+
 ## Best Practices
 
 ### Agent Configuration
@@ -245,6 +422,8 @@ Visit your dashboard to see real-time spending: `https://dashboard.xpay.sh/firew
 - **Use agent-specific limits**: Different agents have different cost profiles
 - **Monitor for a week**: Establish baseline spending patterns before setting final limits
 - **Enable all alerts**: Early detection prevents costly surprises
+- **Set up webhooks**: Get real-time notifications for spending events
+- **Use descriptive names**: Clear agent names help with monitoring and debugging
 
 ### Cost Optimization
 

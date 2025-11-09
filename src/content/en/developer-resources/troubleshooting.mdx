@@ -1,0 +1,870 @@
+# Troubleshooting Guide
+
+Common issues and solutions for Xpay integrations, with step-by-step debugging instructions.
+
+import { Callout } from 'nextra/components'
+
+<Callout type="info">
+**Quick Support**: For urgent issues, join our [Discord](https://discord.gg/xpay) or email support@xpay.sh with your error details.
+</Callout>
+
+## Common Issues
+
+### Payment Verification Failures
+
+#### Issue: "Payment verification failed" errors
+
+**Symptoms:**
+- 402 Payment Required responses when payment was made
+- `PaymentRequiredError` exceptions in your application
+- Valid payments being rejected
+
+**Common Causes:**
+
+1. **Incorrect payment amount**
+   ```bash
+   Expected: 0.10 USDC
+   Received: 0.099 USDC (missing gas/precision)
+   ```
+
+2. **Stale payment timestamps**
+   ```bash
+   Payment timestamp: 2024-01-01T10:00:00Z
+   Current time: 2024-01-01T10:06:00Z
+   Max age: 300 seconds (5 minutes) - EXPIRED
+   ```
+
+3. **Wrong facilitator URL**
+   ```bash
+   Expected: https://facilitator.base.org
+   Used: https://facilitator.ethereum.org
+   ```
+
+**Solutions:**
+
+```typescript
+// 1. Add payment tolerance for precision issues
+const paywall = new XpayPaywall({
+  receivingWallet: '0x...',
+  verification: {
+    tolerance: 0.001,  // Allow 0.1% variance
+    maxAge: 600        // Extend to 10 minutes if needed
+  }
+})
+
+// 2. Debug payment verification
+async function debugPaymentVerification(req: Request, expectedPrice: number) {
+  const headers = req.headers
+  
+  console.log('Payment Headers:', {
+    'x-payment-amount': headers['x-payment-amount'],
+    'x-payment-hash': headers['x-payment-hash'],
+    'x-payment-timestamp': headers['x-payment-timestamp'],
+    'x-facilitator-url': headers['x-facilitator-url']
+  })
+  
+  try {
+    const verification = await paywall.verifyPayment(headers, {
+      price: expectedPrice,
+      tolerance: 0.001,
+      maxAge: 600
+    })
+    
+    console.log('Verification Result:', verification)
+    return verification
+    
+  } catch (error) {
+    console.error('Verification Error:', {
+      error: error.message,
+      expectedPrice,
+      receivedAmount: headers['x-payment-amount'],
+      timeDiff: Date.now() - new Date(headers['x-payment-timestamp']).getTime()
+    })
+    throw error
+  }
+}
+
+// 3. Implement retry logic for temporary failures
+async function verifyWithRetry(headers: any, options: any, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await paywall.verifyPayment(headers, options)
+    } catch (error) {
+      if (i === retries - 1 || !isRetryableError(error)) {
+        throw error
+      }
+      
+      console.log(`Payment verification failed, retrying... (${i + 1}/${retries})`)
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+    }
+  }
+}
+
+function isRetryableError(error: any): boolean {
+  return [
+    'NETWORK_ERROR',
+    'TIMEOUT', 
+    'SERVICE_UNAVAILABLE'
+  ].includes(error.code)
+}
+```
+
+### Agent Spending Limit Issues
+
+#### Issue: Agents hitting limits unexpectedly
+
+**Symptoms:**
+- `SpendingLimitError` exceptions
+- Agents pausing automatically
+- API calls being rejected despite sufficient budget
+
+**Debugging Steps:**
+
+```typescript
+// 1. Check current agent status and spending
+async function debugAgentSpending(agentId: string) {
+  const agent = await firewall.getAgent(agentId)
+  
+  console.log('Agent Status:', {
+    id: agent.id,
+    status: agent.status,
+    totalSpent: agent.totalSpent,
+    totalCalls: agent.totalCalls,
+    limits: {
+      daily: agent.dailyLimit,
+      perCall: agent.perCallLimit,
+      monthly: agent.monthlyLimit
+    },
+    utilization: {
+      daily: (agent.totalSpent / agent.dailyLimit) * 100,
+      monthly: agent.monthlyLimit ? (agent.totalSpent / agent.monthlyLimit) * 100 : null
+    }
+  })
+  
+  // Check recent transactions
+  const transactions = await firewall.getTransactionHistory({
+    agentIds: [agentId],
+    limit: 10
+  })
+  
+  console.log('Recent Transactions:', transactions.transactions.map(tx => ({
+    id: tx.id,
+    amount: tx.amount,
+    status: tx.status,
+    createdAt: new Date(tx.createdAt)
+  })))
+  
+  return { agent, transactions }
+}
+
+// 2. Reset daily limits if needed
+async function resetDailySpending(agentId: string) {
+  try {
+    await firewall.resetDailySpending(agentId)
+    console.log(`Daily spending reset for agent ${agentId}`)
+  } catch (error) {
+    console.error('Failed to reset daily spending:', error)
+  }
+}
+
+// 3. Implement graceful limit handling
+async function makeRequestWithLimitHandling(agentId: string, apiCall: () => Promise<Response>) {
+  try {
+    return await firewall.protectedFetch(apiCall, { agentId })
+  } catch (error) {
+    if (error instanceof SpendingLimitError) {
+      switch (error.limitType) {
+        case 'daily':
+          console.log(`Agent ${agentId} hit daily limit. Next reset: ${error.resetTime}`)
+          // Queue for tomorrow or increase limit
+          await handleDailyLimitExceeded(agentId, error)
+          break
+          
+        case 'per_request':
+          console.log(`Request too expensive for agent ${agentId}`)
+          // Try with smaller request or increase per-call limit
+          await handlePerRequestLimitExceeded(agentId, error)
+          break
+          
+        case 'monthly':
+          console.log(`Agent ${agentId} hit monthly limit`)
+          // Pause agent and notify administrators
+          await handleMonthlyLimitExceeded(agentId, error)
+          break
+      }
+    }
+    throw error
+  }
+}
+```
+
+### Connection and Network Issues
+
+#### Issue: Timeouts and connection errors
+
+**Symptoms:**
+- Request timeouts
+- "Connection refused" errors
+- Intermittent failures
+
+**Solutions:**
+
+```typescript
+// 1. Configure robust timeout and retry settings
+const firewall = new XpayFirewall({
+  endpoint: 'https://firewall-abc123.xpay.sh',
+  apiKey: 'xpay_fw_...',
+  
+  // Network configuration
+  timeout: 30000,        // 30 second timeout
+  retries: 3,           // Retry up to 3 times
+  retryDelay: 1000,     // Start with 1 second delay
+  
+  // Connection pooling
+  keepAlive: true,
+  maxSockets: 50,
+  
+  // Custom retry logic
+  retryCondition: (error) => {
+    return error.code === 'TIMEOUT' || 
+           error.code === 'ECONNRESET' ||
+           (error.response && error.response.status >= 500)
+  }
+})
+
+// 2. Implement circuit breaker pattern
+class CircuitBreaker {
+  private failures = 0
+  private lastFailTime = 0
+  private state: 'closed' | 'open' | 'half-open' = 'closed'
+  
+  constructor(
+    private threshold = 5,
+    private timeout = 60000,
+    private monitorPeriod = 120000
+  ) {}
+  
+  async execute<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.state === 'open') {
+      if (Date.now() - this.lastFailTime >= this.timeout) {
+        this.state = 'half-open'
+      } else {
+        throw new Error('Circuit breaker is open')
+      }
+    }
+    
+    try {
+      const result = await operation()
+      this.onSuccess()
+      return result
+    } catch (error) {
+      this.onFailure()
+      throw error
+    }
+  }
+  
+  private onSuccess() {
+    this.failures = 0
+    this.state = 'closed'
+  }
+  
+  private onFailure() {
+    this.failures++
+    this.lastFailTime = Date.now()
+    
+    if (this.failures >= this.threshold) {
+      this.state = 'open'
+    }
+  }
+}
+
+// 3. Add comprehensive error handling
+async function robustApiCall(agentId: string, url: string, options: any) {
+  const circuitBreaker = new CircuitBreaker()
+  
+  return await circuitBreaker.execute(async () => {
+    try {
+      return await firewall.protectedFetch(url, {
+        ...options,
+        agentId,
+        timeout: 30000
+      })
+    } catch (error) {
+      // Enhanced error logging
+      console.error('API call failed:', {
+        agentId,
+        url,
+        error: error.message,
+        code: error.code,
+        status: error.status,
+        timestamp: new Date().toISOString()
+      })
+      
+      // Specific error handling
+      if (error.code === 'TIMEOUT') {
+        throw new Error('Request timed out - try reducing payload size or increasing timeout')
+      } else if (error.code === 'ECONNRESET') {
+        throw new Error('Connection reset - check network connectivity')
+      } else if (error.status === 503) {
+        throw new Error('Service unavailable - Xpay service may be temporarily down')
+      }
+      
+      throw error
+    }
+  })
+}
+```
+
+### Authentication Issues
+
+#### Issue: API key and authentication errors
+
+**Symptoms:**
+- 401 Unauthorized responses
+- "Invalid API key" errors
+- Intermittent authentication failures
+
+**Debugging:**
+
+```typescript
+// 1. Validate API key format and permissions
+function validateApiKey(apiKey: string) {
+  if (!apiKey) {
+    throw new Error('API key is required')
+  }
+  
+  if (!apiKey.startsWith('xpay_')) {
+    throw new Error('Invalid API key format - must start with "xpay_"')
+  }
+  
+  if (apiKey.includes('test_') && process.env.NODE_ENV === 'production') {
+    throw new Error('Test API key used in production environment')
+  }
+  
+  if (apiKey.includes('live_') && process.env.NODE_ENV !== 'production') {
+    console.warn('Live API key used in non-production environment')
+  }
+}
+
+// 2. Test API key connectivity
+async function testApiKeyConnectivity(apiKey: string) {
+  try {
+    const firewall = new XpayFirewall({
+      endpoint: process.env.XPAY_FIREWALL_ENDPOINT!,
+      apiKey
+    })
+    
+    // Make a simple API call to test connectivity
+    await firewall.ping()
+    console.log('✅ API key is valid and service is reachable')
+    
+    return true
+  } catch (error) {
+    console.error('❌ API key test failed:', error.message)
+    
+    if (error.status === 401) {
+      console.log('🔑 Check your API key in the Xpay dashboard')
+    } else if (error.status === 403) {
+      console.log('🚫 API key lacks required permissions')
+    } else if (error.code === 'ENOTFOUND') {
+      console.log('🌐 Check your firewall endpoint URL')
+    }
+    
+    return false
+  }
+}
+
+// 3. Implement API key rotation
+class ApiKeyManager {
+  private currentKey: string
+  private backupKey?: string
+  
+  constructor(primaryKey: string, backupKey?: string) {
+    this.currentKey = primaryKey
+    this.backupKey = backupKey
+  }
+  
+  async executeWithFallback<T>(operation: (apiKey: string) => Promise<T>): Promise<T> {
+    try {
+      return await operation(this.currentKey)
+    } catch (error) {
+      if (error.status === 401 && this.backupKey) {
+        console.log('Primary API key failed, trying backup key')
+        
+        try {
+          const result = await operation(this.backupKey)
+          
+          // Swap keys if backup works
+          this.currentKey = this.backupKey
+          this.backupKey = undefined
+          
+          console.log('Backup API key worked, keys rotated')
+          return result
+        } catch (backupError) {
+          console.error('Both API keys failed')
+        }
+      }
+      throw error
+    }
+  }
+}
+```
+
+### Performance Issues
+
+#### Issue: Slow response times and high latency
+
+**Symptoms:**
+- Requests taking longer than expected
+- Timeout errors under load
+- Poor application performance
+
+**Performance Optimization:**
+
+```typescript
+// 1. Implement request caching
+class PerformanceOptimizedFirewall {
+  private cache = new Map<string, CachedResponse>()
+  private firewall: XpayFirewall
+  
+  constructor(config: any) {
+    this.firewall = new XpayFirewall(config)
+  }
+  
+  async cachedProtectedFetch(
+    url: string, 
+    options: any,
+    cacheOptions?: { ttl?: number, key?: string }
+  ) {
+    const cacheKey = cacheOptions?.key || this.generateCacheKey(url, options)
+    const cached = this.cache.get(cacheKey)
+    
+    if (cached && Date.now() - cached.timestamp < (cacheOptions?.ttl || 300000)) {
+      console.log(`Cache hit for ${cacheKey}`)
+      return cached.response
+    }
+    
+    const response = await this.firewall.protectedFetch(url, options)
+    
+    // Cache successful responses
+    if (response.ok) {
+      this.cache.set(cacheKey, {
+        response: response.clone(),
+        timestamp: Date.now()
+      })
+    }
+    
+    return response
+  }
+  
+  private generateCacheKey(url: string, options: any): string {
+    return `${url}:${JSON.stringify(options)}`
+  }
+}
+
+// 2. Connection pooling and keep-alive
+const httpAgent = new require('https').Agent({
+  keepAlive: true,
+  keepAliveMsecs: 30000,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+  timeout: 30000
+})
+
+const optimizedFirewall = new XpayFirewall({
+  endpoint: 'https://firewall-abc123.xpay.sh',
+  apiKey: 'xpay_fw_...',
+  httpAgent
+})
+
+// 3. Request batching for multiple operations
+class BatchingFirewall {
+  private pendingRequests: Array<{
+    request: any
+    resolve: (value: any) => void
+    reject: (error: any) => void
+  }> = []
+  
+  private batchTimer?: NodeJS.Timeout
+  
+  constructor(
+    private firewall: XpayFirewall,
+    private batchSize = 10,
+    private batchDelay = 100
+  ) {}
+  
+  async protectedFetch(url: string, options: any): Promise<Response> {
+    return new Promise((resolve, reject) => {
+      this.pendingRequests.push({
+        request: { url, options },
+        resolve,
+        reject
+      })
+      
+      if (this.pendingRequests.length >= this.batchSize) {
+        this.processBatch()
+      } else if (!this.batchTimer) {
+        this.batchTimer = setTimeout(() => this.processBatch(), this.batchDelay)
+      }
+    })
+  }
+  
+  private async processBatch() {
+    if (this.batchTimer) {
+      clearTimeout(this.batchTimer)
+      this.batchTimer = undefined
+    }
+    
+    const batch = this.pendingRequests.splice(0, this.batchSize)
+    
+    try {
+      const batchRequests = batch.map(item => ({
+        agentId: item.request.options.agentId,
+        url: item.request.url,
+        options: item.request.options
+      }))
+      
+      const results = await this.firewall.batchRequests(batchRequests)
+      
+      batch.forEach((item, index) => {
+        const result = results[index]
+        if (result.success) {
+          item.resolve(result.response)
+        } else {
+          item.reject(result.error)
+        }
+      })
+    } catch (error) {
+      batch.forEach(item => item.reject(error))
+    }
+  }
+}
+
+// 4. Performance monitoring
+class PerformanceMonitor {
+  private metrics: Map<string, number[]> = new Map()
+  
+  async monitoredRequest(name: string, operation: () => Promise<any>) {
+    const start = performance.now()
+    
+    try {
+      const result = await operation()
+      const duration = performance.now() - start
+      
+      this.recordMetric(name, duration)
+      
+      if (duration > 5000) {
+        console.warn(`Slow request detected: ${name} took ${duration}ms`)
+      }
+      
+      return result
+    } catch (error) {
+      const duration = performance.now() - start
+      console.error(`Failed request: ${name} failed after ${duration}ms`, error)
+      throw error
+    }
+  }
+  
+  private recordMetric(name: string, duration: number) {
+    if (!this.metrics.has(name)) {
+      this.metrics.set(name, [])
+    }
+    
+    const durations = this.metrics.get(name)!
+    durations.push(duration)
+    
+    // Keep only last 100 measurements
+    if (durations.length > 100) {
+      durations.shift()
+    }
+  }
+  
+  getPerformanceReport(): Record<string, any> {
+    const report: Record<string, any> = {}
+    
+    for (const [name, durations] of this.metrics) {
+      const avg = durations.reduce((sum, d) => sum + d, 0) / durations.length
+      const max = Math.max(...durations)
+      const min = Math.min(...durations)
+      
+      report[name] = {
+        average: avg,
+        max,
+        min,
+        count: durations.length
+      }
+    }
+    
+    return report
+  }
+}
+```
+
+## Frequently Asked Questions
+
+### General Questions
+
+**Q: What is the difference between test and live API keys?**
+
+A: Test API keys (prefixed with `xpay_test_`) work with testnet USDC and don't process real payments. Live API keys (prefixed with `xpay_live_`) process real mainnet USDC transactions. Always use test keys during development.
+
+**Q: How long do payments take to confirm?**
+
+A: Most payments confirm within 2-5 seconds on Base network. However, during network congestion, it may take up to 30 seconds. Always implement appropriate timeout handling.
+
+**Q: Can I use Xpay with other cryptocurrencies besides USDC?**
+
+A: Currently, Xpay only supports USDC on Base network. Support for other stablecoins is planned for future releases.
+
+### Agent Management
+
+**Q: What happens if an agent's wallet runs out of funds?**
+
+A: The agent will receive `InsufficientFundsError` exceptions. Implement monitoring to track wallet balances and top up before they run empty:
+
+```typescript
+async function checkWalletBalance(agentId: string) {
+  const agent = await firewall.getAgent(agentId)
+  const balance = await getWalletBalance(agent.walletAddress)
+  
+  if (balance < agent.dailyLimit * 0.1) { // 10% buffer
+    await notifications.send({
+      type: 'low_balance',
+      message: `Agent ${agentId} wallet balance is low: ${balance} USDC`,
+      agentId,
+      balance
+    })
+  }
+}
+```
+
+**Q: How do I handle agents that are consistently hitting limits?**
+
+A: Analyze spending patterns and either:
+1. Increase limits if the usage is legitimate
+2. Optimize the agent's API usage patterns
+3. Implement dynamic limit adjustments based on performance
+
+```typescript
+async function analyzeLimitHits(agentId: string) {
+  const analytics = await firewall.getSpendingAnalytics({
+    agentIds: [agentId],
+    timeframe: '7d'
+  })
+  
+  const hitRate = analytics.limitHits / analytics.totalCalls
+  
+  if (hitRate > 0.1) { // More than 10% of calls hit limits
+    console.log(`Agent ${agentId} frequently hits limits - consider optimization`)
+    return {
+      recommendation: 'optimize_usage',
+      hitRate,
+      suggestedActions: [
+        'Review API call patterns',
+        'Implement caching',
+        'Increase limits if usage is legitimate'
+      ]
+    }
+  }
+}
+```
+
+### Payment Processing
+
+**Q: Why am I getting "Payment amount mismatch" errors?**
+
+A: This usually happens due to:
+1. Gas fee calculations affecting the final amount
+2. Network precision differences
+3. Exchange rate fluctuations
+
+Always include tolerance in payment verification:
+
+```typescript
+const verification = await paywall.verifyPayment(headers, {
+  price: 0.10,
+  tolerance: 0.001 // Allow 0.1% variance
+})
+```
+
+**Q: How do I handle partial payments or refunds?**
+
+A: Xpay doesn't currently support partial payments. For refunds, you'll need to implement your own refund logic:
+
+```typescript
+async function issueRefund(transactionId: string, amount: number) {
+  // Create a new transaction record
+  const refund = await db.query(`
+    INSERT INTO transactions (id, type, amount, status, original_transaction_id)
+    VALUES ($1, 'refund', $2, 'pending', $3)
+  `, [generateId(), amount, transactionId])
+  
+  // Process refund through your payment system
+  // This is outside of Xpay's scope
+}
+```
+
+### Integration Issues
+
+**Q: How do I test my integration without spending real money?**
+
+A: Use the test environment:
+
+```typescript
+const testFirewall = new XpayFirewall({
+  endpoint: 'https://firewall-test-abc123.xpay.sh',
+  apiKey: 'xpay_test_...',
+  network: 'base-sepolia' // Testnet
+})
+
+// Get testnet USDC from faucets
+// All transactions use test tokens
+```
+
+**Q: Can I run multiple agents with the same wallet?**
+
+A: While technically possible, it's not recommended for production:
+- Nonce conflicts can cause transaction failures
+- Difficult to track spending per agent
+- Security implications
+
+Instead, create separate wallets for each agent:
+
+```typescript
+async function createAgentWithNewWallet() {
+  const wallet = generateNewWallet()
+  
+  const agent = await firewall.createAgent({
+    id: generateAgentId(),
+    name: 'New Agent',
+    walletAddress: wallet.address,
+    kmsKeyId: await encryptPrivateKey(wallet.privateKey),
+    dailyLimit: 50,
+    perCallLimit: 2
+  })
+  
+  return { agent, wallet }
+}
+```
+
+### Debugging Tools
+
+**Q: How can I debug payment flows in detail?**
+
+A: Enable debug logging and use the built-in diagnostic tools:
+
+```typescript
+// Enable debug mode
+const firewall = new XpayFirewall({
+  endpoint: 'https://firewall-abc123.xpay.sh',
+  apiKey: 'xpay_fw_...',
+  debug: true, // Enables detailed logging
+  logLevel: 'debug'
+})
+
+// Use diagnostic endpoint
+async function runDiagnostics(agentId: string) {
+  const diagnostics = await firewall.runDiagnostics(agentId)
+  
+  console.log('Diagnostics Report:', {
+    agentStatus: diagnostics.agent.status,
+    walletBalance: diagnostics.wallet.balance,
+    networkConnectivity: diagnostics.network.reachable,
+    apiKeyValid: diagnostics.auth.valid,
+    lastTransaction: diagnostics.transactions.latest
+  })
+  
+  return diagnostics
+}
+
+// Test specific payment scenarios
+async function testPaymentScenario() {
+  const testResult = await firewall.testPayment({
+    agentId: 'test-agent',
+    amount: 0.10,
+    dryRun: true // Don't actually process payment
+  })
+  
+  console.log('Payment Test Result:', testResult)
+}
+```
+
+**Q: How do I monitor my integration's health?**
+
+A: Implement comprehensive monitoring:
+
+```typescript
+// Health check endpoint
+app.get('/health/xpay', async (req, res) => {
+  try {
+    const checks = await Promise.all([
+      firewall.ping(),
+      checkDatabaseConnection(),
+      checkWalletBalances(),
+      checkRecentTransactionSuccess()
+    ])
+    
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      checks: {
+        xpayService: checks[0],
+        database: checks[1],
+        wallets: checks[2],
+        transactions: checks[3]
+      }
+    })
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      error: error.message
+    })
+  }
+})
+
+// Automated monitoring
+setInterval(async () => {
+  try {
+    const health = await checkXpayHealth()
+    if (!health.healthy) {
+      await alerting.send('Xpay integration unhealthy', health)
+    }
+  } catch (error) {
+    await alerting.send('Xpay health check failed', error)
+  }
+}, 60000) // Check every minute
+```
+
+## Getting Help
+
+### Support Channels
+
+- **Discord Community**: [discord.gg/xpay](https://discord.gg/xpay) - Fastest response for general questions
+- **Email Support**: support@xpay.sh - For account and billing issues  
+- **GitHub Issues**: [github.com/xpaysh/xpay-docs](https://github.com/xpaysh/xpay-docs/issues) - For documentation issues
+- **Emergency Support**: For production outages, use emergency contact provided in your dashboard
+
+### What to Include in Support Requests
+
+When reporting issues, include:
+
+1. **Error details**: Full error message and stack trace
+2. **Code snippet**: Minimal reproducible example
+3. **Environment**: Node.js version, package versions, OS
+4. **Agent/Transaction IDs**: For specific payment issues
+5. **Timeline**: When the issue started occurring
+6. **Expected vs actual behavior**: Clear description of the problem
+
+### Status Page
+
+Monitor Xpay service status at: [status.xpay.sh](https://status.xpay.sh)
+
+Subscribe to updates to stay informed about:
+- Service outages
+- Planned maintenance
+- Performance issues
+- New feature releases
+
+---
+
+Still having issues? Our team is here to help! Join our [Discord community](https://discord.gg/xpay) or reach out to support@xpay.sh.

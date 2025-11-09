@@ -1,0 +1,646 @@
+# Paywall-as-a-Service
+
+Transform any API into a revenue stream with x402-powered automatic payments. The Paywall Service provides instant API monetization with zero setup complexity.
+
+## Overview
+
+The Paywall Service wraps your existing APIs with x402 payment requirements, enabling:
+
+- **Instant monetization** - Start earning from APIs immediately
+- **Zero integration complexity** - Works with any existing API
+- **Automatic payment processing** - Handles all payment logic
+- **Real-time revenue tracking** - Monitor earnings as they happen
+- **Flexible pricing models** - Per-request, tiered, subscription options
+
+## Quick Start
+
+### 1. Basic API Monetization
+
+Turn any endpoint into a paid service in minutes:
+
+```typescript
+import { XpayPaywall } from '@xpay/agent-kit'
+import express from 'express'
+
+const app = express()
+const paywall = new XpayPaywall({
+  receivingWallet: '0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555',
+  facilitatorUrl: 'https://facilitator.base.org'
+})
+
+// Protect your valuable API
+app.get('/api/premium-data', 
+  paywall.middleware({ 
+    price: 0.10,  // $0.10 per request
+    description: 'Premium market data access'
+  }), 
+  (req, res) => {
+    // This code only runs after successful payment
+    const marketData = {
+      prices: { BTC: 45000, ETH: 3000 },
+      timestamp: new Date().toISOString(),
+      premium: true
+    }
+    res.json(marketData)
+  }
+)
+
+app.listen(3000, () => {
+  console.log('Monetized API running on port 3000')
+})
+```
+
+### 2. Advanced Pricing Configuration
+
+```typescript
+// Tiered pricing based on usage
+app.post('/api/ai-analysis',
+  paywall.middleware({
+    pricing: {
+      model: 'tiered',
+      basePrice: 0.01,
+      tiers: [
+        { from: 0, to: 100, price: 0.05 },    // First 100 requests: $0.05
+        { from: 100, to: 1000, price: 0.03 }, // Next 900 requests: $0.03  
+        { from: 1000, price: 0.01 }           // Beyond 1000: $0.01
+      ]
+    },
+    description: 'AI-powered data analysis'
+  }),
+  async (req, res) => {
+    const analysis = await performAIAnalysis(req.body.data)
+    res.json({ analysis, tier: req.paymentTier })
+  }
+)
+
+// Token-based pricing for LLM APIs
+app.post('/api/llm-completion',
+  paywall.middleware({
+    pricing: {
+      model: 'per_token',
+      basePrice: 0.0001, // $0.0001 per token
+      estimateTokens: (req) => {
+        // Estimate tokens from request
+        return req.body.prompt.length / 4 // Rough estimation
+      }
+    }
+  }),
+  async (req, res) => {
+    const completion = await callLLM(req.body.prompt)
+    res.json({ 
+      completion,
+      tokensUsed: completion.usage.total_tokens,
+      cost: completion.usage.total_tokens * 0.0001
+    })
+  }
+)
+```
+
+## Pricing Models
+
+### Per-Request Pricing
+
+Simple flat rate per API call:
+
+```typescript
+const paywall = new XpayPaywall({
+  receivingWallet: '0x...',
+  defaultPricing: {
+    model: 'per_request',
+    basePrice: 0.05,     // $0.05 per request
+    currency: 'USDC'
+  }
+})
+```
+
+### Tiered Pricing
+
+Progressive pricing based on usage volume:
+
+```typescript
+app.use('/api/data', paywall.middleware({
+  pricing: {
+    model: 'tiered',
+    basePrice: 0.10,
+    tiers: [
+      { from: 0, to: 50, price: 0.10 },      // First 50: $0.10 each
+      { from: 50, to: 200, price: 0.08 },    // Next 150: $0.08 each
+      { from: 200, to: 500, price: 0.06 },   // Next 300: $0.06 each
+      { from: 500, price: 0.05 }             // Beyond 500: $0.05 each
+    ]
+  },
+  // Reset tiers daily per customer
+  tierReset: 'daily'
+}))
+```
+
+### Token-Based Pricing
+
+Perfect for AI and LLM APIs:
+
+```typescript
+app.post('/api/text-generation', paywall.middleware({
+  pricing: {
+    model: 'per_token',
+    inputTokenPrice: 0.00001,   // $0.00001 per input token
+    outputTokenPrice: 0.00003,  // $0.00003 per output token
+    minimumCharge: 0.001       // Minimum $0.001 per request
+  }
+}), async (req, res) => {
+  const result = await generateText(req.body.prompt)
+  
+  // Payment automatically calculated based on actual token usage
+  res.json({
+    text: result.text,
+    usage: {
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
+      totalCost: result.inputTokens * 0.00001 + result.outputTokens * 0.00003
+    }
+  })
+})
+```
+
+### Time-Based Pricing
+
+Charge per minute or hour of usage:
+
+```typescript
+app.ws('/api/realtime-stream', paywall.middleware({
+  pricing: {
+    model: 'per_minute',
+    basePrice: 0.02,      // $0.02 per minute
+    billingInterval: 60   // Bill every 60 seconds
+  }
+}), (ws, req) => {
+  // WebSocket connection with per-minute billing
+  ws.on('message', (data) => {
+    // Stream real-time data
+    const streamData = processRealtimeData(data)
+    ws.send(JSON.stringify(streamData))
+  })
+})
+```
+
+## Revenue Optimization
+
+### Dynamic Pricing
+
+Adjust prices based on demand, time, or customer tier:
+
+```typescript
+app.get('/api/premium-content', paywall.middleware({
+  dynamicPricing: async (req) => {
+    const hour = new Date().getHours()
+    const isBusinessHours = hour >= 9 && hour <= 17
+    
+    // Higher prices during business hours
+    const basePrice = isBusinessHours ? 0.15 : 0.10
+    
+    // Customer tier pricing
+    const customerTier = await getCustomerTier(req.headers.authorization)
+    const tierMultiplier = {
+      'basic': 1.0,
+      'premium': 0.8,    // 20% discount
+      'enterprise': 0.6  // 40% discount
+    }[customerTier] || 1.0
+    
+    return {
+      price: basePrice * tierMultiplier,
+      description: `${customerTier} tier pricing`
+    }
+  }
+}), (req, res) => {
+  res.json({ content: 'Premium content', tier: req.customerTier })
+})
+```
+
+### Bundle Pricing
+
+Offer discounts for multiple API calls:
+
+```typescript
+app.post('/api/batch-process', paywall.middleware({
+  bundlePricing: {
+    singlePrice: 0.10,        // $0.10 per individual request
+    bundlePrice: 0.08,        // $0.08 per request in bundle
+    minimumBundle: 10,        // Minimum 10 requests for bundle pricing
+    maximumBundle: 100        // Maximum 100 requests per bundle
+  }
+}), async (req, res) => {
+  const { requests } = req.body
+  
+  if (requests.length >= 10) {
+    // Process as discounted bundle
+    const results = await processBatch(requests)
+    res.json({ 
+      results, 
+      bundleDiscount: (0.10 - 0.08) * requests.length 
+    })
+  } else {
+    // Process individual requests
+    const results = await processIndividual(requests)
+    res.json({ results })
+  }
+})
+```
+
+## Advanced Features
+
+### Rate Limiting Integration
+
+Combine payment requirements with rate limiting:
+
+```typescript
+import rateLimit from 'express-rate-limit'
+
+// Free tier with rate limits
+const freeTierLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  message: 'Free tier limit exceeded. Upgrade to paid tier for unlimited access.'
+})
+
+// Paid tier with higher limits
+app.get('/api/free-data', freeTierLimit, (req, res) => {
+  res.json({ data: 'Free tier data', limited: true })
+})
+
+app.get('/api/unlimited-data', 
+  paywall.middleware({ price: 0.01 }),
+  (req, res) => {
+    res.json({ data: 'Unlimited paid data', limited: false })
+  }
+)
+```
+
+### Customer Analytics
+
+Track customer usage patterns and optimize pricing:
+
+```typescript
+app.use(paywall.analyticsMiddleware({
+  trackMetrics: [
+    'request_count',
+    'revenue_per_customer', 
+    'average_request_cost',
+    'customer_lifetime_value'
+  ],
+  webhookUrl: 'https://your-app.com/webhooks/analytics'
+}))
+
+// Get customer analytics
+app.get('/admin/customer-analytics', async (req, res) => {
+  const analytics = await paywall.getCustomerAnalytics({
+    timeframe: '30d',
+    includeChurn: true,
+    includeRetention: true
+  })
+  
+  res.json({
+    totalCustomers: analytics.totalCustomers,
+    avgRevenuePerCustomer: analytics.avgRevenuePerCustomer,
+    topSpenders: analytics.topSpenders,
+    churnRate: analytics.churnRate
+  })
+})
+```
+
+### Custom Payment Flow
+
+Handle complex payment scenarios:
+
+```typescript
+app.post('/api/complex-service', async (req, res) => {
+  try {
+    // Pre-validate payment capability
+    const paymentCheck = await paywall.checkPaymentCapability(req.headers, {
+      estimatedCost: 0.50,
+      currency: 'USDC'
+    })
+    
+    if (!paymentCheck.canPay) {
+      return res.status(402).json({
+        error: 'Insufficient funds',
+        required: 0.50,
+        available: paymentCheck.availableBalance,
+        topUpUrl: paymentCheck.topUpUrl
+      })
+    }
+    
+    // Process service (expensive operation)
+    const result = await performExpensiveOperation(req.body)
+    
+    // Calculate actual cost based on processing
+    const actualCost = calculateActualCost(result.complexity)
+    
+    // Charge the actual cost
+    const payment = await paywall.processPayment(req.headers, {
+      amount: actualCost,
+      description: `Complex service processing (${result.complexity} complexity)`,
+      metadata: { 
+        requestId: req.id,
+        complexity: result.complexity 
+      }
+    })
+    
+    res.json({
+      result: result.data,
+      payment: {
+        cost: actualCost,
+        transactionId: payment.transactionId,
+        complexity: result.complexity
+      }
+    })
+    
+  } catch (error) {
+    if (error.code === 'PAYMENT_FAILED') {
+      res.status(402).json({ 
+        error: 'Payment failed', 
+        details: error.message 
+      })
+    } else {
+      res.status(500).json({ error: 'Service error' })
+    }
+  }
+})
+```
+
+## Webhook Integration
+
+Monitor payments and customer behavior in real-time:
+
+```typescript
+// Configure webhooks for payment events
+await paywall.configureWebhooks({
+  endpoint: 'https://your-app.com/webhooks/paywall',
+  events: [
+    'payment.completed',
+    'payment.failed', 
+    'customer.first_payment',
+    'revenue.milestone',
+    'pricing.tier_changed'
+  ],
+  secret: 'webhook_secret_key'
+})
+
+// Handle webhook events
+app.post('/webhooks/paywall', (req, res) => {
+  const { event, data } = req.body
+  
+  switch (event) {
+    case 'payment.completed':
+      // Track successful payment
+      analytics.track('payment_completed', {
+        customerId: data.customerId,
+        amount: data.amount,
+        endpoint: data.endpoint
+      })
+      break
+      
+    case 'customer.first_payment':
+      // Welcome new paying customer
+      sendWelcomeEmail(data.customerId)
+      break
+      
+    case 'revenue.milestone':
+      // Celebrate revenue milestones
+      if (data.milestone === 1000) {
+        notifyTeam(`🎉 Hit $1000 in API revenue!`)
+      }
+      break
+  }
+  
+  res.status(200).send('OK')
+})
+```
+
+## Security Best Practices
+
+### Payment Verification
+
+Always verify payments on your server:
+
+```typescript
+app.post('/api/secure-endpoint', async (req, res) => {
+  // Verify payment headers
+  const paymentValid = await paywall.verifyPayment(req.headers, {
+    price: 0.25,
+    tolerance: 0.001,        // Allow 0.1% tolerance for gas fluctuations
+    maxAge: 300             // Payment must be within 5 minutes
+  })
+  
+  if (!paymentValid.valid) {
+    return res.status(402).json({
+      error: 'Invalid payment',
+      reason: paymentValid.reason,
+      required: paymentValid.expectedPayment
+    })
+  }
+  
+  // Process request only after payment verification
+  const secureData = await getSecureData()
+  res.json(secureData)
+})
+```
+
+### Rate Limiting & DDoS Protection
+
+Protect against abuse while maintaining legitimate access:
+
+```typescript
+// Implement progressive rate limiting
+const createRateLimit = (windowMs, max, price) => rateLimit({
+  windowMs,
+  max,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Rate limit exceeded',
+      resetTime: new Date(Date.now() + windowMs),
+      upgradeOption: {
+        price: price,
+        description: 'Pay per request to bypass rate limits'
+      }
+    })
+  }
+})
+
+// Free tier: 10 requests per minute
+app.use('/api/free', createRateLimit(60 * 1000, 10, 0.01))
+
+// Paid tier: No rate limits
+app.use('/api/paid', paywall.middleware({ price: 0.01 }))
+```
+
+### Wallet Security
+
+Protect your receiving wallet:
+
+```typescript
+const paywall = new XpayPaywall({
+  receivingWallet: process.env.XPAY_RECEIVING_WALLET, // Use environment variables
+  facilitatorUrl: 'https://facilitator.base.org',
+  security: {
+    requireHttps: true,           // Only accept HTTPS requests
+    validateOrigin: true,         // Validate request origin
+    maxPaymentAge: 300,          // 5 minute payment window
+    enableIPWhitelist: false,    // Enable for high-security applications
+    rateLimitByWallet: true      // Rate limit per wallet address
+  }
+})
+```
+
+## Deployment Guide
+
+### Production Configuration
+
+```typescript
+import { XpayPaywall } from '@xpay/agent-kit'
+import Redis from 'ioredis'
+
+const redis = new Redis(process.env.REDIS_URL)
+
+const paywall = new XpayPaywall({
+  receivingWallet: process.env.XPAY_RECEIVING_WALLET,
+  facilitatorUrl: process.env.XPAY_FACILITATOR_URL,
+  
+  // Production optimizations
+  cache: {
+    provider: redis,
+    paymentTTL: 300,           // Cache payments for 5 minutes
+    customerTTL: 3600          // Cache customer data for 1 hour
+  },
+  
+  monitoring: {
+    enableMetrics: true,
+    metricsPort: 9090,         // Prometheus metrics
+    healthCheckEndpoint: '/health'
+  },
+  
+  logging: {
+    level: 'info',
+    destination: 'datadog',    // or 'console', 'file'
+    apiKey: process.env.DATADOG_API_KEY
+  }
+})
+```
+
+### Docker Deployment
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+
+ENV NODE_ENV=production
+ENV XPAY_RECEIVING_WALLET=${XPAY_RECEIVING_WALLET}
+ENV XPAY_FACILITATOR_URL=${XPAY_FACILITATOR_URL}
+
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+CMD ["npm", "start"]
+```
+
+### Kubernetes Configuration
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xpay-paywall-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: xpay-paywall-api
+  template:
+    metadata:
+      labels:
+        app: xpay-paywall-api
+    spec:
+      containers:
+      - name: api
+        image: your-registry/xpay-paywall:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: XPAY_RECEIVING_WALLET
+          valueFrom:
+            secretKeyRef:
+              name: xpay-secrets
+              key: receiving-wallet
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+```
+
+## Migration Guide
+
+### From Free API to Paid
+
+Gradually migrate existing free APIs:
+
+```typescript
+// Phase 1: Optional payments (donations)
+app.get('/api/data', async (req, res) => {
+  const data = await getData()
+  
+  // Include payment information in response
+  res.json({
+    data,
+    support: {
+      message: 'Support this API with a small payment',
+      suggestedAmount: 0.01,
+      paymentDetails: paywall.getPaymentDetails(0.01)
+    }
+  })
+})
+
+// Phase 2: Freemium model  
+app.get('/api/data', async (req, res) => {
+  const isPaid = await paywall.checkPayment(req.headers, { price: 0.05 })
+  
+  if (isPaid) {
+    // Full data for paying customers
+    const fullData = await getFullData()
+    res.json({ data: fullData, tier: 'premium' })
+  } else {
+    // Limited data for free users
+    const limitedData = await getLimitedData()
+    res.json({ 
+      data: limitedData, 
+      tier: 'free',
+      upgrade: paywall.getPaymentDetails(0.05)
+    })
+  }
+})
+
+// Phase 3: Fully paid
+app.get('/api/data', 
+  paywall.middleware({ price: 0.05 }),
+  async (req, res) => {
+    const data = await getData()
+    res.json({ data })
+  }
+)
+```
+
+---
+
+Ready to start monetizing your APIs? Check our [getting started guide](/getting-started) or explore [advanced integration patterns](/developer-resources/integration-patterns).

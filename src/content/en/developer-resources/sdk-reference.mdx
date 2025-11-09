@@ -1,0 +1,569 @@
+# SDK Reference
+
+Complete reference for the Xpay Agent Kit SDK, including TypeScript interfaces, error handling, and advanced configuration options.
+
+## Installation
+
+```bash npm2yarn
+npm install @xpay/agent-kit
+```
+
+## Core Interfaces
+
+### Agent Interface
+
+```typescript
+interface Agent {
+  id: string                    // Unique agent identifier
+  name: string                  // Human-readable agent name
+  description?: string          // Optional agent description
+  userId: string                // Owner user ID
+  customerId: string            // Customer/organization ID
+  walletAddress: string         // Non-custodial wallet address
+  kmsKeyId: string             // KMS key for wallet management
+  nonce: number                // Current transaction nonce
+  dailyLimit: number           // Daily spending limit in USDC
+  perCallLimit: number         // Per-request spending limit in USDC
+  monthlyLimit?: number        // Optional monthly limit in USDC
+  status: AgentStatus          // Current agent status
+  totalSpent: number           // Total amount spent (USDC)
+  totalCalls: number           // Total API calls made
+  createdAt: number            // Creation timestamp
+  updatedAt: number            // Last update timestamp
+}
+
+type AgentStatus = 'active' | 'paused' | 'suspended' | 'deleted'
+```
+
+### Transaction Interface
+
+```typescript
+interface Transaction {
+  id: string                    // Unique transaction ID
+  agentId: string              // Agent that made the transaction
+  endpointId?: string          // Endpoint ID (for paywall transactions)
+  amount: number               // Transaction amount in USDC
+  currency: 'USDC'            // Currency (always USDC)
+  status: TransactionStatus    // Transaction status
+  type: TransactionType        // Transaction type
+  metadata?: Record<string, any> // Additional transaction data
+  createdAt: number            // Transaction timestamp
+  hash?: string                // Blockchain transaction hash
+  gasUsed?: number            // Gas used for transaction
+  gasPrice?: string           // Gas price in wei
+}
+
+type TransactionStatus = 'pending' | 'confirmed' | 'failed' | 'cancelled'
+type TransactionType = 'api_call' | 'subscription' | 'refund' | 'adjustment'
+```
+
+### Endpoint Interface
+
+```typescript
+interface Endpoint {
+  id: string                   // Unique endpoint identifier
+  name: string                 // Endpoint display name
+  description?: string         // Optional description
+  url: string                  // Endpoint URL
+  method: HttpMethod           // HTTP method
+  pricing: EndpointPricing     // Pricing configuration
+  status: EndpointStatus       // Current status
+  totalCalls: number           // Total calls to this endpoint
+  totalRevenue: number         // Total revenue generated (USDC)
+  createdAt: number           // Creation timestamp
+  updatedAt: number           // Last update timestamp
+}
+
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+type EndpointStatus = 'active' | 'paused' | 'maintenance' | 'deprecated'
+
+interface EndpointPricing {
+  model: 'per_request' | 'per_token' | 'per_minute' | 'tiered'
+  basePrice: number            // Base price in USDC
+  currency: 'USDC'
+  tiers?: PricingTier[]       // For tiered pricing
+}
+
+interface PricingTier {
+  from: number                 // Range start
+  to?: number                  // Range end (undefined for last tier)
+  price: number               // Price for this tier
+}
+```
+
+## XpayFirewall Class
+
+### Constructor
+
+```typescript
+import { XpayFirewall } from '@xpay/agent-kit'
+
+const firewall = new XpayFirewall({
+  endpoint: string             // Firewall endpoint URL
+  apiKey: string              // Your Xpay API key
+  timeout?: number            // Request timeout (default: 30000ms)
+  retries?: number            // Number of retries (default: 3)
+  region?: string             // Preferred region (default: auto)
+})
+```
+
+### Agent Management Methods
+
+#### createAgent()
+
+```typescript
+await firewall.createAgent(config: AgentConfig): Promise<Agent>
+
+interface AgentConfig {
+  id: string
+  name: string
+  description?: string
+  walletAddress: string
+  dailyLimit: number
+  perCallLimit: number
+  monthlyLimit?: number
+  allowedAPIs?: string[]       // Array of allowed API domains
+  status?: AgentStatus
+  emergencyContact?: string
+  businessHours?: BusinessHours
+  rateLimiting?: RateLimiting
+  autoShutoff?: AutoShutoff
+  fallbackChain?: FallbackConfig[]
+}
+
+interface BusinessHours {
+  enabled: boolean
+  timezone: string             // IANA timezone identifier
+  schedule: string            // Format: "HH:MM-HH:MM"
+  weekdays?: number[]         // 0-6, Sunday = 0
+}
+
+interface RateLimiting {
+  maxConcurrentRequests: number
+  requestsPerMinute: number
+  requestsPerHour?: number
+}
+
+interface AutoShutoff {
+  enabled: boolean
+  threshold: number           // 0.0 to 1.0 (percentage)
+  action: 'pause' | 'notify' | 'both'
+}
+
+interface FallbackConfig {
+  provider: string
+  model?: string
+  maxCost: number
+  timeout?: number
+}
+```
+
+#### updateAgent()
+
+```typescript
+await firewall.updateAgent(
+  agentId: string,
+  updates: Partial<AgentConfig>
+): Promise<Agent>
+```
+
+#### getAgent()
+
+```typescript
+await firewall.getAgent(agentId: string): Promise<Agent>
+```
+
+#### listAgents()
+
+```typescript
+await firewall.listAgents(options?: {
+  limit?: number              // Max results (default: 100)
+  offset?: number            // Pagination offset
+  status?: AgentStatus       // Filter by status
+  search?: string           // Search by name/description
+}): Promise<{
+  agents: Agent[]
+  total: number
+  hasMore: boolean
+}>
+```
+
+#### pauseAgent() / resumeAgent()
+
+```typescript
+await firewall.pauseAgent(agentId: string): Promise<void>
+await firewall.resumeAgent(agentId: string): Promise<void>
+```
+
+#### deleteAgent()
+
+```typescript
+await firewall.deleteAgent(agentId: string): Promise<void>
+```
+
+### Request Methods
+
+#### protectedFetch()
+
+```typescript
+await firewall.protectedFetch(
+  urlOrRequest: string | Request,
+  options: RequestOptions & {
+    agentId: string           // Required: Agent making the request
+    maxCost?: number         // Override per-request limit
+    priority?: 'low' | 'normal' | 'high'
+    metadata?: Record<string, any>
+  }
+): Promise<Response>
+```
+
+#### batchRequests()
+
+```typescript
+await firewall.batchRequests(requests: Array<{
+  agentId: string
+  url: string
+  options: RequestInit
+  metadata?: Record<string, any>
+}>): Promise<Array<{
+  success: boolean
+  response?: Response
+  error?: Error
+  cost: number
+}>>
+```
+
+### Monitoring Methods
+
+#### getSpendingAnalytics()
+
+```typescript
+await firewall.getSpendingAnalytics(options: {
+  agentIds?: string[]         // Specific agents (default: all)
+  timeframe: '1h' | '24h' | '7d' | '30d' | 'custom'
+  startDate?: Date           // For custom timeframe
+  endDate?: Date             // For custom timeframe
+  groupBy?: 'agent' | 'api' | 'hour' | 'day'
+  includeMetadata?: boolean
+}): Promise<SpendingAnalytics>
+
+interface SpendingAnalytics {
+  totalSpent: number
+  totalCalls: number
+  averageCostPerCall: number
+  breakdown: Array<{
+    key: string               // Agent ID, API domain, or time period
+    spent: number
+    calls: number
+    percentage: number
+  }>
+  trends: Array<{
+    timestamp: number
+    spent: number
+    calls: number
+  }>
+}
+```
+
+#### getTransactionHistory()
+
+```typescript
+await firewall.getTransactionHistory(options: {
+  agentIds?: string[]
+  limit?: number
+  offset?: number
+  status?: TransactionStatus
+  startDate?: Date
+  endDate?: Date
+}): Promise<{
+  transactions: Transaction[]
+  total: number
+  hasMore: boolean
+}>
+```
+
+### Webhook Configuration
+
+#### configureWebhooks()
+
+```typescript
+await firewall.configureWebhooks(config: {
+  endpoint: string            // Your webhook URL
+  events: WebhookEvent[]      // Events to subscribe to
+  secret: string             // Webhook signing secret
+  retries?: number           // Retry attempts (default: 3)
+  timeout?: number           // Webhook timeout (default: 10000ms)
+}): Promise<void>
+
+type WebhookEvent = 
+  | 'agent.created'
+  | 'agent.updated'
+  | 'agent.paused'
+  | 'agent.resumed'
+  | 'agent.deleted'
+  | 'agent.spending.warning'
+  | 'agent.spending.exceeded'
+  | 'agent.request.failed'
+  | 'agent.unusual_pattern'
+  | 'transaction.created'
+  | 'transaction.confirmed'
+  | 'transaction.failed'
+```
+
+## XpayPaywall Class
+
+### Constructor
+
+```typescript
+import { XpayPaywall } from '@xpay/agent-kit'
+
+const paywall = new XpayPaywall({
+  receivingWallet: string     // Your wallet address
+  facilitatorUrl?: string     // x402 facilitator URL
+  defaultPrice?: number       // Default price per request
+  apiKey?: string            // Xpay API key for analytics
+})
+```
+
+### Middleware
+
+#### Express.js Middleware
+
+```typescript
+import express from 'express'
+
+const app = express()
+
+// Apply paywall to specific route
+app.get('/api/premium', 
+  paywall.middleware({
+    price: 0.10,              // $0.10 per request
+    description: 'Premium API access',
+    metadata: { tier: 'premium' }
+  }),
+  (req, res) => {
+    // This code only runs after successful payment
+    res.json({ data: 'Premium content' })
+  }
+)
+
+// Apply paywall to all routes
+app.use('/api/paid', paywall.middleware({ price: 0.05 }))
+```
+
+#### Manual Payment Verification
+
+```typescript
+const isPaymentValid = await paywall.verifyPayment(req.headers, {
+  price: 0.10,
+  tolerance: 0.001           // Allow small rounding differences
+})
+
+if (!isPaymentValid) {
+  return res.status(402).json({ 
+    error: 'Payment required',
+    paymentDetails: paywall.getPaymentDetails(0.10)
+  })
+}
+```
+
+### Endpoint Management
+
+#### createEndpoint()
+
+```typescript
+await paywall.createEndpoint({
+  name: string
+  url: string
+  method: HttpMethod
+  pricing: EndpointPricing
+  description?: string
+  tags?: string[]
+  rateLimiting?: {
+    requestsPerMinute: number
+    requestsPerHour?: number
+  }
+}): Promise<Endpoint>
+```
+
+#### updateEndpoint()
+
+```typescript
+await paywall.updateEndpoint(
+  endpointId: string,
+  updates: Partial<EndpointConfig>
+): Promise<Endpoint>
+```
+
+## Error Handling
+
+### Error Types
+
+```typescript
+import { 
+  SpendingLimitError,
+  InsufficientFundsError,
+  AgentNotFoundError,
+  PaymentRequiredError,
+  RateLimitError
+} from '@xpay/agent-kit'
+
+// Spending limit exceeded
+class SpendingLimitError extends Error {
+  limitType: 'daily' | 'monthly' | 'per_request'
+  currentSpent: number
+  limit: number
+  resetTime: Date
+}
+
+// Insufficient funds in wallet
+class InsufficientFundsError extends Error {
+  required: number
+  available: number
+  walletAddress: string
+}
+
+// Agent not found or access denied
+class AgentNotFoundError extends Error {
+  agentId: string
+}
+
+// Payment required for paywall
+class PaymentRequiredError extends Error {
+  price: number
+  paymentDetails: {
+    walletAddress: string
+    amount: string
+    currency: 'USDC'
+    facilitatorUrl: string
+  }
+}
+
+// Rate limit exceeded
+class RateLimitError extends Error {
+  resetTime: Date
+  limit: number
+  remaining: number
+}
+```
+
+### Error Handling Patterns
+
+```typescript
+import { XpayFirewall, SpendingLimitError, RateLimitError } from '@xpay/agent-kit'
+
+async function handleXpayRequest(agentId: string, requestFn: () => Promise<Response>) {
+  try {
+    return await firewall.protectedFetch(requestFn, { agentId })
+  } catch (error) {
+    if (error instanceof SpendingLimitError) {
+      // Handle spending limits
+      logger.warn(`Agent ${agentId} hit ${error.limitType} limit`)
+      
+      if (error.limitType === 'daily') {
+        // Schedule retry for tomorrow
+        await scheduleRetry(agentId, requestFn, error.resetTime)
+      } else if (error.limitType === 'per_request') {
+        // Try with smaller/cheaper request
+        return await fallbackToSmallerModel(agentId, requestFn)
+      }
+    } else if (error instanceof RateLimitError) {
+      // Handle rate limiting
+      const waitTime = error.resetTime.getTime() - Date.now()
+      await new Promise(resolve => setTimeout(resolve, waitTime))
+      return handleXpayRequest(agentId, requestFn) // Retry
+    } else if (error instanceof InsufficientFundsError) {
+      // Handle insufficient funds
+      await notifyFundsNeeded(error.walletAddress, error.required)
+      throw new Error('Agent wallet needs funding')
+    }
+    
+    throw error // Re-throw unknown errors
+  }
+}
+```
+
+## Advanced Configuration
+
+### Custom HTTP Client
+
+```typescript
+import axios from 'axios'
+
+const firewall = new XpayFirewall({
+  endpoint: 'https://firewall-abc123.xpay.sh',
+  apiKey: 'xpay_fw_...',
+  httpClient: axios.create({
+    timeout: 45000,
+    headers: { 'User-Agent': 'MyApp/1.0' }
+  })
+})
+```
+
+### Connection Pooling
+
+```typescript
+const firewall = new XpayFirewall({
+  endpoint: 'https://firewall-abc123.xpay.sh',
+  apiKey: 'xpay_fw_...',
+  pooling: {
+    maxSockets: 50,
+    keepAlive: true,
+    keepAliveMsecs: 30000
+  }
+})
+```
+
+### Custom Retry Logic
+
+```typescript
+const firewall = new XpayFirewall({
+  endpoint: 'https://firewall-abc123.xpay.sh',
+  apiKey: 'xpay_fw_...',
+  retryConfig: {
+    retries: 5,
+    factor: 2,
+    minTimeout: 1000,
+    maxTimeout: 30000,
+    retryCondition: (error) => {
+      return error.code === 'NETWORK_ERROR' || error.status === 503
+    }
+  }
+})
+```
+
+## TypeScript Support
+
+The SDK is written in TypeScript and provides complete type definitions. Enable strict type checking for the best developer experience:
+
+```typescript
+// tsconfig.json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true
+  }
+}
+```
+
+All SDK methods are fully typed and will provide autocomplete and type checking in your IDE.
+
+## Browser Support
+
+The SDK works in both Node.js and modern browsers. For browser usage, ensure you handle CORS appropriately:
+
+```typescript
+// Browser usage
+import { XpayPaywall } from '@xpay/agent-kit/browser'
+
+const paywall = new XpayPaywall({
+  receivingWallet: '0x...',
+  // Browser-specific configuration
+  corsOrigins: ['https://yourapp.com']
+})
+```
+
+---
+
+Need help with integration? Check our [troubleshooting guide](/developer-resources/troubleshooting) or join our [Discord community](https://discord.gg/xpay).

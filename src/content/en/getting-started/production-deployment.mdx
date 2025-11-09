@@ -1,0 +1,1015 @@
+# Production Deployment Guide
+
+Complete guide for deploying Xpay-integrated applications to production, including security, monitoring, and scaling considerations.
+
+import { Callout } from 'nextra/components'
+
+<Callout type="warning">
+**Security First**: Production deployments handle real payments. Follow all security guidelines carefully to protect your users and revenue.
+</Callout>
+
+## Pre-Deployment Checklist
+
+### Security Requirements
+
+- [ ] **Environment Variables**: All sensitive data stored in environment variables
+- [ ] **HTTPS Only**: All endpoints serve over HTTPS with valid certificates
+- [ ] **API Key Rotation**: Regular rotation schedule for Xpay API keys
+- [ ] **Wallet Security**: Non-custodial wallets with proper KMS integration
+- [ ] **Rate Limiting**: Protection against DDoS and abuse
+- [ ] **Input Validation**: All user inputs properly validated and sanitized
+
+### Performance Requirements
+
+- [ ] **Caching Strategy**: Payment verification and customer data caching
+- [ ] **Database Indexing**: Proper indexes on transaction and agent tables
+- [ ] **Connection Pooling**: Database and HTTP connection pooling configured
+- [ ] **Error Handling**: Comprehensive error handling and retry logic
+- [ ] **Monitoring**: Health checks, metrics, and alerting configured
+
+### Business Requirements
+
+- [ ] **Backup Strategy**: Regular backups of critical data
+- [ ] **Disaster Recovery**: Recovery procedures documented and tested
+- [ ] **Compliance**: Legal and regulatory requirements met
+- [ ] **Customer Support**: Support processes for payment issues
+
+## Environment Configuration
+
+### Environment Variables
+
+```bash
+# Xpay Configuration
+XPAY_API_KEY=xpay_live_...
+XPAY_FIREWALL_ENDPOINT=https://firewall-prod-abc123.xpay.sh
+XPAY_WEBHOOK_SECRET=whsec_...
+
+# Wallet Configuration  
+XPAY_RECEIVING_WALLET=0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555
+XPAY_KMS_KEY_ID=arn:aws:kms:us-east-1:123456789:key/...
+
+# Network Configuration
+XPAY_FACILITATOR_URL=https://facilitator.base.org
+XPAY_NETWORK=base-mainnet
+XPAY_BLOCK_CONFIRMATIONS=3
+
+# Security
+HTTPS_ONLY=true
+CORS_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
+RATE_LIMIT_REQUESTS_PER_MINUTE=100
+
+# Monitoring
+DATADOG_API_KEY=...
+SENTRY_DSN=...
+PROMETHEUS_ENABLED=true
+PROMETHEUS_PORT=9090
+
+# Database
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+REDIS_URL=redis://cache.cluster.amazonaws.com:6379
+
+# Application
+NODE_ENV=production
+PORT=3000
+LOG_LEVEL=info
+```
+
+### Configuration Files
+
+Create production configuration files:
+
+```typescript
+// config/production.ts
+export const productionConfig = {
+  xpay: {
+    apiKey: process.env.XPAY_API_KEY!,
+    firewallEndpoint: process.env.XPAY_FIREWALL_ENDPOINT!,
+    webhookSecret: process.env.XPAY_WEBHOOK_SECRET!,
+    
+    // Production optimizations
+    timeout: 30000,
+    retries: 3,
+    caching: {
+      enabled: true,
+      ttl: 300,
+      provider: 'redis'
+    },
+    
+    // Security settings
+    security: {
+      httpsOnly: true,
+      validateOrigin: true,
+      maxPaymentAge: 300,
+      rateLimitByWallet: true
+    }
+  },
+  
+  database: {
+    url: process.env.DATABASE_URL!,
+    pool: {
+      min: 2,
+      max: 20,
+      acquireTimeoutMillis: 30000,
+      idleTimeoutMillis: 30000
+    },
+    migrations: {
+      directory: './migrations',
+      tableName: 'knex_migrations'
+    }
+  },
+  
+  monitoring: {
+    enabled: true,
+    healthCheck: '/health',
+    metrics: {
+      enabled: true,
+      port: 9090,
+      path: '/metrics'
+    },
+    logging: {
+      level: 'info',
+      format: 'json',
+      destination: 'datadog'
+    }
+  }
+}
+```
+
+## Infrastructure Setup
+
+### Docker Configuration
+
+```dockerfile
+# Multi-stage build for optimized production image
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Production stage
+FROM node:18-alpine AS production
+
+# Security: Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
+WORKDIR /app
+
+# Copy production dependencies
+COPY --from=builder /app/node_modules ./node_modules
+COPY --chown=nextjs:nodejs . .
+
+# Security and performance optimizations
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+
+USER nextjs
+
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+CMD ["npm", "start"]
+```
+
+### Docker Compose (Development/Staging)
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@db:5432/xpay
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: xpay
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+### Kubernetes Deployment
+
+```yaml
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xpay-app
+  labels:
+    app: xpay-app
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: xpay-app
+  template:
+    metadata:
+      labels:
+        app: xpay-app
+    spec:
+      containers:
+      - name: app
+        image: your-registry/xpay-app:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: XPAY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: xpay-secrets
+              key: api-key
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: url
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xpay-app-service
+spec:
+  selector:
+    app: xpay-app
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: xpay-app-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+spec:
+  tls:
+  - hosts:
+    - api.yourdomain.com
+    secretName: xpay-tls
+  rules:
+  - host: api.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: xpay-app-service
+            port:
+              number: 80
+```
+
+## Database Setup
+
+### Migration Strategy
+
+```typescript
+// migrations/001_create_agents.ts
+export async function up(knex: Knex): Promise<void> {
+  return knex.schema.createTable('agents', (table) => {
+    table.string('id').primary()
+    table.string('name').notNullable()
+    table.text('description')
+    table.string('user_id').notNullable().index()
+    table.string('customer_id').notNullable().index()
+    table.string('wallet_address').notNullable()
+    table.string('kms_key_id').notNullable()
+    table.integer('nonce').notNullable().defaultTo(0)
+    table.decimal('daily_limit', 18, 6).notNullable()
+    table.decimal('per_call_limit', 18, 6).notNullable()
+    table.decimal('monthly_limit', 18, 6)
+    table.enum('status', ['active', 'paused', 'suspended', 'deleted']).notNullable().defaultTo('active')
+    table.decimal('total_spent', 18, 6).notNullable().defaultTo(0)
+    table.integer('total_calls').notNullable().defaultTo(0)
+    table.timestamp('created_at').notNullable().defaultTo(knex.fn.now())
+    table.timestamp('updated_at').notNullable().defaultTo(knex.fn.now())
+    
+    // Indexes for performance
+    table.index(['user_id', 'status'])
+    table.index(['customer_id', 'status'])
+    table.index('created_at')
+  })
+}
+
+// migrations/002_create_transactions.ts
+export async function up(knex: Knex): Promise<void> {
+  return knex.schema.createTable('transactions', (table) => {
+    table.string('id').primary()
+    table.string('agent_id').notNullable().references('id').inTable('agents')
+    table.string('endpoint_id').references('id').inTable('endpoints')
+    table.decimal('amount', 18, 6).notNullable()
+    table.string('currency').notNullable().defaultTo('USDC')
+    table.enum('status', ['pending', 'confirmed', 'failed', 'cancelled']).notNullable()
+    table.enum('type', ['api_call', 'subscription', 'refund', 'adjustment']).notNullable()
+    table.jsonb('metadata')
+    table.string('hash')
+    table.integer('gas_used')
+    table.string('gas_price')
+    table.timestamp('created_at').notNullable().defaultTo(knex.fn.now())
+    
+    // Indexes for analytics and reporting
+    table.index(['agent_id', 'created_at'])
+    table.index(['status', 'created_at'])
+    table.index(['type', 'created_at'])
+    table.index('hash')
+  })
+}
+```
+
+### Database Optimization
+
+```typescript
+// config/database.ts
+import { Pool } from 'pg'
+
+export const createDatabasePool = () => {
+  return new Pool({
+    connectionString: process.env.DATABASE_URL,
+    
+    // Connection pool settings
+    min: 2,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+    
+    // Performance optimizations
+    statement_timeout: 30000,
+    query_timeout: 30000,
+    
+    // SSL configuration for production
+    ssl: process.env.NODE_ENV === 'production' ? {
+      rejectUnauthorized: false
+    } : false
+  })
+}
+
+// Database queries with proper indexing
+export class AgentRepository {
+  constructor(private db: Pool) {}
+  
+  async findActiveAgentsByUser(userId: string): Promise<Agent[]> {
+    // Optimized query using compound index
+    const result = await this.db.query(`
+      SELECT * FROM agents 
+      WHERE user_id = $1 AND status = 'active'
+      ORDER BY created_at DESC
+    `, [userId])
+    
+    return result.rows
+  }
+  
+  async getSpendingAnalytics(agentId: string, timeframe: string): Promise<any> {
+    // Use time-based partitioning for large datasets
+    const result = await this.db.query(`
+      SELECT 
+        DATE_TRUNC('hour', created_at) as hour,
+        SUM(amount) as total_spent,
+        COUNT(*) as total_calls
+      FROM transactions 
+      WHERE agent_id = $1 
+        AND created_at >= NOW() - INTERVAL '${timeframe}'
+        AND status = 'confirmed'
+      GROUP BY hour
+      ORDER BY hour
+    `, [agentId])
+    
+    return result.rows
+  }
+}
+```
+
+## Monitoring & Observability
+
+### Health Checks
+
+```typescript
+// health.ts
+import express from 'express'
+import { XpayFirewall } from '@xpay/agent-kit'
+
+const router = express.Router()
+
+router.get('/health', async (req, res) => {
+  const checks = {
+    timestamp: new Date().toISOString(),
+    status: 'healthy',
+    checks: {
+      database: 'unknown',
+      redis: 'unknown',
+      xpay: 'unknown'
+    }
+  }
+  
+  try {
+    // Database health check
+    await db.query('SELECT 1')
+    checks.checks.database = 'healthy'
+  } catch (error) {
+    checks.checks.database = 'unhealthy'
+    checks.status = 'unhealthy'
+  }
+  
+  try {
+    // Redis health check
+    await redis.ping()
+    checks.checks.redis = 'healthy'
+  } catch (error) {
+    checks.checks.redis = 'unhealthy'
+    checks.status = 'unhealthy'
+  }
+  
+  try {
+    // Xpay service health check
+    await firewall.ping()
+    checks.checks.xpay = 'healthy'
+  } catch (error) {
+    checks.checks.xpay = 'unhealthy'
+    checks.status = 'unhealthy'
+  }
+  
+  const statusCode = checks.status === 'healthy' ? 200 : 503
+  res.status(statusCode).json(checks)
+})
+
+router.get('/ready', async (req, res) => {
+  // Readiness check - can serve traffic
+  try {
+    await db.query('SELECT 1')
+    res.status(200).json({ status: 'ready' })
+  } catch (error) {
+    res.status(503).json({ status: 'not ready' })
+  }
+})
+
+export default router
+```
+
+### Metrics Collection
+
+```typescript
+// metrics.ts
+import client from 'prom-client'
+
+// Create custom metrics
+const httpRequestsTotal = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status_code']
+})
+
+const xpayPaymentsTotal = new client.Counter({
+  name: 'xpay_payments_total',
+  help: 'Total number of Xpay payments',
+  labelNames: ['agent_id', 'status', 'type']
+})
+
+const xpayPaymentAmount = new client.Histogram({
+  name: 'xpay_payment_amount_usdc',
+  help: 'Payment amounts in USDC',
+  buckets: [0.01, 0.05, 0.1, 0.5, 1, 5, 10, 50, 100],
+  labelNames: ['agent_id', 'type']
+})
+
+const agentSpendingLimit = new client.Gauge({
+  name: 'xpay_agent_spending_limit_usdc',
+  help: 'Agent spending limits',
+  labelNames: ['agent_id', 'limit_type']
+})
+
+// Middleware to collect HTTP metrics
+export const metricsMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const start = Date.now()
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start
+    
+    httpRequestsTotal.labels(
+      req.method,
+      req.route?.path || req.path,
+      res.statusCode.toString()
+    ).inc()
+  })
+  
+  next()
+}
+
+// Function to update payment metrics
+export const recordPayment = (agentId: string, amount: number, status: string, type: string) => {
+  xpayPaymentsTotal.labels(agentId, status, type).inc()
+  if (status === 'confirmed') {
+    xpayPaymentAmount.labels(agentId, type).observe(amount)
+  }
+}
+
+// Metrics endpoint
+export const metricsEndpoint = (req: express.Request, res: express.Response) => {
+  res.set('Content-Type', client.register.contentType)
+  res.end(client.register.metrics())
+}
+```
+
+### Logging Strategy
+
+```typescript
+// logger.ts
+import winston from 'winston'
+import { DatadogWinston } from '@datadog/winston'
+
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: {
+    service: 'xpay-app',
+    version: process.env.npm_package_version
+  },
+  transports: [
+    // Console logging for development
+    new winston.transports.Console({
+      format: winston.format.simple()
+    }),
+    
+    // Datadog logging for production
+    new DatadogWinston({
+      apiKey: process.env.DATADOG_API_KEY!,
+      hostname: process.env.HOSTNAME,
+      service: 'xpay-app',
+      ddsource: 'nodejs'
+    })
+  ]
+})
+
+// Payment-specific logging
+export const logPayment = (event: string, data: any) => {
+  logger.info('Payment event', {
+    event,
+    agentId: data.agentId,
+    amount: data.amount,
+    transactionId: data.transactionId,
+    timestamp: new Date().toISOString()
+  })
+}
+
+// Error logging with context
+export const logError = (error: Error, context: any) => {
+  logger.error('Application error', {
+    error: error.message,
+    stack: error.stack,
+    context,
+    timestamp: new Date().toISOString()
+  })
+}
+
+export default logger
+```
+
+## Security Implementation
+
+### API Security
+
+```typescript
+// security.ts
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
+import slowDown from 'express-slow-down'
+
+// Security headers
+export const securityMiddleware = helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://facilitator.base.org"]
+    }
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+})
+
+// Rate limiting
+export const createRateLimit = (windowMs: number, max: number) => rateLimit({
+  windowMs,
+  max,
+  message: {
+    error: 'Too many requests',
+    retryAfter: Math.ceil(windowMs / 1000)
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  
+  // Skip successful payments from rate limiting
+  skip: (req) => {
+    return req.headers['x-payment-verified'] === 'true'
+  }
+})
+
+// Slow down repeated requests
+export const speedLimiter = slowDown({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  delayAfter: 10, // Allow 10 requests per window at full speed
+  delayMs: 500 // Add 500ms delay per request after delayAfter
+})
+
+// Payment verification middleware
+export const verifyPayment = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  try {
+    const paymentValid = await paywall.verifyPayment(req.headers, {
+      price: req.route?.price || 0.01,
+      tolerance: 0.001,
+      maxAge: 300
+    })
+    
+    if (paymentValid.valid) {
+      req.headers['x-payment-verified'] = 'true'
+      req.paymentDetails = paymentValid
+    }
+    
+    next()
+  } catch (error) {
+    logger.error('Payment verification failed', { error, headers: req.headers })
+    res.status(500).json({ error: 'Payment verification error' })
+  }
+}
+```
+
+### Wallet Security
+
+```typescript
+// wallet-security.ts
+import AWS from 'aws-sdk'
+import { encrypt, decrypt } from './encryption'
+
+const kms = new AWS.KMS({ region: process.env.AWS_REGION })
+
+export class SecureWalletManager {
+  private kmsKeyId: string
+  
+  constructor(kmsKeyId: string) {
+    this.kmsKeyId = kmsKeyId
+  }
+  
+  async encryptPrivateKey(privateKey: string): Promise<string> {
+    const params = {
+      KeyId: this.kmsKeyId,
+      Plaintext: Buffer.from(privateKey)
+    }
+    
+    const result = await kms.encrypt(params).promise()
+    return result.CiphertextBlob!.toString('base64')
+  }
+  
+  async decryptPrivateKey(encryptedKey: string): Promise<string> {
+    const params = {
+      CiphertextBlob: Buffer.from(encryptedKey, 'base64')
+    }
+    
+    const result = await kms.decrypt(params).promise()
+    return result.Plaintext!.toString()
+  }
+  
+  async rotateWalletKeys(agentId: string): Promise<void> {
+    // Generate new wallet
+    const newWallet = generateNewWallet()
+    
+    // Encrypt new private key
+    const encryptedKey = await this.encryptPrivateKey(newWallet.privateKey)
+    
+    // Update agent with new wallet
+    await db.query(`
+      UPDATE agents 
+      SET wallet_address = $1, kms_key_id = $2, updated_at = NOW()
+      WHERE id = $3
+    `, [newWallet.address, encryptedKey, agentId])
+    
+    // Log key rotation
+    logger.info('Wallet key rotated', { agentId, newAddress: newWallet.address })
+  }
+}
+```
+
+## Performance Optimization
+
+### Caching Strategy
+
+```typescript
+// cache.ts
+import Redis from 'ioredis'
+
+const redis = new Redis(process.env.REDIS_URL!)
+
+export class CacheManager {
+  // Cache payment verifications
+  async cachePaymentVerification(paymentHash: string, isValid: boolean, ttl = 300) {
+    await redis.setex(`payment:${paymentHash}`, ttl, JSON.stringify({
+      valid: isValid,
+      timestamp: Date.now()
+    }))
+  }
+  
+  async getCachedPaymentVerification(paymentHash: string): Promise<boolean | null> {
+    const cached = await redis.get(`payment:${paymentHash}`)
+    if (!cached) return null
+    
+    const data = JSON.parse(cached)
+    return data.valid
+  }
+  
+  // Cache agent data
+  async cacheAgent(agentId: string, agent: Agent, ttl = 900) { // 15 minutes
+    await redis.setex(`agent:${agentId}`, ttl, JSON.stringify(agent))
+  }
+  
+  async getCachedAgent(agentId: string): Promise<Agent | null> {
+    const cached = await redis.get(`agent:${agentId}`)
+    return cached ? JSON.parse(cached) : null
+  }
+  
+  // Cache spending analytics
+  async cacheSpendingAnalytics(key: string, data: any, ttl = 300) { // 5 minutes
+    await redis.setex(`analytics:${key}`, ttl, JSON.stringify(data))
+  }
+  
+  async invalidateAgentCache(agentId: string) {
+    const pattern = `*${agentId}*`
+    const keys = await redis.keys(pattern)
+    if (keys.length > 0) {
+      await redis.del(...keys)
+    }
+  }
+}
+
+export const cache = new CacheManager()
+```
+
+### Database Connection Pooling
+
+```typescript
+// database.ts
+import { Pool, PoolConfig } from 'pg'
+import { promisify } from 'util'
+
+const poolConfig: PoolConfig = {
+  connectionString: process.env.DATABASE_URL,
+  
+  // Pool settings for high-traffic production
+  min: parseInt(process.env.DB_POOL_MIN || '5'),
+  max: parseInt(process.env.DB_POOL_MAX || '20'),
+  
+  // Connection timing
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+  acquireTimeoutMillis: 10000,
+  
+  // Health checks
+  allowExitOnIdle: false,
+  
+  // SSL for production
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: false
+  } : false
+}
+
+export const db = new Pool(poolConfig)
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Closing database pool...')
+  await db.end()
+  process.exit(0)
+})
+
+// Connection monitoring
+db.on('connect', () => {
+  console.log('Database connected')
+})
+
+db.on('error', (err) => {
+  console.error('Database error:', err)
+})
+```
+
+## Deployment Automation
+
+### CI/CD Pipeline (GitHub Actions)
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: npm test
+      
+    - name: Run security audit
+      run: npm audit --audit-level high
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build -t xpay-app:${{ github.sha }} .
+        docker tag xpay-app:${{ github.sha }} your-registry/xpay-app:latest
+    
+    - name: Push to registry
+      run: |
+        echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+        docker push your-registry/xpay-app:latest
+        docker push your-registry/xpay-app:${{ github.sha }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+    - name: Deploy to Kubernetes
+      run: |
+        echo ${{ secrets.KUBECONFIG }} | base64 -d > kubeconfig
+        export KUBECONFIG=kubeconfig
+        kubectl set image deployment/xpay-app app=your-registry/xpay-app:${{ github.sha }}
+        kubectl rollout status deployment/xpay-app
+```
+
+### Health Check Monitoring
+
+```typescript
+// monitoring/alerts.ts
+import { CloudWatch } from 'aws-sdk'
+
+const cloudwatch = new CloudWatch({ region: process.env.AWS_REGION })
+
+export class AlertManager {
+  async sendMetric(metricName: string, value: number, unit = 'Count') {
+    await cloudwatch.putMetricData({
+      Namespace: 'XpayApp',
+      MetricData: [{
+        MetricName: metricName,
+        Value: value,
+        Unit: unit,
+        Timestamp: new Date()
+      }]
+    }).promise()
+  }
+  
+  async checkHealthAndAlert() {
+    try {
+      // Check database connectivity
+      await db.query('SELECT 1')
+      await this.sendMetric('DatabaseHealth', 1)
+    } catch (error) {
+      await this.sendMetric('DatabaseHealth', 0)
+      await this.sendAlert('Database connection failed', error)
+    }
+    
+    try {
+      // Check Xpay service
+      await firewall.ping()
+      await this.sendMetric('XpayServiceHealth', 1)
+    } catch (error) {
+      await this.sendMetric('XpayServiceHealth', 0)
+      await this.sendAlert('Xpay service unreachable', error)
+    }
+  }
+  
+  private async sendAlert(message: string, error: any) {
+    // Send to Slack, PagerDuty, etc.
+    logger.error('Health check failed', { message, error })
+  }
+}
+
+// Run health checks every minute
+setInterval(async () => {
+  const alertManager = new AlertManager()
+  await alertManager.checkHealthAndAlert()
+}, 60000)
+```
+
+## Post-Deployment Checklist
+
+### Immediate Post-Deploy
+
+- [ ] **Health checks passing**: All endpoints returning 200
+- [ ] **Database migrations**: Applied successfully
+- [ ] **Payment processing**: Test transactions working
+- [ ] **Monitoring active**: Metrics being collected
+- [ ] **Logs flowing**: Centralized logging operational
+
+### Within 24 Hours
+
+- [ ] **Performance baseline**: Response times within SLA
+- [ ] **Error rates**: Below acceptable thresholds  
+- [ ] **Payment success rate**: Above 99%
+- [ ] **Customer notifications**: No support tickets related to deployment
+- [ ] **Backup verification**: Recent backups tested and accessible
+
+### Within 1 Week
+
+- [ ] **Load testing**: System handles expected traffic
+- [ ] **Disaster recovery**: Procedures tested
+- [ ] **Security scan**: No new vulnerabilities
+- [ ] **Performance optimization**: Any bottlenecks identified and addressed
+- [ ] **Documentation updated**: Deployment notes and lessons learned
+
+---
+
+Need help with deployment? Check our [troubleshooting guide](/developer-resources/troubleshooting) or contact support at support@xpay.sh.
