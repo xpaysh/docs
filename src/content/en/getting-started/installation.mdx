@@ -16,14 +16,14 @@ This guide covers everything you need to install and configure \{xpay✦\} for y
 For most developers, installing the complete agent kit is the easiest way to get started:
 
 ```bash npm2yarn
-npm install @xpay/agent-kit
+npm install @xpaysh/agent-kit
 ```
 
 This includes all \{xpay✦\} components:
-- `@xpay/firewall` - Agent spending protection
-- `@xpay/paywall` - API monetization  
-- `@xpay/explorer` - Transaction monitoring
-- `@xpay/sdk` - Core x402 utilities
+- `@xpaysh/agent-kit` - Agent spending protection
+- `@xpaysh/agent-kit` - API monetization  
+- `@xpaysh/explorer` - Transaction monitoring
+- `@xpaysh/sdk` - Core x402 utilities
 
 ### Individual Packages
 
@@ -31,22 +31,22 @@ Install only what you need:
 
 **Agent protection only:**
 ```bash npm2yarn
-npm install @xpay/firewall
+npm install @xpaysh/agent-kit
 ```
 
 **API monetization only:**
 ```bash npm2yarn
-npm install @xpay/paywall
+npm install @xpaysh/agent-kit
 ```
 
 **Transaction monitoring only:**
 ```bash npm2yarn
-npm install @xpay/explorer
+npm install @xpaysh/explorer
 ```
 
 **Core SDK only:**
 ```bash npm2yarn
-npm install @xpay/sdk
+npm install @xpaysh/sdk
 ```
 
 ## Environment Setup
@@ -87,7 +87,7 @@ Add types to your `tsconfig.json`:
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "node_modules/@xpay/*/types/**/*"
+    "node_modules/@xpaysh/*/types/**/*"
   ]
 }
 ```
@@ -100,7 +100,7 @@ Update your `next.config.js`:
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['@xpay/agent-kit']
+    serverComponentsExternalPackages: ['@xpaysh/agent-kit']
   },
   webpack: (config) => {
     config.resolve.fallback = {
@@ -148,13 +148,13 @@ For production deployments:
 
 ```javascript
 import express from 'express'
-import { XpayPaywall } from '@xpay/agent-kit'
+import { XpayPaywall } from '@xpaysh/agent-kit'
 
 const app = express()
 app.use(express.json())
 
 // Initialize \{xpay✦\} middleware
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   pricePerRequest: 0.10,
   receivingWallet: process.env.RECEIVING_WALLET_ADDRESS
 })
@@ -166,17 +166,17 @@ app.use('/api/premium', paywall.middleware)
 
 ```javascript
 import Fastify from 'fastify'
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
 const fastify = Fastify()
 
 // Register \{xpay✦\} plugin
 fastify.register(async function (fastify) {
-  const firewall = new XpayFirewall({
+  const smartProxy = new SmartProxy({
     maxDailySpend: 100
   })
   
-  fastify.decorateRequest('firewall', firewall)
+  fastify.decorateRequest('smartProxy', smartProxy)
 })
 ```
 
@@ -184,13 +184,13 @@ fastify.register(async function (fastify) {
 
 ```typescript
 import { NextRequest } from 'next/server'
-import { XpayPaywall } from '@xpay/agent-kit'
+import { XpayPaywall } from '@xpaysh/agent-kit'
 
 export const config = {
   runtime: 'edge'
 }
 
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   pricePerRequest: 0.05,
   receivingWallet: process.env.RECEIVING_WALLET_ADDRESS
 })
@@ -205,7 +205,7 @@ export default async function handler(req: NextRequest) {
 Test your installation:
 
 ```typescript
-import { XpaySDK } from '@xpay/agent-kit'
+import { XpaySDK } from '@xpaysh/agent-kit'
 
 async function verifyInstallation() {
   try {
@@ -239,7 +239,7 @@ Expected output:
 
 ### Module Resolution Errors
 
-If you see `Cannot resolve module '@xpay/agent-kit'`:
+If you see `Cannot resolve module '@xpaysh/agent-kit'`:
 
 ```bash
 # Clear cache and reinstall
@@ -265,8 +265,8 @@ Add type declarations if needed:
 
 ```typescript
 // types/xpay.d.ts
-declare module '@xpay/agent-kit' {
-  export * from '@xpay/agent-kit/types'
+declare module '@xpaysh/agent-kit' {
+  export * from '@xpaysh/agent-kit/types'
 }
 ```
 

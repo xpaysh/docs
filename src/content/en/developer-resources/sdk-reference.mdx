@@ -5,7 +5,7 @@ Complete reference for the Xpay Agent Kit SDK, including TypeScript interfaces, 
 ## Installation
 
 ```bash npm2yarn
-npm install @xpay/agent-kit
+npm install @xpaysh/agent-kit
 ```
 
 ## Core Interfaces
@@ -91,15 +91,15 @@ interface PricingTier {
 }
 ```
 
-## XpayFirewall Class
+## SmartProxy Class
 
 ### Constructor
 
 ```typescript
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
-const firewall = new XpayFirewall({
-  endpoint: string             // Firewall endpoint URL
+const smartProxy = new SmartProxy({
+  endpoint: string             // Smart Proxy endpoint URL
   apiKey: string              // Your Xpay API key
   timeout?: number            // Request timeout (default: 30000ms)
   retries?: number            // Number of retries (default: 3)
@@ -112,7 +112,7 @@ const firewall = new XpayFirewall({
 #### createAgent()
 
 ```typescript
-await firewall.createAgent(config: AgentConfig): Promise<Agent>
+await smartProxy.createAgent(config: AgentConfig): Promise<Agent>
 
 interface AgentConfig {
   id: string
@@ -161,7 +161,7 @@ interface FallbackConfig {
 #### updateAgent()
 
 ```typescript
-await firewall.updateAgent(
+await smartProxy.updateAgent(
   agentId: string,
   updates: Partial<AgentConfig>
 ): Promise<Agent>
@@ -170,13 +170,13 @@ await firewall.updateAgent(
 #### getAgent()
 
 ```typescript
-await firewall.getAgent(agentId: string): Promise<Agent>
+await smartProxy.getAgent(agentId: string): Promise<Agent>
 ```
 
 #### listAgents()
 
 ```typescript
-await firewall.listAgents(options?: {
+await smartProxy.listAgents(options?: {
   limit?: number              // Max results (default: 100)
   offset?: number            // Pagination offset
   status?: AgentStatus       // Filter by status
@@ -191,14 +191,14 @@ await firewall.listAgents(options?: {
 #### pauseAgent() / resumeAgent()
 
 ```typescript
-await firewall.pauseAgent(agentId: string): Promise<void>
-await firewall.resumeAgent(agentId: string): Promise<void>
+await smartProxy.pauseAgent(agentId: string): Promise<void>
+await smartProxy.resumeAgent(agentId: string): Promise<void>
 ```
 
 #### deleteAgent()
 
 ```typescript
-await firewall.deleteAgent(agentId: string): Promise<void>
+await smartProxy.deleteAgent(agentId: string): Promise<void>
 ```
 
 ### Request Methods
@@ -206,7 +206,7 @@ await firewall.deleteAgent(agentId: string): Promise<void>
 #### protectedFetch()
 
 ```typescript
-await firewall.protectedFetch(
+await smartProxy.protectedFetch(
   urlOrRequest: string | Request,
   options: RequestOptions & {
     agentId: string           // Required: Agent making the request
@@ -220,7 +220,7 @@ await firewall.protectedFetch(
 #### batchRequests()
 
 ```typescript
-await firewall.batchRequests(requests: Array<{
+await smartProxy.batchRequests(requests: Array<{
   agentId: string
   url: string
   options: RequestInit
@@ -238,7 +238,7 @@ await firewall.batchRequests(requests: Array<{
 #### getSpendingAnalytics()
 
 ```typescript
-await firewall.getSpendingAnalytics(options: {
+await smartProxy.getSpendingAnalytics(options: {
   agentIds?: string[]         // Specific agents (default: all)
   timeframe: '1h' | '24h' | '7d' | '30d' | 'custom'
   startDate?: Date           // For custom timeframe
@@ -268,7 +268,7 @@ interface SpendingAnalytics {
 #### getTransactionHistory()
 
 ```typescript
-await firewall.getTransactionHistory(options: {
+await smartProxy.getTransactionHistory(options: {
   agentIds?: string[]
   limit?: number
   offset?: number
@@ -287,7 +287,7 @@ await firewall.getTransactionHistory(options: {
 #### configureWebhooks()
 
 ```typescript
-await firewall.configureWebhooks(config: {
+await smartProxy.configureWebhooks(config: {
   endpoint: string            // Your webhook URL
   events: WebhookEvent[]      // Events to subscribe to
   secret: string             // Webhook signing secret
@@ -315,7 +315,7 @@ type WebhookEvent =
 ### Constructor
 
 ```typescript
-import { XpayPaywall } from '@xpay/agent-kit'
+import { XpayPaywall } from '@xpaysh/agent-kit'
 
 const paywall = new XpayPaywall({
   receivingWallet: string     // Your wallet address
@@ -406,7 +406,7 @@ import {
   AgentNotFoundError,
   PaymentRequiredError,
   RateLimitError
-} from '@xpay/agent-kit'
+} from '@xpaysh/agent-kit'
 
 // Spending limit exceeded
 class SpendingLimitError extends Error {
@@ -450,11 +450,11 @@ class RateLimitError extends Error {
 ### Error Handling Patterns
 
 ```typescript
-import { XpayFirewall, SpendingLimitError, RateLimitError } from '@xpay/agent-kit'
+import { SmartProxy, SpendingLimitError, RateLimitError } from '@xpaysh/agent-kit'
 
 async function handleXpayRequest(agentId: string, requestFn: () => Promise<Response>) {
   try {
-    return await firewall.protectedFetch(requestFn, { agentId })
+    return await smartProxy.protectedFetch(requestFn, { agentId })
   } catch (error) {
     if (error instanceof SpendingLimitError) {
       // Handle spending limits
@@ -490,8 +490,8 @@ async function handleXpayRequest(agentId: string, requestFn: () => Promise<Respo
 ```typescript
 import axios from 'axios'
 
-const firewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
+const smartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
   apiKey: 'xpay_fw_...',
   httpClient: axios.create({
     timeout: 45000,
@@ -503,8 +503,8 @@ const firewall = new XpayFirewall({
 ### Connection Pooling
 
 ```typescript
-const firewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
+const smartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
   apiKey: 'xpay_fw_...',
   pooling: {
     maxSockets: 50,
@@ -517,8 +517,8 @@ const firewall = new XpayFirewall({
 ### Custom Retry Logic
 
 ```typescript
-const firewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
+const smartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
   apiKey: 'xpay_fw_...',
   retryConfig: {
     retries: 5,
@@ -555,7 +555,7 @@ The SDK works in both Node.js and modern browsers. For browser usage, ensure you
 
 ```typescript
 // Browser usage
-import { XpayPaywall } from '@xpay/agent-kit/browser'
+import { XpayPaywall } from '@xpaysh/agent-kit/browser'
 
 const paywall = new XpayPaywall({
   receivingWallet: '0x...',

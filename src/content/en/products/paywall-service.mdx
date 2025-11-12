@@ -19,11 +19,11 @@ The Paywall Service wraps your existing APIs with x402 payment requirements, ena
 Turn any endpoint into a paid service in minutes:
 
 ```typescript
-import { XpayPaywall } from '@xpay/agent-kit'
+import { Paywall } from '@xpaysh/agent-kit'
 import express from 'express'
 
 const app = express()
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   receivingWallet: '0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555',
   facilitatorUrl: 'https://facilitator.base.org'
 })
@@ -103,7 +103,7 @@ app.post('/api/llm-completion',
 Simple flat rate per API call:
 
 ```typescript
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   receivingWallet: '0x...',
   defaultPricing: {
     model: 'per_request',
@@ -477,7 +477,7 @@ app.use('/api/paid', paywall.middleware({ price: 0.01 }))
 Protect your receiving wallet:
 
 ```typescript
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   receivingWallet: process.env.XPAY_RECEIVING_WALLET, // Use environment variables
   facilitatorUrl: 'https://facilitator.base.org',
   security: {
@@ -495,12 +495,12 @@ const paywall = new XpayPaywall({
 ### Production Configuration
 
 ```typescript
-import { XpayPaywall } from '@xpay/agent-kit'
+import { Paywall } from '@xpaysh/agent-kit'
 import Redis from 'ioredis'
 
 const redis = new Redis(process.env.REDIS_URL)
 
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   receivingWallet: process.env.XPAY_RECEIVING_WALLET,
   facilitatorUrl: process.env.XPAY_FACILITATOR_URL,
   

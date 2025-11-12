@@ -15,7 +15,7 @@ Xpay is an AI Agent Payment Control Platform that provides essential tools sitti
 
 ### Products Documentation
 
-#### Agent Firewall
+#### Smart Proxy
 Complete documentation for Xpay's cost control dashboard:
 - Real-time spending monitoring and alerts
 - Customizable budget limits and spending rules

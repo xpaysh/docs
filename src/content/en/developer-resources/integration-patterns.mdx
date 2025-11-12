@@ -15,10 +15,10 @@ import { Callout } from 'nextra/components'
 For SaaS applications serving multiple customers, each with their own agents:
 
 ```typescript
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
 class MultiTenantAgentManager {
-  private firewalls: Map<string, XpayFirewall> = new Map()
+  private smartProxies: Map<string, SmartProxy> = new Map()
   
   constructor(private config: {
     defaultLimits: AgentLimits
@@ -28,8 +28,8 @@ class MultiTenantAgentManager {
   async initializeTenant(tenantId: string, tier: string = 'basic') {
     const tierConfig = this.config.tierConfigs[tier]
     
-    const firewall = new XpayFirewall({
-      endpoint: `https://firewall-${tenantId}.xpay.sh`,
+    const smartProxy = new SmartProxy({
+      endpoint: `https://smart-proxy-${tenantId}.xpay.sh`,
       apiKey: process.env.XPAY_API_KEY!,
       
       // Tenant-specific configuration
@@ -46,8 +46,8 @@ class MultiTenantAgentManager {
       cachePrefix: `tenant:${tenantId}`
     })
     
-    this.firewalls.set(tenantId, firewall)
-    return firewall
+    this.smartProxies.set(tenantId, smartProxy)
+    return smartProxy
   }
   
   async createAgentForTenant(
@@ -55,12 +55,12 @@ class MultiTenantAgentManager {
     userId: string, 
     agentConfig: Partial<AgentConfig>
   ): Promise<Agent> {
-    const firewall = this.getFirewallForTenant(tenantId)
+    const smartProxy = this.getSmartProxyForTenant(tenantId)
     const tier = await this.getTenantTier(tenantId)
     const tierLimits = this.config.tierConfigs[tier]
     
     // Apply tenant-specific limits and branding
-    const agent = await firewall.createAgent({
+    const agent = await smartProxy.createAgent({
       ...agentConfig,
       id: `${tenantId}-${agentConfig.id}`,
       userId: `${tenantId}-${userId}`,
@@ -86,21 +86,21 @@ class MultiTenantAgentManager {
   }
   
   async getAgentsForTenant(tenantId: string, userId?: string): Promise<Agent[]> {
-    const firewall = this.getFirewallForTenant(tenantId)
+    const smartProxy = this.getSmartProxyForTenant(tenantId)
     
-    const agents = await firewall.listAgents({
+    const agents = await smartProxy.listAgents({
       search: userId ? `${tenantId}-${userId}` : tenantId
     })
     
     return agents.agents
   }
   
-  private getFirewallForTenant(tenantId: string): XpayFirewall {
-    const firewall = this.firewalls.get(tenantId)
-    if (!firewall) {
+  private getSmartProxyForTenant(tenantId: string): SmartProxy {
+    const smartProxy = this.smartProxies.get(tenantId)
+    if (!smartProxy) {
       throw new Error(`Tenant ${tenantId} not initialized`)
     }
-    return firewall
+    return smartProxy
   }
   
   private async getTenantTier(tenantId: string): Promise<string> {
@@ -403,7 +403,7 @@ class XpayBatchProcessor implements BatchProcessor {
   private readonly CONCURRENT_BATCHES = 5
   
   constructor(
-    private firewall: XpayFirewall,
+    private smartProxy: SmartProxy,
     private config: {
       retryAttempts: number
       retryDelay: number
@@ -475,7 +475,7 @@ class XpayBatchProcessor implements BatchProcessor {
     
     try {
       // Execute batch request
-      const batchResults = await this.firewall.batchRequests(batchRequest)
+      const batchResults = await this.smartProxy.batchRequests(batchRequest)
       
       // Process individual results
       for (let i = 0; i < batchResults.length; i++) {
@@ -641,7 +641,7 @@ class XpayBatchProcessor implements BatchProcessor {
 }
 
 // Usage example
-const batchProcessor = new XpayBatchProcessor(firewall, {
+const batchProcessor = new XpayBatchProcessor(smartProxy, {
   retryAttempts: 3,
   retryDelay: 1000,
   successThreshold: 0.95
@@ -680,10 +680,10 @@ class XpayAnalyticsEngine {
   private reportGenerator: ReportGenerator
   
   constructor(
-    private firewall: XpayFirewall,
+    private smartProxy: SmartProxy,
     private config: AnalyticsConfig
   ) {
-    this.metricsCollector = new MetricsCollector(firewall)
+    this.metricsCollector = new MetricsCollector(smartProxy)
     this.dataProcessor = new DataProcessor()
     this.reportGenerator = new ReportGenerator()
   }
@@ -900,7 +900,7 @@ class XpayAnalyticsEngine {
 }
 
 // Usage example
-const analytics = new XpayAnalyticsEngine(firewall, {
+const analytics = new XpayAnalyticsEngine(smartProxy, {
   enableMachineLearning: true,
   dataRetentionDays: 365,
   reportingFrequency: 'daily'
@@ -947,15 +947,15 @@ cron.schedule('0 9 * * 1', async () => {
 
 ```typescript
 import { describe, it, beforeEach, afterEach, expect } from '@jest/globals'
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
 describe('Xpay Integration Tests', () => {
-  let firewall: XpayFirewall
+  let smartProxy: SmartProxy
   let testAgent: Agent
   
   beforeEach(async () => {
-    // Initialize test firewall
-    firewall = new XpayFirewall({
+    // Initialize test smart proxy
+    smartProxy = new SmartProxy({
       endpoint: process.env.XPAY_TEST_ENDPOINT!,
       apiKey: process.env.XPAY_TEST_API_KEY!,
       
@@ -965,7 +965,7 @@ describe('Xpay Integration Tests', () => {
     })
     
     // Create test agent
-    testAgent = await firewall.createAgent({
+    testAgent = await smartProxy.createAgent({
       id: `test-agent-${Date.now()}`,
       name: 'Test Agent',
       walletAddress: process.env.TEST_WALLET_ADDRESS!,
@@ -977,7 +977,7 @@ describe('Xpay Integration Tests', () => {
   afterEach(async () => {
     // Cleanup
     if (testAgent) {
-      await firewall.deleteAgent(testAgent.id)
+      await smartProxy.deleteAgent(testAgent.id)
     }
   })
   
@@ -989,7 +989,7 @@ describe('Xpay Integration Tests', () => {
     })
     
     it('should update agent limits', async () => {
-      const updated = await firewall.updateAgent(testAgent.id, {
+      const updated = await smartProxy.updateAgent(testAgent.id, {
         dailyLimit: 20,
         perCallLimit: 2
       })
@@ -999,19 +999,19 @@ describe('Xpay Integration Tests', () => {
     })
     
     it('should pause and resume agent', async () => {
-      await firewall.pauseAgent(testAgent.id)
-      let agent = await firewall.getAgent(testAgent.id)
+      await smartProxy.pauseAgent(testAgent.id)
+      let agent = await smartProxy.getAgent(testAgent.id)
       expect(agent.status).toBe('paused')
       
-      await firewall.resumeAgent(testAgent.id)
-      agent = await firewall.getAgent(testAgent.id)
+      await smartProxy.resumeAgent(testAgent.id)
+      agent = await smartProxy.getAgent(testAgent.id)
       expect(agent.status).toBe('active')
     })
   })
   
   describe('Payment Processing', () => {
     it('should process successful payment', async () => {
-      const response = await firewall.protectedFetch('https://api.example.com/test', {
+      const response = await smartProxy.protectedFetch('https://api.example.com/test', {
         agentId: testAgent.id,
         method: 'POST',
         body: JSON.stringify({ test: true })
@@ -1020,17 +1020,17 @@ describe('Xpay Integration Tests', () => {
       expect(response.ok).toBe(true)
       
       // Verify agent spending updated
-      const updatedAgent = await firewall.getAgent(testAgent.id)
+      const updatedAgent = await smartProxy.getAgent(testAgent.id)
       expect(updatedAgent.totalSpent).toBeGreaterThan(0)
       expect(updatedAgent.totalCalls).toBe(1)
     })
     
     it('should reject payment when limit exceeded', async () => {
       // Set very low limit
-      await firewall.updateAgent(testAgent.id, { perCallLimit: 0.001 })
+      await smartProxy.updateAgent(testAgent.id, { perCallLimit: 0.001 })
       
       await expect(
-        firewall.protectedFetch('https://api.example.com/expensive', {
+        smartProxy.protectedFetch('https://api.example.com/expensive', {
           agentId: testAgent.id,
           method: 'POST'
         })
@@ -1044,13 +1044,13 @@ describe('Xpay Integration Tests', () => {
         options: { method: 'GET' }
       }))
       
-      const results = await firewall.batchRequests(requests)
+      const results = await smartProxy.batchRequests(requests)
       
       expect(results).toHaveLength(5)
       expect(results.every(r => r.success)).toBe(true)
       
       // Verify total spending
-      const updatedAgent = await firewall.getAgent(testAgent.id)
+      const updatedAgent = await smartProxy.getAgent(testAgent.id)
       expect(updatedAgent.totalCalls).toBe(5)
     })
   })
@@ -1061,7 +1061,7 @@ describe('Xpay Integration Tests', () => {
       jest.setTimeout(10000)
       
       await expect(
-        firewall.protectedFetch('https://httpstat.us/200?sleep=8000', {
+        smartProxy.protectedFetch('https://httpstat.us/200?sleep=8000', {
           agentId: testAgent.id,
           timeout: 2000
         })
@@ -1069,7 +1069,7 @@ describe('Xpay Integration Tests', () => {
     })
     
     it('should retry failed requests', async () => {
-      const retryFirewall = new XpayFirewall({
+      const retrySmartProxy = new SmartProxy({
         endpoint: process.env.XPAY_TEST_ENDPOINT!,
         apiKey: process.env.XPAY_TEST_API_KEY!,
         retries: 3,
@@ -1087,7 +1087,7 @@ describe('Xpay Integration Tests', () => {
       })
       
       // Test retry mechanism
-      const response = await retryFirewall.protectedFetch('https://api.example.com/retry', {
+      const response = await retrySmartProxy.protectedFetch('https://api.example.com/retry', {
         agentId: testAgent.id
       })
       
@@ -1100,12 +1100,12 @@ describe('Xpay Integration Tests', () => {
     it('should track spending analytics correctly', async () => {
       // Make several test requests
       for (let i = 0; i < 3; i++) {
-        await firewall.protectedFetch('https://api.example.com/analytics', {
+        await smartProxy.protectedFetch('https://api.example.com/analytics', {
           agentId: testAgent.id
         })
       }
       
-      const analytics = await firewall.getSpendingAnalytics({
+      const analytics = await smartProxy.getSpendingAnalytics({
         agentIds: [testAgent.id],
         timeframe: '1h'
       })
@@ -1117,11 +1117,11 @@ describe('Xpay Integration Tests', () => {
     
     it('should retrieve transaction history', async () => {
       // Make a test transaction
-      await firewall.protectedFetch('https://api.example.com/history', {
+      await smartProxy.protectedFetch('https://api.example.com/history', {
         agentId: testAgent.id
       })
       
-      const history = await firewall.getTransactionHistory({
+      const history = await smartProxy.getTransactionHistory({
         agentIds: [testAgent.id],
         limit: 10
       })
@@ -1135,7 +1135,7 @@ describe('Xpay Integration Tests', () => {
 
 // Load testing utilities
 export class LoadTestRunner {
-  constructor(private firewall: XpayFirewall) {}
+  constructor(private smartProxy: SmartProxy) {}
   
   async runLoadTest(config: LoadTestConfig): Promise<LoadTestResults> {
     const startTime = Date.now()
@@ -1144,7 +1144,7 @@ export class LoadTestRunner {
     // Create test agents
     const agents = await Promise.all(
       Array.from({ length: config.agentCount }, (_, i) =>
-        this.firewall.createAgent({
+        this.smartProxy.createAgent({
           id: `load-test-agent-${i}`,
           name: `Load Test Agent ${i}`,
           walletAddress: process.env.TEST_WALLET_ADDRESS!,
@@ -1167,7 +1167,7 @@ export class LoadTestRunner {
             setTimeout(async () => {
               const requestStart = Date.now()
               try {
-                await this.firewall.protectedFetch(config.targetUrl, {
+                await this.smartProxy.protectedFetch(config.targetUrl, {
                   agentId: agent.id
                 })
                 resolve({
@@ -1194,7 +1194,7 @@ export class LoadTestRunner {
     } finally {
       // Cleanup test agents
       await Promise.all(
-        agents.map(agent => this.firewall.deleteAgent(agent.id))
+        agents.map(agent => this.smartProxy.deleteAgent(agent.id))
       )
     }
     

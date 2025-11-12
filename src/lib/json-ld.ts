@@ -66,7 +66,7 @@ export const softwareApplicationSchema: SoftwareApplication = {
     '@id': 'https://docs.xpay.sh/#organization'
   },
   featureList: [
-    'Agent Firewall - AI spending control',
+    'Smart Proxy - AI spending control',
     'Paywall Service - API monetization',
     'Transaction Explorer - Payment monitoring',
     'x402 Protocol Integration',
@@ -119,7 +119,7 @@ export function createTechArticleSchema({
       'autonomous payments',
       'API monetization',
       'blockchain payments',
-      'agent firewall',
+      'smart proxy',
       'transaction monitoring'
     ]
   }

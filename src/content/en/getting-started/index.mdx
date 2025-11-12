@@ -6,7 +6,7 @@ Get up and running with \{xpay✦\} in under 10 minutes. This guide will help yo
 
 \{xpay✦\} provides a complete platform for secure AI agent payments:
 
-1. **🛡️ Agent Firewall** - Enterprise-grade spending controls and monitoring
+1. **🛡️ Smart Proxy** - Enterprise-grade spending controls and monitoring
 2. **⚡ Paywall Service** - Instant API monetization with x402 payments  
 3. **📊 Analytics & Monitoring** - Real-time transaction tracking and insights
 
@@ -35,15 +35,15 @@ Before you begin, ensure you have:
 Install the \{xpay✦\} Agent Kit:
 
 ```bash npm2yarn
-npm install @xpay/agent-kit
+npm install @xpaysh/agent-kit
 ```
 
 Or install individual packages:
 
 ```bash npm2yarn
-npm install @xpay/firewall
-npm install @xpay/paywall  
-npm install @xpay/explorer
+npm install @xpaysh/agent-kit
+npm install @xpaysh/agent-kit  
+npm install @xpaysh/explorer
 ```
 
 ## Step 1: Create Your First Protected Agent
@@ -51,15 +51,15 @@ npm install @xpay/explorer
 Set up an agent with enterprise-grade spending controls:
 
 ```typescript
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
-const firewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
+const smartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
   apiKey: 'xpay_fw_...'
 })
 
 // Create an agent with comprehensive controls
-const agent = await firewall.createAgent({
+const agent = await smartProxy.createAgent({
   id: 'my-first-agent',
   name: 'Customer Support Agent',
   description: 'Handles customer inquiries with AI',
@@ -92,7 +92,7 @@ Now use your agent to make safe, monitored API calls:
 // Make a protected AI API call
 async function askAI(question: string) {
   try {
-    const response = await firewall.protectedFetch('https://api.openai.com/v1/chat/completions', {
+    const response = await smartProxy.protectedFetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer YOUR_OPENAI_KEY',
@@ -137,13 +137,13 @@ console.log('AI Response:', answer)
 Turn your existing APIs into revenue streams with x402 payments:
 
 ```typescript
-import { XpayPaywall } from '@xpay/agent-kit'
+import { XpayPaywall } from '@xpaysh/agent-kit'
 import express from 'express'
 
 const app = express()
 app.use(express.json())
 
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   receivingWallet: '0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555',
   facilitatorUrl: 'https://facilitator.base.org',
   apiKey: 'xpay_pw_...'
@@ -231,7 +231,7 @@ Get comprehensive insights into your agent spending and API revenue:
 
 ```typescript
 // Monitor agent spending patterns
-const spendingAnalytics = await firewall.getSpendingAnalytics({
+const spendingAnalytics = await smartProxy.getSpendingAnalytics({
   agentIds: ['my-first-agent'],
   timeframe: '24h',
   groupBy: 'agent',
@@ -248,7 +248,7 @@ spendingAnalytics.breakdown.forEach(item => {
 })
 
 // Track transaction history
-const transactions = await firewall.getTransactionHistory({
+const transactions = await smartProxy.getTransactionHistory({
   agentIds: ['my-first-agent'],
   limit: 10,
   status: 'confirmed'
@@ -260,7 +260,7 @@ transactions.transactions.forEach(tx => {
 })
 
 // Set up real-time webhooks for monitoring
-await firewall.configureWebhooks({
+await smartProxy.configureWebhooks({
   endpoint: 'https://your-app.com/webhooks/xpay',
   events: [
     'agent.spending.warning',    // 80% of limit reached
@@ -298,7 +298,7 @@ You've successfully set up:
 ## Next Steps
 
 ### 🛡️ **Advanced Agent Security**
-- **[Agent Firewall](/products/agent-firewall)** - Multi-agent management, custom rules, and circuit breakers
+- **[Smart Proxy](/products/smart-proxy)** - Multi-agent management, custom rules, and circuit breakers
 - **[Production Deployment](/getting-started/production-deployment)** - Docker, Kubernetes, and CI/CD pipelines
 - **[Integration Patterns](/developer-resources/integration-patterns)** - Complex scenarios and best practices
 

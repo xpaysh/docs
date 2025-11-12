@@ -41,7 +41,7 @@ import { Callout } from 'nextra/components'
 ```bash
 # Xpay Configuration
 XPAY_API_KEY=xpay_live_...
-XPAY_FIREWALL_ENDPOINT=https://firewall-prod-abc123.xpay.sh
+XPAY_SMART_PROXY_ENDPOINT=https://smart-proxy-prod-abc123.xpay.sh
 XPAY_WEBHOOK_SECRET=whsec_...
 
 # Wallet Configuration  
@@ -83,7 +83,7 @@ Create production configuration files:
 export const productionConfig = {
   xpay: {
     apiKey: process.env.XPAY_API_KEY!,
-    firewallEndpoint: process.env.XPAY_FIREWALL_ENDPOINT!,
+    smartProxyEndpoint: process.env.XPAY_SMART_PROXY_ENDPOINT!,
     webhookSecret: process.env.XPAY_WEBHOOK_SECRET!,
     
     // Production optimizations
@@ -456,7 +456,7 @@ export class AgentRepository {
 ```typescript
 // health.ts
 import express from 'express'
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
 const router = express.Router()
 
@@ -491,7 +491,7 @@ router.get('/health', async (req, res) => {
   
   try {
     // Xpay service health check
-    await firewall.ping()
+    await smartProxy.ping()
     checks.checks.xpay = 'healthy'
   } catch (error) {
     checks.checks.xpay = 'unhealthy'
@@ -963,7 +963,7 @@ export class AlertManager {
     
     try {
       // Check Xpay service
-      await firewall.ping()
+      await smartProxy.ping()
       await this.sendMetric('XpayServiceHealth', 1)
     } catch (error) {
       await this.sendMetric('XpayServiceHealth', 0)

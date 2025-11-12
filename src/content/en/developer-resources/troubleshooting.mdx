@@ -123,7 +123,7 @@ function isRetryableError(error: any): boolean {
 ```typescript
 // 1. Check current agent status and spending
 async function debugAgentSpending(agentId: string) {
-  const agent = await firewall.getAgent(agentId)
+  const agent = await smartProxy.getAgent(agentId)
   
   console.log('Agent Status:', {
     id: agent.id,
@@ -142,7 +142,7 @@ async function debugAgentSpending(agentId: string) {
   })
   
   // Check recent transactions
-  const transactions = await firewall.getTransactionHistory({
+  const transactions = await smartProxy.getTransactionHistory({
     agentIds: [agentId],
     limit: 10
   })
@@ -160,7 +160,7 @@ async function debugAgentSpending(agentId: string) {
 // 2. Reset daily limits if needed
 async function resetDailySpending(agentId: string) {
   try {
-    await firewall.resetDailySpending(agentId)
+    await smartProxy.resetDailySpending(agentId)
     console.log(`Daily spending reset for agent ${agentId}`)
   } catch (error) {
     console.error('Failed to reset daily spending:', error)
@@ -170,7 +170,7 @@ async function resetDailySpending(agentId: string) {
 // 3. Implement graceful limit handling
 async function makeRequestWithLimitHandling(agentId: string, apiCall: () => Promise<Response>) {
   try {
-    return await firewall.protectedFetch(apiCall, { agentId })
+    return await smartProxy.protectedFetch(apiCall, { agentId })
   } catch (error) {
     if (error instanceof SpendingLimitError) {
       switch (error.limitType) {
@@ -211,8 +211,8 @@ async function makeRequestWithLimitHandling(agentId: string, apiCall: () => Prom
 
 ```typescript
 // 1. Configure robust timeout and retry settings
-const firewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
+const smartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
   apiKey: 'xpay_fw_...',
   
   // Network configuration
@@ -284,7 +284,7 @@ async function robustApiCall(agentId: string, url: string, options: any) {
   
   return await circuitBreaker.execute(async () => {
     try {
-      return await firewall.protectedFetch(url, {
+      return await smartProxy.protectedFetch(url, {
         ...options,
         agentId,
         timeout: 30000
@@ -349,13 +349,13 @@ function validateApiKey(apiKey: string) {
 // 2. Test API key connectivity
 async function testApiKeyConnectivity(apiKey: string) {
   try {
-    const firewall = new XpayFirewall({
-      endpoint: process.env.XPAY_FIREWALL_ENDPOINT!,
+    const smartProxy = new SmartProxy({
+      endpoint: process.env.XPAY_SMART_PROXY_ENDPOINT!,
       apiKey
     })
     
     // Make a simple API call to test connectivity
-    await firewall.ping()
+    await smartProxy.ping()
     console.log('✅ API key is valid and service is reachable')
     
     return true
@@ -367,7 +367,7 @@ async function testApiKeyConnectivity(apiKey: string) {
     } else if (error.status === 403) {
       console.log('🚫 API key lacks required permissions')
     } else if (error.code === 'ENOTFOUND') {
-      console.log('🌐 Check your firewall endpoint URL')
+      console.log('🌐 Check your smart proxy endpoint URL')
     }
     
     return false
@@ -423,12 +423,12 @@ class ApiKeyManager {
 
 ```typescript
 // 1. Implement request caching
-class PerformanceOptimizedFirewall {
+class PerformanceOptimizedSmartProxy {
   private cache = new Map<string, CachedResponse>()
-  private firewall: XpayFirewall
+  private smartProxy: SmartProxy
   
   constructor(config: any) {
-    this.firewall = new XpayFirewall(config)
+    this.smartProxy = new SmartProxy(config)
   }
   
   async cachedProtectedFetch(
@@ -444,7 +444,7 @@ class PerformanceOptimizedFirewall {
       return cached.response
     }
     
-    const response = await this.firewall.protectedFetch(url, options)
+    const response = await this.smartProxy.protectedFetch(url, options)
     
     // Cache successful responses
     if (response.ok) {
@@ -471,14 +471,14 @@ const httpAgent = new require('https').Agent({
   timeout: 30000
 })
 
-const optimizedFirewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
+const optimizedSmartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
   apiKey: 'xpay_fw_...',
   httpAgent
 })
 
 // 3. Request batching for multiple operations
-class BatchingFirewall {
+class BatchingSmartProxy {
   private pendingRequests: Array<{
     request: any
     resolve: (value: any) => void
@@ -488,7 +488,7 @@ class BatchingFirewall {
   private batchTimer?: NodeJS.Timeout
   
   constructor(
-    private firewall: XpayFirewall,
+    private smartProxy: SmartProxy,
     private batchSize = 10,
     private batchDelay = 100
   ) {}
@@ -524,7 +524,7 @@ class BatchingFirewall {
         options: item.request.options
       }))
       
-      const results = await this.firewall.batchRequests(batchRequests)
+      const results = await this.smartProxy.batchRequests(batchRequests)
       
       batch.forEach((item, index) => {
         const result = results[index]
@@ -624,7 +624,7 @@ A: The agent will receive `InsufficientFundsError` exceptions. Implement monitor
 
 ```typescript
 async function checkWalletBalance(agentId: string) {
-  const agent = await firewall.getAgent(agentId)
+  const agent = await smartProxy.getAgent(agentId)
   const balance = await getWalletBalance(agent.walletAddress)
   
   if (balance < agent.dailyLimit * 0.1) { // 10% buffer
@@ -647,7 +647,7 @@ A: Analyze spending patterns and either:
 
 ```typescript
 async function analyzeLimitHits(agentId: string) {
-  const analytics = await firewall.getSpendingAnalytics({
+  const analytics = await smartProxy.getSpendingAnalytics({
     agentIds: [agentId],
     timeframe: '7d'
   })
@@ -711,8 +711,8 @@ async function issueRefund(transactionId: string, amount: number) {
 A: Use the test environment:
 
 ```typescript
-const testFirewall = new XpayFirewall({
-  endpoint: 'https://firewall-test-abc123.xpay.sh',
+const testSmartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-test-abc123.xpay.sh',
   apiKey: 'xpay_test_...',
   network: 'base-sepolia' // Testnet
 })
@@ -734,7 +734,7 @@ Instead, create separate wallets for each agent:
 async function createAgentWithNewWallet() {
   const wallet = generateNewWallet()
   
-  const agent = await firewall.createAgent({
+  const agent = await smartProxy.createAgent({
     id: generateAgentId(),
     name: 'New Agent',
     walletAddress: wallet.address,
@@ -755,8 +755,8 @@ A: Enable debug logging and use the built-in diagnostic tools:
 
 ```typescript
 // Enable debug mode
-const firewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
+const smartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
   apiKey: 'xpay_fw_...',
   debug: true, // Enables detailed logging
   logLevel: 'debug'
@@ -764,7 +764,7 @@ const firewall = new XpayFirewall({
 
 // Use diagnostic endpoint
 async function runDiagnostics(agentId: string) {
-  const diagnostics = await firewall.runDiagnostics(agentId)
+  const diagnostics = await smartProxy.runDiagnostics(agentId)
   
   console.log('Diagnostics Report:', {
     agentStatus: diagnostics.agent.status,
@@ -779,7 +779,7 @@ async function runDiagnostics(agentId: string) {
 
 // Test specific payment scenarios
 async function testPaymentScenario() {
-  const testResult = await firewall.testPayment({
+  const testResult = await smartProxy.testPayment({
     agentId: 'test-agent',
     amount: 0.10,
     dryRun: true // Don't actually process payment
@@ -798,7 +798,7 @@ A: Implement comprehensive monitoring:
 app.get('/health/xpay', async (req, res) => {
   try {
     const checks = await Promise.all([
-      firewall.ping(),
+      smartProxy.ping(),
       checkDatabaseConnection(),
       checkWalletBalances(),
       checkRecentTransactionSuccess()

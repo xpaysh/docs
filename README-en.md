@@ -13,7 +13,7 @@
 This repository contains the official documentation for {xpay✦}, the leading platform for autonomous AI agent payments built on the x402 protocol. Our documentation covers:
 
 - **x402 Protocol** - The foundation for autonomous payments
-- **Agent Firewall** - Cost control and spending limits for AI agents  
+- **Smart Proxy** - Cost control and spending limits for AI agents  
 - **Paywall-as-a-Service** - API monetization made simple
 - **Transaction Explorer** - Real-time payment monitoring and analytics
 - **Developer Resources** - SDKs, code examples, and integration guides

@@ -8,11 +8,11 @@ Everything you need to build with \{xpay✦\} and the x402 protocol. From SDKs a
 
 | Package | Description | Install |
 |---------|-------------|---------|
-| `@xpay/agent-kit` | Complete toolkit for agent developers | `npm install @xpay/agent-kit` |
-| `@xpay/firewall` | Agent spending protection | `npm install @xpay/firewall` |
-| `@xpay/paywall` | API monetization tools | `npm install @xpay/paywall` |
-| `@xpay/explorer` | Transaction monitoring | `npm install @xpay/explorer` |
-| `@xpay/sdk` | Core x402 utilities | `npm install @xpay/sdk` |
+| `@xpaysh/agent-kit` | Complete toolkit for agent developers | `npm install @xpaysh/agent-kit` |
+| `@xpaysh/agent-kit` | Agent spending protection | `npm install @xpaysh/agent-kit` |
+| `@xpaysh/agent-kit` | API monetization tools | `npm install @xpaysh/agent-kit` |
+| `@xpaysh/explorer` | Transaction monitoring | `npm install @xpaysh/explorer` |
+| `@xpaysh/sdk` | Core x402 utilities | `npm install @xpaysh/sdk` |
 
 ### x402 Protocol SDKs
 
@@ -29,14 +29,14 @@ Everything you need to build with \{xpay✦\} and the x402 protocol. From SDKs a
 
 ```typescript
 // Agent with spending limits
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
-const firewall = new XpayFirewall({
+const smartProxy = new SmartProxy({
   maxDailySpend: 100,
   maxPerRequest: 5
 })
 
-const response = await firewall.protectedFetch('https://api.openai.com/v1/chat/completions', {
+const response = await smartProxy.protectedFetch('https://api.openai.com/v1/chat/completions', {
   method: 'POST',
   body: JSON.stringify({
     model: 'gpt-4',
@@ -47,11 +47,11 @@ const response = await firewall.protectedFetch('https://api.openai.com/v1/chat/c
 
 ```typescript
 // API monetization
-import { XpayPaywall } from '@xpay/agent-kit'
+import { XpayPaywall } from '@xpaysh/agent-kit'
 import express from 'express'
 
 const app = express()
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   pricePerRequest: 0.10,
   receivingWallet: '0x...'
 })
@@ -68,9 +68,9 @@ app.get('/api/premium', paywall.middleware, (req, res) => {
 ```typescript
 // pages/api/protected.ts
 import { NextApiRequest, NextApiResponse } from 'next'
-import { XpayPaywall } from '@xpay/agent-kit'
+import { XpayPaywall } from '@xpaysh/agent-kit'
 
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   pricePerRequest: 0.05,
   receivingWallet: process.env.RECEIVING_WALLET
 })
@@ -93,9 +93,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 ```typescript
 import { ChatOpenAI } from 'langchain/chat_models/openai'
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
-const firewall = new XpayFirewall({
+const smartProxy = new SmartProxy({
   maxDailySpend: 50,
   agentId: 'langchain-agent'
 })
@@ -103,7 +103,7 @@ const firewall = new XpayFirewall({
 const chat = new ChatOpenAI({
   openAIApiKey: process.env.OPENAI_API_KEY,
   configuration: {
-    fetch: firewall.protectedFetch.bind(firewall)
+    fetch: smartProxy.protectedFetch.bind(smartProxy)
   }
 })
 ```
@@ -112,13 +112,13 @@ const chat = new ChatOpenAI({
 
 ```typescript
 import { NextRequest } from 'next/server'
-import { XpayPaywall } from '@xpay/agent-kit'
+import { XpayPaywall } from '@xpaysh/agent-kit'
 
 export const config = {
   runtime: 'edge'
 }
 
-const paywall = new XpayPaywall({
+const paywall = new Paywall({
   pricePerRequest: 0.01,
   receivingWallet: process.env.RECEIVING_WALLET
 })
@@ -169,10 +169,10 @@ export default async function handler(req: NextRequest) {
 #### \{xpay✦\} CLI
 ```bash
 # Install globally
-npm install -g @xpay/cli
+npm install -g @xpaysh/cli
 
-# Create new firewall
-xpay firewall create --name "my-agents"
+# Create new smart proxy
+xpaysh smart-proxy create --name "my-agents"
 
 # Configure agent limits
 xpay agent configure my-bot --max-daily 100 --max-request 5
@@ -206,7 +206,7 @@ Browser extension for debugging x402 payments:
 
 #### Payment Simulation
 ```typescript
-import { MockX402Server } from '@xpay/testing'
+import { MockX402Server } from '@xpaysh/agent-kit-testing'
 
 const mockServer = new MockX402Server({
   port: 3001,
@@ -222,7 +222,7 @@ const response = await agent.callAPI('http://localhost:3001/api/test')
 
 #### Spending Simulation
 ```typescript
-import { SpendingSimulator } from '@xpay/testing'
+import { SpendingSimulator } from '@xpaysh/agent-kit-testing'
 
 const simulator = new SpendingSimulator({
   agent: 'test-agent',
@@ -249,7 +249,7 @@ await simulator.simulatePattern('random', { averageRequestsPerMinute: 2 })
 
 #### Payment Verification Failures
 ```typescript
-import { X402Debug } from '@xpay/sdk'
+import { X402Debug } from '@xpaysh/sdk'
 
 const debug = new X402Debug({
   facilitator: 'https://facilitator.base.org',
@@ -265,7 +265,7 @@ console.log('Transaction hash:', result.txHash)
 
 #### Agent Spending Analysis
 ```typescript
-import { XpayAnalytics } from '@xpay/agent-kit'
+import { XpayAnalytics } from '@xpaysh/agent-kit'
 
 const analytics = new XpayAnalytics({
   apiKey: process.env.XPAY_API_KEY
@@ -293,7 +293,7 @@ console.log('Failure rate:', report.failureRate)
 ### WebSocket APIs
 
 ```typescript
-import { XpayWebSocket } from '@xpay/agent-kit'
+import { XpayWebSocket } from '@xpaysh/agent-kit'
 
 const ws = new XpayWebSocket({
   apiKey: process.env.XPAY_API_KEY,
