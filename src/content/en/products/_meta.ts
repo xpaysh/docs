@@ -1,3 +1,3 @@
 export default {
-  "agent-firewall": "Agent Firewall"
+  "smart-proxy": "Smart Proxy"
 }

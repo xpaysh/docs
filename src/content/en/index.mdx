@@ -23,12 +23,12 @@ As AI agents become more autonomous, they need secure, reliable payment infrastr
 
 ## Core Products
 
-### 🛡️ x402 Agent Firewall
+### 🛡️ x402 Smart Proxy
 **Cost Control Dashboard**
 
-Developers are concerned about their agents getting stuck in spending loops. Our firewall provides AWS proxy endpoints with hard spending limits, real-time alerts, and per-agent budgets.
+Developers are concerned about their agents getting stuck in spending loops. Our smart proxy provides AWS proxy endpoints with hard spending limits, real-time alerts, and per-agent budgets.
 
-[Learn more →](/products/agent-firewall)
+[Learn more →](/products/smart-proxy)
 
 ### ⚡ x402 Paywall-as-a-Service  
 **Easy Monetization**
@@ -49,21 +49,21 @@ Complete visibility into agent spending patterns, API performance, and transacti
 Get started with \{xpay✦\} in under 5 minutes:
 
 ```bash
-npm install @xpay/agent-kit
+npm install @xpaysh/agent-kit
 ```
 
 ```typescript
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
 // Set spending limits for your agent
-const firewall = new XpayFirewall({
+const smartProxy = new SmartProxy({
   maxDailySpend: 100, // $100 USD
   maxPerRequest: 5,   // $5 USD per request
   alertThreshold: 0.8 // Alert at 80% of limits
 })
 
 // Your agent's API calls are now protected
-await firewall.protectedFetch('https://api.example.com/expensive-ai-service')
+await smartProxy.protectedFetch('https://api.example.com/expensive-ai-service')
 ```
 
 [Full Quick Start Guide →](/getting-started)

@@ -1,6 +1,6 @@
-# x402 Agent Firewall
+# x402 Smart Proxy
 
-The x402 Agent Firewall is a cost control dashboard that provides developers with peace of mind when deploying autonomous agents. It acts as a proxy between your agents and x402-powered APIs, ensuring agents never overspend while maintaining full functionality.
+The x402 Smart Proxy is a cost control dashboard that provides developers with peace of mind when deploying autonomous agents. It acts as a proxy between your agents and x402-powered APIs, ensuring agents never overspend while maintaining full functionality.
 
 ## The Problem
 
@@ -15,7 +15,7 @@ Autonomous agents can make hundreds of API calls per minute. Without proper cont
 
 ## The Solution
 
-The Agent Firewall provides an AWS-hosted proxy endpoint that sits between your agents and x402 APIs. It offers:
+The Smart Proxy provides an AWS-hosted proxy endpoint that sits between your agents and x402 APIs. It offers:
 
 ### 🛡️ Hard Spending Limits
 - **Per-request limits**: Maximum spend per API call
@@ -42,15 +42,15 @@ The Agent Firewall provides an AWS-hosted proxy endpoint that sits between your 
 Manage multiple agents from a single dashboard with complete lifecycle control:
 
 ```typescript
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
-const firewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
+const smartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
   apiKey: 'xpay_fw_...'
 })
 
 // Create agents with complete configuration
-await firewall.createAgent({
+await smartProxy.createAgent({
   id: 'customer-support-bot',
   name: 'Customer Support Agent',
   description: 'Handles customer inquiries and support tickets',
@@ -62,7 +62,7 @@ await firewall.createAgent({
   status: 'active'
 })
 
-await firewall.createAgent({
+await smartProxy.createAgent({
   id: 'data-analysis-bot', 
   name: 'Data Analysis Agent',
   description: 'Processes large datasets and generates reports',
@@ -75,30 +75,30 @@ await firewall.createAgent({
 })
 
 // Update agent configuration
-await firewall.updateAgent('customer-support-bot', {
+await smartProxy.updateAgent('customer-support-bot', {
   dailyLimit: 75, // Increase daily limit
   perCallLimit: 3
 })
 
 // Pause agent temporarily  
-await firewall.pauseAgent('data-analysis-bot')
+await smartProxy.pauseAgent('data-analysis-bot')
 
 // Get agent status and spending
-const agent = await firewall.getAgent('customer-support-bot')
+const agent = await smartProxy.getAgent('customer-support-bot')
 console.log(`Agent spent: $${agent.totalSpent} / $${agent.dailyLimit}`)
 ```
 
 ### Intelligent Routing
 
-The firewall intelligently routes requests based on agent configuration:
+The smart proxyintelligently routes requests based on agent configuration:
 
 ```typescript
-// Agent requests are automatically routed through firewall
+// Agent requests are automatically routed through smart proxy
 const response = await fetch('https://api.openai.com/v1/chat/completions', {
   method: 'POST',
   headers: {
     'X-Agent-ID': 'customer-support-bot',
-    'X-Firewall-Token': firewall.getToken(),
+    'X-SmartProxy-Token': smartProxy.getToken(),
     'Authorization': 'Bearer sk-...'
   },
   body: JSON.stringify({
@@ -114,7 +114,7 @@ Here are common agent configuration patterns for different use cases:
 
 #### Customer Service Agent
 ```typescript
-await firewall.createAgent({
+await smartProxy.createAgent({
   id: 'customer-service-v1',
   name: 'Customer Service Bot',
   description: 'Handles customer inquiries during business hours',
@@ -134,7 +134,7 @@ await firewall.createAgent({
 
 #### Data Processing Agent
 ```typescript
-await firewall.createAgent({
+await smartProxy.createAgent({
   id: 'data-processor-prod',
   name: 'Production Data Processor',
   description: 'Processes customer data and generates reports',
@@ -152,7 +152,7 @@ await firewall.createAgent({
 
 #### Development/Testing Agent
 ```typescript
-await firewall.createAgent({
+await smartProxy.createAgent({
   id: 'dev-test-agent',
   name: 'Development Testing Agent',
   description: 'Agent for development and testing purposes',
@@ -172,7 +172,7 @@ await firewall.createAgent({
 
 #### Time-based Limits
 ```typescript
-await firewall.setScheduledLimits('trading-bot', {
+await smartProxy.setScheduledLimits('trading-bot', {
   // Higher limits during market hours
   '09:00-16:00': { maxPerRequest: 5, maxHourly: 100 },
   // Lower limits overnight  
@@ -182,7 +182,7 @@ await firewall.setScheduledLimits('trading-bot', {
 
 #### API-specific Limits
 ```typescript
-await firewall.setAPILimits('data-bot', {
+await smartProxy.setAPILimits('data-bot', {
   'openai.com': { maxPerRequest: 2, maxDaily: 50 },
   'anthropic.com': { maxPerRequest: 1, maxDaily: 30 },
   'huggingface.co': { maxPerRequest: 0.5, maxDaily: 20 }
@@ -191,7 +191,7 @@ await firewall.setAPILimits('data-bot', {
 
 #### Cost-based Routing
 ```typescript
-await firewall.setCostRouting('smart-bot', {
+await smartProxy.setCostRouting('smart-bot', {
   // Use cheaper APIs first
   strategy: 'cost-optimized',
   fallbacks: [
@@ -246,7 +246,7 @@ Flexible alerting keeps you informed:
 
 ## Pricing
 
-The Agent Firewall uses a freemium SaaS model:
+The Smart Proxy uses a freemium SaaS model:
 
 ### Free Tier
 - Up to 3 agents
@@ -274,27 +274,27 @@ The Agent Firewall uses a freemium SaaS model:
 
 ## Getting Started
 
-### 1. Create Firewall Instance
+### 1. Create Smart Proxy Instance
 
-Sign up and create your first firewall:
+Sign up and create your first smart proxy:
 
 ```bash
-npx @xpay/cli firewall create --name "my-agents"
+npx @xpaysh/cli smart-proxy create --name "my-agents"
 ```
 
-This creates a unique endpoint: `https://firewall-abc123.xpay.sh`
+This creates a unique endpoint: `https://smart-proxy-abc123.xpay.sh`
 
 ### 2. Configure Your First Agent
 
 ```typescript
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
-const firewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
-  apiKey: process.env.XPAY_FIREWALL_KEY
+const smartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
+  apiKey: process.env.XPAY_SMART_PROXY_KEY
 })
 
-await firewall.configureAgent('my-first-agent', {
+await smartProxy.configureAgent('my-first-agent', {
   maxDailySpend: 25,
   maxPerRequest: 1,
   alertThreshold: 0.8 // Alert at 80%
@@ -303,7 +303,7 @@ await firewall.configureAgent('my-first-agent', {
 
 ### 3. Route Agent Requests
 
-Update your agent to use the firewall:
+Update your agent to use the smart proxy:
 
 ```typescript
 // Before: Direct API calls
@@ -311,8 +311,8 @@ const response = await fetch('https://api.openai.com/v1/chat/completions', {
   // ... request config
 })
 
-// After: Firewall-protected calls  
-const response = await firewall.protectedFetch('https://api.openai.com/v1/chat/completions', {
+// After: Smart Proxy-protected calls  
+const response = await smartProxy.protectedFetch('https://api.openai.com/v1/chat/completions', {
   agentId: 'my-first-agent',
   // ... request config
 })
@@ -320,18 +320,18 @@ const response = await firewall.protectedFetch('https://api.openai.com/v1/chat/c
 
 ### 4. Monitor in Dashboard
 
-Visit your dashboard to see real-time spending: `https://dashboard.xpay.sh/firewall/abc123`
+Visit your dashboard to see real-time spending: `https://dashboard.xpay.sh/smart-proxy/abc123`
 
 ## Error Handling & Recovery
 
 ### Handling Spending Limit Errors
 
 ```typescript
-import { XpayFirewall, SpendingLimitError } from '@xpay/agent-kit'
+import { SmartProxy, SpendingLimitError } from '@xpaysh/agent-kit'
 
 async function makeProtectedRequest(agentId: string, apiCall: () => Promise<Response>) {
   try {
-    return await firewall.protectedFetch(apiCall, { agentId })
+    return await smartProxy.protectedFetch(apiCall, { agentId })
   } catch (error) {
     if (error instanceof SpendingLimitError) {
       switch (error.limitType) {
@@ -350,7 +350,7 @@ async function makeProtectedRequest(agentId: string, apiCall: () => Promise<Resp
           console.log(`Agent ${agentId} hit monthly budget`)
           // Alert administrators and pause agent
           await notifyAdmins(agentId, 'monthly_limit_exceeded')
-          await firewall.pauseAgent(agentId)
+          await smartProxy.pauseAgent(agentId)
           break
       }
     }
@@ -363,7 +363,7 @@ async function makeProtectedRequest(agentId: string, apiCall: () => Promise<Resp
 
 ```typescript
 // Configure agents with fallback chains
-await firewall.createAgent({
+await smartProxy.createAgent({
   id: 'smart-agent',
   name: 'Cost-Optimized Agent',
   walletAddress: '0x...',
@@ -381,7 +381,7 @@ await firewall.createAgent({
 
 ```typescript
 // Set up webhooks for real-time monitoring
-await firewall.configureWebhooks({
+await smartProxy.configureWebhooks({
   endpoint: 'https://your-app.com/webhooks/xpay',
   events: [
     'agent.spending.warning',    // 80% of limit reached
@@ -446,18 +446,18 @@ app.post('/webhooks/xpay', (req, res) => {
 ```typescript
 import { LLMChain } from 'langchain/chains'
 import { OpenAI } from 'langchain/llms/openai'
-import { XpayFirewall } from '@xpay/agent-kit'
+import { SmartProxy } from '@xpaysh/agent-kit'
 
-const firewall = new XpayFirewall({
-  endpoint: 'https://firewall-abc123.xpay.sh',
-  apiKey: process.env.XPAY_FIREWALL_KEY
+const smartProxy = new SmartProxy({
+  endpoint: 'https://smart-proxy-abc123.xpay.sh',
+  apiKey: process.env.XPAY_SMART_PROXY_KEY
 })
 
 // Create protected LLM
 const llm = new OpenAI({
   openAIApiKey: process.env.OPENAI_API_KEY,
-  // Override fetch to use firewall
-  fetch: (url, init) => firewall.protectedFetch(url, {
+  // Override fetch to use smart proxy
+  fetch: (url, init) => smartProxy.protectedFetch(url, {
     ...init,
     agentId: 'langchain-agent'
   })
@@ -470,15 +470,15 @@ const chain = new LLMChain({ llm, prompt })
 
 ```python
 # Python example for AutoGPT
-from xpay import XpayFirewall
+from xpay import SmartProxy
 
-firewall = XpayFirewall(
-    endpoint='https://firewall-abc123.xpay.sh',
-    api_key=os.getenv('XPAY_FIREWALL_KEY')
+smartProxy = SmartProxy(
+    endpoint='https://smart-proxy-abc123.xpay.sh',
+    api_key=os.getenv('XPAY_SMART_PROXY_KEY')
 )
 
 # Configure AutoGPT agent
-firewall.configure_agent('autogpt-main', {
+smartProxy.configure_agent('autogpt-main', {
     'max_daily_spend': 100,
     'max_per_request': 5,
     'allowed_apis': ['openai.com', 'anthropic.com']
@@ -487,27 +487,27 @@ firewall.configure_agent('autogpt-main', {
 # Override HTTP client
 import requests
 session = requests.Session()
-session.request = firewall.protected_request
+session.request = smartProxy.protected_request
 ```
 
 ## FAQ
 
-### How does the firewall handle API keys?
+### How does the smart proxyhandle API keys?
 
-The firewall acts as a transparent proxy - your API keys are passed through securely and never stored. The firewall only adds spending controls and monitoring.
+The smart proxyacts as a transparent proxy - your API keys are passed through securely and never stored. The smart proxyonly adds spending controls and monitoring.
 
 ### What happens when limits are exceeded?
 
-When a limit is exceeded, the firewall returns a `429 Too Many Requests` response with details about which limit was hit and when the agent can retry.
+When a limit is exceeded, the smart proxyreturns a `429 Too Many Requests` response with details about which limit was hit and when the agent can retry.
 
-### Can I use the firewall with non-x402 APIs?
+### Can I use the smart proxywith non-x402 APIs?
 
-Currently, the firewall is designed specifically for x402-enabled APIs. Support for traditional APIs with custom billing may be added in the future.
+Currently, the smart proxyis designed specifically for x402-enabled APIs. Support for traditional APIs with custom billing may be added in the future.
 
 ### Is there latency overhead?
 
-The firewall adds approximately 10-50ms of latency per request, depending on your geographic location and our nearest edge server.
+The smart proxyadds approximately 10-50ms of latency per request, depending on your geographic location and our nearest edge server.
 
 ---
 
-Ready to protect your agents? [Get started with the Agent Firewall →](https://dashboard.xpay.sh/firewall/create)
+Ready to protect your agents? [Get started with the Smart Proxy →](https://dashboard.xpay.sh/smart-proxy/create)
