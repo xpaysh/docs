@@ -11,6 +11,7 @@ import { CustomFooter } from '@/components/CustomFooter'
 import { useServerLocale } from '@/hooks'
 import LocaleToggle from '@/widgets/locale-toggle'
 import ThemeToggle from '@/widgets/theme-toggle'
+import { Analytics } from "@vercel/analytics/react";
 
 import { getDictionary, getDirection } from '../_dictionaries/get-dictionary'
 import { ThemeProvider } from './_components/ThemeProvider'
@@ -68,24 +69,6 @@ const CustomNavbar = async ({ lang }: I18nLangAsyncProps) => {
   )
 }
 
-const BaiduTrack = () => {
-  return (
-    <>
-      <Script strategy="afterInteractive">
-        {`
-          var _hmt = _hmt || [];
-          (function() {
-            var hm = document.createElement("script");
-            hm.src = "https://hm.baidu.com/hm.js?d5ad5e04e6af914c01767926567602be";
-            var s = document.getElementsByTagName("script")[0]; 
-            s.parentNode.insertBefore(hm, s);
-          })();
-        `}
-      </Script>
-    </>
-  )
-}
-
 
 // interface Props {
 //   children: ReactNode
@@ -94,6 +77,7 @@ const BaiduTrack = () => {
 
 export default async function RootLayout({ children, params }: LayoutProps<'/[lang]'>) {
   const getterParams = await params
+  const isProd = process.env.NODE_ENV === 'production';
 
   const { lang } = getterParams as { lang: I18nLangKeys }
 
@@ -176,8 +160,37 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
           </Layout>
         </ThemeProvider>
       </body>
-      <GoogleAnalytics gaId="G-5G03XLKQ06" />
-      <BaiduTrack />
+      {isProd && <Analytics />}
+
+        {/* PostHog Analytics */}
+        {isProd && (
+          <Script id="posthog-init" strategy="afterInteractive">
+            {`
+              !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+              posthog.init('${process.env.NEXT_PUBLIC_POSTHOG_KEY}', {
+                api_host: '${process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'}'
+              });
+            `}
+          </Script>
+        )}
+        
+        {/* Google Analytics */}
+        {isProd && (
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-5G03XLKQ06"
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-5G03XLKQ06');
+              `}
+            </Script>
+          </>
+        )}
     </html>
   )
 }

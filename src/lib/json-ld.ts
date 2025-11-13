@@ -12,7 +12,7 @@ export const organizationSchema: Organization = {
     'https://twitter.com/xpaysh',
     'https://discord.gg/qtanBNnJ'
   ],
-  description: 'AI Agent Payment Control Platform - x402 protocol infrastructure for autonomous payments',
+  description: 'AI Agent Payment Control Platform - agentic payments infrastructure for autonomous payments',
   foundingDate: '2024',
   legalName: 'xPay',
   numberOfEmployees: {
