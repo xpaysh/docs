@@ -10,7 +10,7 @@ export const organizationSchema: Organization = {
   sameAs: [
     'https://github.com/xpaysh',
     'https://twitter.com/xpaysh',
-    'https://discord.gg/qtanBNnJ'
+    'https://discord.gg/vukXDGT7n5'
   ],
   description: 'AI Agent Payment Control Platform - agentic payments infrastructure for autonomous payments',
   foundingDate: '2024',
@@ -24,7 +24,7 @@ export const organizationSchema: Organization = {
     '@type': 'ContactPoint',
     contactType: 'Customer Service',
     email: 'support@xpay.sh',
-    url: 'https://discord.gg/qtanBNnJ'
+    url: 'https://discord.gg/vukXDGT7n5'
   }
 }
 

@@ -58,7 +58,7 @@ const CustomNavbar = async ({ lang }: I18nLangAsyncProps) => {
       )}
       logoLink={`/${lang}`}
       projectLink={repo}
-      chatLink="https://discord.gg/qtanBNnJ"
+      chatLink="https://discord.gg/vukXDGT7n5"
     >
       <>
         <LocaleToggle className="max-md:hidden" />
