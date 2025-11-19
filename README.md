@@ -155,7 +155,7 @@ npm start
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Built with ❤️ by the {xpay✦} team and [Nextra template](https://github.com/pdsuwwz/nextjs-nextra-starter).
+Built with ❤️ by the {xpay✦} team using the [Nextra template](https://github.com/pdsuwwz/nextjs-nextra-starter).
 
 ---
 
