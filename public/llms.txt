@@ -1,10 +1,10 @@
-# Xpay Documentation - Developer Resources for x402 Protocol
+# {xpay✦} Documentation - Developer Resources for x402 Protocol
 
-This documentation site provides comprehensive developer resources for the x402 payment protocol and Xpay platform ecosystem.
+This documentation site provides comprehensive developer resources for the x402 payment protocol and {xpay✦} platform ecosystem.
 
-## What is Xpay?
+## What is {xpay✦}?
 
-Xpay is an AI Agent Payment Control Platform that provides essential tools sitting between AI agents and autonomous payments, ensuring agents never overspend while enabling instant API monetization.
+{xpay✦} is an AI Agent Payment Control Platform that provides essential tools sitting between AI agents and autonomous payments, ensuring agents never overspend while enabling instant API monetization.
 
 ## Documentation Sections
 
@@ -59,7 +59,7 @@ Technical resources for developers:
 
 ### Community
 
-Resources for the Xpay developer community:
+Resources for the {xpay✦} developer community:
 - Developer forums and discussions
 - Community contributions
 - Open source projects
@@ -187,7 +187,7 @@ This documentation is built using Nextra, a Next.js-based documentation framewor
 - Internationalization support
 - Developer-focused features
 
-The documentation is continuously updated to reflect the latest x402 protocol developments and Xpay platform features.
+The documentation is continuously updated to reflect the latest x402 protocol developments and {xpay✦} platform features.
 
 ---
 

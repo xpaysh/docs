@@ -32,8 +32,8 @@ export const websiteSchema: WebSite = {
   '@type': 'WebSite',
   '@id': 'https://docs.xpay.sh/#website',
   url: 'https://docs.xpay.sh',
-  name: 'Xpay Documentation',
-  description: 'World-class developer documentation for the x402 protocol and Xpay products',
+  name: '{xpay✦} Documentation',
+  description: 'World-class developer documentation for the x402 protocol and {xpay✦} products',
   publisher: {
     '@id': 'https://docs.xpay.sh/#organization'
   },
@@ -50,7 +50,7 @@ export const websiteSchema: WebSite = {
 export const softwareApplicationSchema: SoftwareApplication = {
   '@type': 'SoftwareApplication',
   '@id': 'https://docs.xpay.sh/#software',
-  name: 'Xpay Platform',
+  name: '{xpay✦} Platform',
   alternateName: '{xpay✦}',
   description: 'Comprehensive platform for AI agent payment control, API monetization, and transaction monitoring',
   url: 'https://www.xpay.sh',

@@ -10,7 +10,7 @@ const config = {
   },
   docsRepositoryBase: 'https://github.com/xpaysh/xpay-docs',
   footer: {
-    text: 'Xpay Documentation',
+    text: '{xpay✦} Documentation',
   },
   useNextSeoProps() {
     return {
@@ -20,7 +20,7 @@ const config = {
   head: (
     <>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta property="og:title" content="Xpay Documentation" />
+      <meta property="og:title" content="{xpay✦} Documentation" />
       <meta property="og:description" content="AI Agent Payment Control Platform - x402 protocol infrastructure for autonomous payments" />
     </>
   ),

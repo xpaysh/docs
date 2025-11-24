@@ -18,10 +18,64 @@ import { ThemeProvider } from './_components/ThemeProvider'
 import './styles/index.css'
 
 export const metadata = {
-  title: 'Xpay Documentation',
-  description: 'Developer documentation for x402 protocol and Xpay products',
+  title: '{xpay✦} Documentation',
+  description: 'Developer documentation for x402 protocol and {xpay✦} products',
   metadataBase: new URL('https://docs.xpay.sh'),
-  icons: '/favicon.ico',
+  icons: [
+    {
+      rel: 'icon',
+      type: 'image/x-icon',
+      sizes: '48x48 16x16',
+      url: '/favicon/favicon.ico',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '16x16',
+      url: '/favicon/favicon-16x16.png',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '32x32',
+      url: '/favicon/favicon-32x32.png',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '48x48',
+      url: '/favicon/favicon-48x48.png',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '96x96',
+      url: '/favicon/favicon-96x96.png',
+    },
+    {
+      rel: 'apple-touch-icon',
+      sizes: '180x180',
+      url: '/favicon/apple-touch-icon.png',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '192x192',
+      url: '/favicon/android-chrome-192x192.png',
+    },
+    {
+      rel: 'icon',
+      type: 'image/png',
+      sizes: '512x512',
+      url: '/favicon/android-chrome-512x512.png',
+    },
+  ],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    title: '{xpay✦} Docs',
+    capable: true,
+    statusBarStyle: 'default',
+  },
 } satisfies Metadata
 
 const repo = 'https://github.com/xpaysh/docs'
@@ -44,14 +98,14 @@ const CustomNavbar = async ({ lang }: I18nLangAsyncProps) => {
     <Navbar
       logo={(
         <div className="flex items-center gap-2">
-          <img 
-            src="/logo-full.png" 
-            alt="{xpay✦}" 
+          <img
+            src="/logo-full.png"
+            alt="{xpay✦}"
             className="h-8 dark:hidden"
           />
-          <img 
-            src="/logo-full-accent.png" 
-            alt="{xpay✦}" 
+          <img
+            src="/logo-full-accent.png"
+            alt="{xpay✦}"
             className="h-8 hidden dark:block"
           />
         </div>
@@ -84,8 +138,8 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
   const dictionary = await getDictionary(lang)
   const pageMap = await getPageMap(lang)
 
-  const title = 'Xpay Documentation'
-  const description = 'Developer documentation for x402 protocol and Xpay products'
+  const title = '{xpay✦} Documentation'
+  const description = 'Developer documentation for x402 protocol and {xpay✦} products'
 
   const { t } = await useServerLocale(lang)
 
@@ -126,7 +180,7 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
             }
             lastUpdated={(
               <LastUpdated>
-                { t('lastUpdated') }
+                {t('lastUpdated')}
               </LastUpdated>
             )}
             editLink={null}
@@ -162,35 +216,35 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
       </body>
       {isProd && <Analytics />}
 
-        {/* PostHog Analytics */}
-        {isProd && (
-          <Script id="posthog-init" strategy="afterInteractive">
-            {`
+      {/* PostHog Analytics */}
+      {isProd && (
+        <Script id="posthog-init" strategy="afterInteractive">
+          {`
               !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
               posthog.init('${process.env.NEXT_PUBLIC_POSTHOG_KEY}', {
                 api_host: '${process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'}'
               });
             `}
-          </Script>
-        )}
-        
-        {/* Google Analytics */}
-        {isProd && (
-          <>
-            <Script
-              src="https://www.googletagmanager.com/gtag/js?id=G-5G03XLKQ06"
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
+        </Script>
+      )}
+
+      {/* Google Analytics */}
+      {isProd && (
+        <>
+          <Script
+            src="https://www.googletagmanager.com/gtag/js?id=G-5G03XLKQ06"
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics" strategy="afterInteractive">
+            {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'G-5G03XLKQ06');
               `}
-            </Script>
-          </>
-        )}
+          </Script>
+        </>
+      )}
     </html>
   )
 }
