@@ -1,0 +1,193 @@
+# Universal Pay-to-Run Webhook
+
+Accept payments for any workflow using standard webhooks. Works with any automation platform - no custom integrations required.
+
+## Overview
+
+Universal Pay-to-Run lets you monetize any automation workflow by:
+1. Creating a checkout in your \{xpay\} dashboard
+2. Getting a payment form URL and webhook secret
+3. Adding a webhook node in your automation platform
+4. Receiving signed webhook calls after each payment
+
+### Supported Platforms
+
+| Platform | Integration Type | Setup Time |
+|----------|-----------------|------------|
+| n8n (self-hosted) | Custom node or webhook | ~2 min |
+| n8n Cloud | Standard webhook | ~5 min |
+| Activepieces | Webhook trigger | ~5 min |
+| Make (Integromat) | Custom webhook | ~5 min |
+| Zapier | Webhooks by Zapier | ~5 min |
+
+---
+
+## Quick Start
+
+### Step 1: Create a Checkout
+
+Visit your [xpay dashboard](https://app.xpay.sh/dashboard/pay-to-run) and create a new checkout:
+
+1. Set your product name and price
+2. Enter your automation platform's webhook URL
+3. Configure form fields to collect customer information
+4. Save and copy your checkout URL
+
+### Step 2: Set Up Your Webhook
+
+In your automation platform, create a webhook trigger node that listens for POST requests. Configure it with:
+- **Method**: POST
+- **Content-Type**: application/json
+- **Response**: Return 200 OK on success
+
+### Step 3: Share Your Checkout URL
+
+Share your checkout URL (`https://run.xpay.sh/p/your-checkout-id`) with customers. After payment:
+1. Customer pays on your checkout page
+2. xpay sends a signed webhook to your callback URL
+3. Your workflow executes with the payment data
+
+---
+
+## Webhook Payload
+
+When a payment is received, xpay sends a POST request to your callback URL with this payload:
+
+```json
+{
+  "payment": {
+    "tx_hash": "0x1234...abcd",
+    "payer_address": "0xabc...123",
+    "amount": 5.00,
+    "currency": "USDC",
+    "network": "base",
+    "timestamp": 1703001234567
+  },
+  "customer_input": {
+    "email": "customer@example.com",
+    "name": "John Doe"
+  },
+  "metadata": {
+    "checkout_id": "chk_abc123",
+    "test_mode": false,
+    "triggered_at": "2024-12-20T10:00:00Z"
+  }
+}
+```
+
+### Headers
+
+Each webhook request includes these headers for verification:
+
+| Header | Description |
+|--------|-------------|
+| `X-xPay-Signature` | HMAC-SHA256 signature of the payload |
+| `X-xPay-Timestamp` | Unix timestamp when the webhook was sent |
+| `X-xPay-Test` | "true" if this is a test webhook |
+
+---
+
+## Signature Verification
+
+For production use, verify webhook signatures to ensure requests come from xpay.
+
+### Node.js Example
+
+```javascript
+const crypto = require('crypto');
+
+function verifyWebhookSignature(payload, signature, timestamp, secret) {
+  const data = `${timestamp}.${JSON.stringify(payload)}`;
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(data)
+    .digest('hex');
+
+  return crypto.timingSafeEquals(
+    Buffer.from(signature),
+    Buffer.from(`sha256=${expectedSignature}`)
+  );
+}
+
+// In your webhook handler:
+const isValid = verifyWebhookSignature(
+  req.body,
+  req.headers['x-xpay-signature'],
+  req.headers['x-xpay-timestamp'],
+  process.env.WEBHOOK_SECRET
+);
+
+if (!isValid) {
+  return res.status(401).send('Invalid signature');
+}
+```
+
+### Python Example
+
+```python
+import hmac
+import hashlib
+import json
+
+def verify_webhook_signature(payload, signature, timestamp, secret):
+    data = f"{timestamp}.{json.dumps(payload, separators=(',', ':'))}"
+    expected = hmac.new(
+        secret.encode(),
+        data.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    return hmac.compare_digest(signature, f"sha256={expected}")
+```
+
+---
+
+## Test Mode
+
+Use test mode to verify your integration without real payments:
+
+1. Enable "Test Mode" when creating your checkout
+2. Click "Test Webhook" in the checkout details page
+3. Your workflow receives a test payload with `test_mode: true`
+
+Test webhooks have the same structure as production webhooks, with mock transaction data.
+
+---
+
+## Platform-Specific Guides
+
+- [n8n (self-hosted)](/integrations/n8n) - Use the custom xpay node
+- [n8n Cloud](/integrations/n8n-cloud) - Standard webhook approach
+- [Activepieces](/integrations/activepieces) - Webhook trigger guide
+
+---
+
+## Troubleshooting
+
+### Webhook not received
+
+1. Check your callback URL is publicly accessible
+2. Verify your server returns 200 OK
+3. Check for firewall or rate limiting issues
+4. Use the "Test Webhook" button to debug
+
+### Invalid signature
+
+1. Ensure you're using the correct webhook secret
+2. Check that you're parsing the JSON correctly
+3. Verify timestamp is being read as a string
+
+### Timeout errors
+
+xpay waits up to 10 seconds for a response. If your workflow takes longer:
+1. Return 200 OK immediately
+2. Process the workflow asynchronously
+3. Use a message queue if needed
+
+---
+
+## Next Steps
+
+- [Create your first checkout](https://app.xpay.sh/dashboard/pay-to-run/new)
+- [Learn about the x402 protocol](/x402-protocol)
+- [View webhook examples on GitHub](https://github.com/xpaysh/xpay-examples)

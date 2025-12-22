@@ -1,0 +1,209 @@
+# n8n Cloud Integration
+
+Use xpay Pay-to-Run with n8n Cloud using standard webhook nodes - no custom installation required.
+
+## Why This Approach?
+
+n8n Cloud doesn't allow unverified community nodes. Instead of the custom xpay node, you'll use:
+- **Webhook node** as a trigger
+- **HTTP Request node** for optional signature verification
+- Standard n8n nodes for your workflow logic
+
+This approach works identically to the custom node - you just configure it manually.
+
+---
+
+## Setup Guide
+
+### Step 1: Create Your Webhook in n8n Cloud
+
+1. Open n8n Cloud and create a new workflow
+2. Add a **Webhook** node as the trigger
+3. Configure it:
+   - **HTTP Method**: POST
+   - **Path**: Choose a unique path (e.g., `/xpay-payment`)
+   - **Response Mode**: Respond immediately
+
+4. Activate the workflow to get your webhook URL
+
+### Step 2: Create a Checkout in xpay
+
+1. Go to [xpay Dashboard](https://app.xpay.sh/dashboard/pay-to-run/new)
+2. Create a new checkout:
+   - **Product Name**: Your workflow name
+   - **Price**: Amount in USDC
+   - **Callback URL**: Your n8n webhook URL from Step 1
+   - **Network**: Base Sepolia (testnet) or Base (mainnet)
+   - **Recipient Wallet**: Your Ethereum wallet address
+
+3. Add any custom fields to collect customer information
+4. Save and copy your checkout URL
+
+### Step 3: Connect Your Workflow
+
+After the Webhook node, add your workflow logic. The incoming data includes:
+
+```json
+{
+  "body": {
+    "payment": {
+      "tx_hash": "0x...",
+      "payer_address": "0x...",
+      "amount": 5.00,
+      "currency": "USDC"
+    },
+    "customer_input": {
+      "email": "customer@example.com"
+    }
+  }
+}
+```
+
+Access payment data: `{{ $json.body.payment.amount }}`
+Access customer input: `{{ $json.body.customer_input.email }}`
+
+---
+
+## Complete Workflow Example
+
+Here's a typical Pay-to-Run workflow:
+
+```
+[Webhook] → [IF: Verify Payment] → [Your Logic] → [Respond]
+```
+
+### Example: AI Content Generator
+
+1. **Webhook** - Receives payment confirmation
+2. **OpenAI** - Generates content based on customer input
+3. **Send Email** - Delivers result to customer
+4. **Respond to Webhook** - Returns success
+
+---
+
+## Import Ready-to-Use Template
+
+Copy this JSON into n8n Cloud (Ctrl/Cmd + V in the canvas):
+
+```json
+{
+  "name": "xpay Pay-to-Run Template",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "xpay-payment",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\": true, \"message\": \"Payment processed\"}",
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]]
+    }
+  }
+}
+```
+
+---
+
+## Optional: Signature Verification
+
+For production workflows, verify the webhook signature:
+
+1. Add a **Code** node after Webhook
+2. Use this code:
+
+```javascript
+const crypto = require('crypto');
+
+// Get headers and body
+const signature = $input.first().headers['x-xpay-signature'];
+const timestamp = $input.first().headers['x-xpay-timestamp'];
+const body = $input.first().json.body;
+
+// Your webhook secret from xpay dashboard
+const secret = 'YOUR_WEBHOOK_SECRET';
+
+// Verify signature
+const data = `${timestamp}.${JSON.stringify(body)}`;
+const expected = 'sha256=' + crypto
+  .createHmac('sha256', secret)
+  .update(data)
+  .digest('hex');
+
+if (signature !== expected) {
+  throw new Error('Invalid webhook signature');
+}
+
+return $input.all();
+```
+
+3. Store your webhook secret in n8n credentials for security
+
+---
+
+## Test Your Integration
+
+1. In xpay dashboard, go to your checkout details
+2. Click **Test Webhook**
+3. Check your n8n workflow execution history
+4. Verify the data flows correctly
+
+---
+
+## Comparison: Custom Node vs Webhook
+
+| Feature | Custom Node (Self-hosted) | Webhook (Cloud) |
+|---------|--------------------------|-----------------|
+| Setup time | ~2 min | ~5 min |
+| Signature verification | Automatic | Manual (optional) |
+| Checkout URL display | In node | In dashboard |
+| Test mode | Built-in | Dashboard button |
+| Works on n8n Cloud | No | Yes |
+
+---
+
+## Troubleshooting
+
+### Workflow not triggering
+
+1. Ensure workflow is **active** (toggle in top-right)
+2. Check webhook URL is correct in xpay dashboard
+3. Verify webhook path matches exactly
+
+### Missing data
+
+1. Check Response Mode is set correctly
+2. Verify you're accessing `$json.body` not just `$json`
+3. Look at execution log for full payload
+
+### Timeout errors
+
+n8n Cloud webhooks have a 30-second timeout. For long-running workflows:
+1. Return response immediately with Respond to Webhook node
+2. Continue processing after response
+
+---
+
+## Next Steps
+
+- [Create your checkout](https://app.xpay.sh/dashboard/pay-to-run/new)
+- [Universal Webhook Guide](/integrations/universal-webhook) - Deep dive on webhook format
+- [n8n Self-hosted Guide](/integrations/n8n) - Using the custom node

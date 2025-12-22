@@ -1,0 +1,197 @@
+# Activepieces Integration
+
+Monetize your Activepieces flows using xpay Pay-to-Run webhooks.
+
+## Overview
+
+Activepieces is an open-source automation platform with a clean interface and powerful capabilities. With xpay, you can:
+- Accept USDC payments before flow execution
+- Collect customer information via custom forms
+- Trigger any Activepieces flow after payment
+
+---
+
+## Setup Guide
+
+### Step 1: Create a Webhook Trigger in Activepieces
+
+1. Open Activepieces and create a new flow
+2. Add the **Webhook** trigger
+3. Select **Catch Request**
+4. Copy the generated webhook URL
+
+### Step 2: Create an xpay Checkout
+
+1. Go to [xpay Dashboard](https://app.xpay.sh/dashboard/pay-to-run/new)
+2. Create a new checkout:
+   - **Product Name**: Your flow's name
+   - **Price**: Amount to charge in USDC
+   - **Callback URL**: Your Activepieces webhook URL
+   - **Network**: Base Sepolia (testnet) or Base (mainnet)
+   - **Recipient Wallet**: Your wallet address
+
+3. Add form fields for customer information
+4. Save your checkout
+
+### Step 3: Build Your Flow
+
+After the webhook trigger, add your flow logic. The webhook data structure:
+
+```json
+{
+  "payment": {
+    "tx_hash": "0x...",
+    "payer_address": "0x...",
+    "amount": 5.00,
+    "currency": "USDC",
+    "network": "base",
+    "timestamp": 1703001234567
+  },
+  "customer_input": {
+    "email": "customer@example.com",
+    "prompt": "Generate a blog post about AI"
+  },
+  "metadata": {
+    "checkout_id": "chk_abc123",
+    "test_mode": false
+  }
+}
+```
+
+---
+
+## Example Flow: AI Content Generator
+
+```
+[Webhook] → [OpenAI: Generate] → [Gmail: Send Result]
+```
+
+1. **Webhook Trigger**
+   - Receives payment confirmation from xpay
+
+2. **OpenAI Piece**
+   - Use `{{trigger.body.customer_input.prompt}}` as input
+   - Generate content based on customer request
+
+3. **Gmail Piece**
+   - Send to `{{trigger.body.customer_input.email}}`
+   - Include generated content
+
+---
+
+## Signature Verification (Optional)
+
+For production flows, verify webhook authenticity:
+
+1. Add a **Code** piece after the webhook trigger
+2. Use this JavaScript:
+
+```javascript
+const crypto = require('crypto');
+
+const signature = inputs.headers['x-xpay-signature'];
+const timestamp = inputs.headers['x-xpay-timestamp'];
+const body = inputs.body;
+const secret = 'YOUR_WEBHOOK_SECRET'; // Store in flow variables
+
+const data = `${timestamp}.${JSON.stringify(body)}`;
+const expected = 'sha256=' + crypto
+  .createHmac('sha256', secret)
+  .update(data)
+  .digest('hex');
+
+if (signature !== expected) {
+  throw new Error('Invalid signature');
+}
+
+return body;
+```
+
+---
+
+## Flow Templates
+
+### Template 1: PDF Generator
+
+Accept payment, generate PDF from customer data, email result.
+
+```
+[Webhook] → [Code: Build PDF] → [Gmail: Send PDF]
+```
+
+### Template 2: API Access
+
+Accept payment, provide temporary API key or access token.
+
+```
+[Webhook] → [Code: Generate Key] → [HTTP: Store in DB] → [Gmail: Send Key]
+```
+
+### Template 3: Data Analysis
+
+Accept payment with file upload, analyze data, return insights.
+
+```
+[Webhook] → [OpenAI: Analyze] → [Airtable: Store] → [Gmail: Send Report]
+```
+
+---
+
+## Testing Your Flow
+
+1. In Activepieces, use **Test Flow** to simulate webhooks
+2. In xpay dashboard, click **Test Webhook** to send a test payload
+3. Verify data flows through each piece correctly
+
+---
+
+## Tips for Production
+
+### Handle Errors Gracefully
+
+Add error handling pieces:
+- **Branch** piece for conditional logic
+- **HTTP Request** piece to notify xpay of failures
+
+### Use Variables
+
+Store sensitive data like webhook secrets in Activepieces variables:
+1. Go to Project Settings → Variables
+2. Add `XPAY_WEBHOOK_SECRET`
+3. Reference as `{{vars.XPAY_WEBHOOK_SECRET}}`
+
+### Logging
+
+Add logging for debugging:
+1. Use **HTTP Request** piece to send to a logging service
+2. Or use **Airtable/Google Sheets** to log transactions
+
+---
+
+## Troubleshooting
+
+### Flow not triggering
+
+1. Ensure flow is **published and enabled**
+2. Check webhook URL matches exactly in xpay dashboard
+3. Look at Activepieces run history for errors
+
+### Missing data
+
+1. Check you're accessing `trigger.body` not just `trigger`
+2. Verify customer form fields match expected names
+3. Use **Code** piece to inspect raw payload
+
+### Timeouts
+
+Activepieces webhooks timeout after 30 seconds. For long flows:
+1. Return response immediately
+2. Use **Delay** piece with retries for external services
+
+---
+
+## Next Steps
+
+- [Create your checkout](https://app.xpay.sh/dashboard/pay-to-run/new)
+- [Universal Webhook Guide](/integrations/universal-webhook)
+- [Activepieces Documentation](https://www.activepieces.com/docs)

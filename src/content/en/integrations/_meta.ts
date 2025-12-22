@@ -1,4 +1,7 @@
 export default {
   "index": "Overview",
-  "n8n": "n8n"
+  "universal-webhook": "Universal Webhook",
+  "n8n": "n8n (Self-hosted)",
+  "n8n-cloud": "n8n Cloud",
+  "activepieces": "Activepieces"
 }
