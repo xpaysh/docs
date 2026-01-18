@@ -1,0 +1,205 @@
+# Get RDA Details
+
+Retrieve detailed information about a specific RDA.
+
+## Endpoint
+
+```
+GET /rda/{identifier}
+```
+
+## Authentication
+
+Optional. Required for draft RDAs.
+
+## Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `identifier` | string | RDA slug or ID |
+
+## Response
+
+### Success (200)
+
+```json
+{
+  "rda": {
+    "id": "rda_abc123",
+    "slug": "research-report-generator",
+    "name": "AI Research Report Generator",
+    "description": "Generate comprehensive research reports on any topic",
+    "longDescription": "This RDA uses advanced AI models to generate detailed...",
+    "type": "prompt",
+    "status": "published",
+    "verified": true,
+    "featured": false,
+    "trending": true,
+    "tags": ["research", "reports", "analysis", "content"],
+    "coverImage": "https://...",
+    "codeSnippet": "const report = await generate({topic, depth})",
+    "codeLanguage": "javascript",
+    "version": "1.2.0",
+
+    "schema": {
+      "inputs": [
+        {
+          "name": "topic",
+          "label": "Research Topic",
+          "type": "text",
+          "required": true,
+          "placeholder": "Enter topic to research..."
+        },
+        {
+          "name": "depth",
+          "label": "Research Depth",
+          "type": "select",
+          "required": true,
+          "options": ["quick", "standard", "comprehensive"]
+        },
+        {
+          "name": "focusAreas",
+          "label": "Focus Areas",
+          "type": "text",
+          "required": false,
+          "placeholder": "pricing, competitors, trends"
+        }
+      ],
+      "outputs": {
+        "type": "markdown"
+      }
+    },
+
+    "promptConfig": {
+      "allowedModels": [
+        {"id": "gpt-4o-mini", "name": "GPT-4o Mini", "tier": "fast"},
+        {"id": "gpt-4o", "name": "GPT-4o", "tier": "balanced"},
+        {"id": "claude-3.5-sonnet", "name": "Claude 3.5 Sonnet", "tier": "balanced"}
+      ],
+      "defaultModelId": "gpt-4o",
+      "sourcePrice": 4.99,
+      "examples": [
+        {
+          "id": "ex_001",
+          "title": "SaaS Pricing Analysis",
+          "inputs": {"topic": "SaaS Pricing", "depth": "comprehensive"},
+          "output": "## Research Report\n\n### Executive Summary...",
+          "model": "gpt-4o"
+        }
+      ]
+    },
+
+    "pricing": {
+      "model": "per-run",
+      "amount": 0.05,
+      "currency": "USDC",
+      "estimatedCost": "~$0.02-0.10 per run"
+    },
+
+    "stats": {
+      "totalRuns": 1250,
+      "totalRevenue": 62.50,
+      "averageRating": 4.8,
+      "totalRatings": 89,
+      "successRate": 98.5,
+      "averageLatency": 3500
+    },
+
+    "ownerId": "user_xyz",
+    "ownerName": "ResearchLabs",
+    "ownerVerified": true,
+
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-15T00:00:00Z",
+    "publishedAt": "2024-01-02T00:00:00Z"
+  }
+}
+```
+
+### Response Fields
+
+See full schema in the response above. Key fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `schema` | object | Input/output schema definition |
+| `promptConfig` | object | Prompt-specific config (for prompts) |
+| `agentConfig` | object | Agent-specific config (for agents) |
+| `toolConfig` | object | Tool-specific config (for tools) |
+| `stats` | object | Usage statistics |
+| `examples` | array | Pre-generated examples |
+
+## Error Responses
+
+### Not Found (404)
+
+```json
+{
+  "error": "RDA not found: invalid-slug"
+}
+```
+
+### Unauthorized (401)
+
+For draft RDAs without authentication:
+
+```json
+{
+  "error": "Authentication required"
+}
+```
+
+## Examples
+
+### Get by Slug
+
+```bash
+curl https://api.xpay.sh/hub/rda/research-report-generator
+```
+
+### Get by ID
+
+```bash
+curl https://api.xpay.sh/hub/rda/rda_abc123
+```
+
+### With Authentication (for drafts)
+
+```bash
+curl https://api.xpay.sh/hub/rda/my-draft-rda \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+## Code Examples
+
+### JavaScript
+
+```javascript
+const response = await fetch('https://api.xpay.sh/hub/rda/research-report-generator')
+const { rda } = await response.json()
+
+console.log(rda.name)
+console.log(rda.description)
+console.log(rda.schema.inputs)
+```
+
+### Python
+
+```python
+import requests
+
+response = requests.get('https://api.xpay.sh/hub/rda/research-report-generator')
+rda = response.json()['rda']
+
+print(rda['name'])
+print(rda['description'])
+for input_field in rda['schema']['inputs']:
+    print(f"  {input_field['name']}: {input_field['type']}")
+```
+
+## Notes
+
+- Public RDAs are accessible without authentication
+- Draft RDAs require owner authentication
+- Stats are updated in real-time
+- Examples are included for prompt RDAs

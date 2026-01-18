@@ -1,0 +1,134 @@
+# API Reference
+
+xpay✦ Hub provides a REST API for running RDAs and managing your account.
+
+## Base URL
+
+```
+https://api.xpay.sh/hub
+```
+
+## Authentication
+
+All authenticated endpoints require a Bearer token:
+
+```bash
+Authorization: Bearer YOUR_TOKEN
+```
+
+Tokens are obtained through Privy authentication.
+
+## Endpoints Overview
+
+### RDA Execution
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/run` | Execute an RDA |
+
+### RDA Catalog
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/rdas` | List all RDAs |
+| GET | `/rda/{slug}` | Get RDA details |
+| POST | `/rda` | Create an RDA |
+
+### Wallet
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/wallet/balance` | Check balance |
+| POST | `/wallet/deposit` | Record deposit |
+
+## Response Format
+
+All responses follow this structure:
+
+### Success
+
+```json
+{
+  "data": { ... },
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+### Error
+
+```json
+{
+  "error": "Error message",
+  "code": "ERROR_CODE",
+  "details": { ... }
+}
+```
+
+## HTTP Status Codes
+
+| Code | Description |
+|------|-------------|
+| 200 | Success |
+| 201 | Created |
+| 400 | Bad request |
+| 401 | Unauthorized |
+| 402 | Payment required |
+| 403 | Forbidden |
+| 404 | Not found |
+| 500 | Server error |
+
+## Rate Limits
+
+- **Authenticated**: 100 requests/minute
+- **Unauthenticated**: 10 requests/minute
+
+Rate limit headers:
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1704067200
+```
+
+## SDKs
+
+### JavaScript/TypeScript
+
+```bash
+npm install @xpaysh/hub-sdk
+```
+
+```typescript
+import { XpayHub } from '@xpaysh/hub-sdk'
+
+const client = new XpayHub({
+  apiKey: 'YOUR_API_KEY'
+})
+
+const result = await client.run('research-report-generator', {
+  topic: 'SaaS Pricing',
+  depth: 'comprehensive'
+})
+```
+
+### Python
+
+Coming soon.
+
+## Webhooks
+
+For long-running operations, configure webhook callbacks:
+
+```json
+{
+  "webhookUrl": "https://your-server.com/callback",
+  "webhookEvents": ["run.completed", "run.failed"]
+}
+```
+
+## Getting Help
+
+- [Discord](https://discord.gg/xpay) - Community support
+- [GitHub Issues](https://github.com/xpaysh/xpay-docs/issues) - Bug reports
+- [Email](mailto:support@xpay.sh) - Direct support

@@ -1,0 +1,209 @@
+# Pricing Models
+
+How RDA pricing works on xpay✦ Hub.
+
+## Available Models
+
+### Per-Run
+
+Fixed price for each execution.
+
+```typescript
+{
+  model: 'per-run',
+  amount: 0.05,
+  currency: 'USDC'
+}
+```
+
+**How it works:**
+- Same price every time
+- Regardless of input/output size
+- Most predictable for users
+
+**Best for:**
+- Most RDAs
+- Predictable costs
+- Simple pricing
+
+### Per-Token
+
+Price based on input and output tokens.
+
+```typescript
+{
+  model: 'per-token',
+  amount: 0.001, // per 1K tokens
+  currency: 'USDC'
+}
+```
+
+**How it works:**
+- Cost scales with content length
+- Input + output tokens counted
+- More variable pricing
+
+**Best for:**
+- Variable-length outputs
+- Pass-through pricing
+- Usage-based billing
+
+### Per-Second
+
+Price based on execution time.
+
+```typescript
+{
+  model: 'per-second',
+  amount: 0.01,
+  currency: 'USDC'
+}
+```
+
+**How it works:**
+- Cost scales with time
+- Execution time measured
+- Good for compute tasks
+
+**Best for:**
+- Long-running agents
+- Compute-intensive tasks
+- Time-based resources
+
+### Free
+
+No cost to execute.
+
+```typescript
+{
+  model: 'free',
+  amount: 0,
+  currency: 'USDC'
+}
+```
+
+**How it works:**
+- No charge to users
+- Creator pays any API costs
+- Good for building audience
+
+**Best for:**
+- Demo/trial RDAs
+- Open source tools
+- Building reputation
+
+## Prompt Tier Pricing
+
+For prompt RDAs, pricing is tied to model tiers:
+
+| Tier | Price | Creator Revenue |
+|------|-------|-----------------|
+| Fast | $0.02 | ~$0.018 |
+| Balanced | $0.05 | ~$0.045 |
+| Reasoning | $0.10 | ~$0.09 |
+
+Users select tier when running.
+
+## Source Code Pricing
+
+Prompt RDAs can sell their template:
+
+```typescript
+{
+  promptSourcePrice: 4.99 // One-time purchase
+}
+```
+
+**What users get:**
+- Full prompt template
+- System prompt (if any)
+- License to use
+
+**Typical prices:**
+- Simple: $1.99 - $4.99
+- Medium: $4.99 - $9.99
+- Complex: $9.99 - $24.99
+
+## Revenue Split
+
+### Standard Split
+
+- **Creator**: ~90%
+- **Platform**: ~10%
+
+### Payout
+
+- Instant settlement
+- USDC to your wallet
+- No minimums
+
+## Pricing Strategy
+
+### Competitive Analysis
+
+1. Find similar RDAs
+2. Note their pricing
+3. Consider your value-add
+4. Price accordingly
+
+### Value-Based Pricing
+
+Consider what users would pay elsewhere:
+
+- Time saved
+- Quality delivered
+- Alternative costs
+
+### Cost-Plus Pricing
+
+Calculate your costs:
+
+- API costs (LLM, external)
+- Infrastructure
+- Time investment
+- Add margin
+
+## Dynamic Pricing
+
+### Estimators
+
+Show estimated cost before running:
+
+```typescript
+{
+  estimatedCost: '~$0.05 per run'
+}
+```
+
+### Variable Costs
+
+For token-based pricing, estimate range:
+
+```typescript
+{
+  minCost: 0.01,
+  maxCost: 0.50,
+  typicalCost: 0.05
+}
+```
+
+## User Experience
+
+### Cost Display
+
+Users see:
+- Price per run (or estimate)
+- Their balance
+- Cost breakdown
+
+### Cost Protection
+
+- Spending limits
+- Confirmation dialogs
+- Failed run refunds
+
+## Related Topics
+
+- [Model Tiers](/hub/topics/model-tiers)
+- [Understanding Pricing](/hub/guides/users/understanding-pricing)
+- [Pricing Your RDA](/hub/guides/creators/pricing-your-rda)

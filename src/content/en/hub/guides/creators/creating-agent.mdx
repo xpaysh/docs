@@ -1,0 +1,252 @@
+# Creating an Agent
+
+This guide walks you through creating an Agent RDA for workflow automation.
+
+## What is an Agent RDA?
+
+An Agent RDA orchestrates multi-step workflows by communicating with external services via webhooks.
+
+## Prerequisites
+
+- xpay✦ Hub account
+- Webhook endpoint (n8n, Make, custom server)
+- Understanding of HTTP APIs
+
+## Step 1: Set Up Your Webhook
+
+### Using n8n
+
+1. Create a new workflow in n8n
+2. Add a **Webhook** trigger node
+3. Configure to receive POST requests
+4. Copy the webhook URL
+
+### Webhook Payload
+
+Your endpoint will receive:
+
+```json
+{
+  "run_id": "run_abc123",
+  "rda_id": "rda_xyz",
+  "rda_slug": "my-agent",
+  "rda_name": "My Agent",
+  "inputs": {
+    "field1": "value1",
+    "field2": "value2"
+  },
+  "user_id": "did:privy:xxx",
+  "timestamp": 1702000000000
+}
+```
+
+### Response Format
+
+Return results as JSON:
+
+```json
+{
+  "status": "success",
+  "output": "Your result here",
+  "metadata": {
+    "steps_completed": 3,
+    "duration_ms": 5000
+  }
+}
+```
+
+## Step 2: Define Your RDA
+
+### Basic Information
+
+- **Name** - Clear, action-oriented title
+- **Slug** - URL-friendly identifier
+- **Description** - What the agent does
+- **Tags** - Relevant keywords for discovery
+
+## Step 3: Configure Agent Settings
+
+```typescript
+const agentConfig = {
+  webhookUrl: 'https://your-n8n.com/webhook/xxx',
+  webhookMethod: 'POST',
+  webhookHeaders: {
+    'X-Custom-Header': 'value'
+  },
+  timeoutSeconds: 60,
+  maxRetries: 3,
+  retryDelayMs: 1000,
+  // For async/long-running tasks
+  pollUrl: 'https://your-n8n.com/poll/xxx',
+  pollIntervalMs: 2000
+}
+```
+
+### Configuration Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `webhookUrl` | Endpoint to call | Required |
+| `webhookMethod` | HTTP method | POST |
+| `webhookHeaders` | Custom headers | {} |
+| `timeoutSeconds` | Max execution time | 60 |
+| `maxRetries` | Retry attempts | 3 |
+| `pollUrl` | Async polling endpoint | null |
+| `pollIntervalMs` | Polling interval | 2000 |
+
+## Step 4: Design Input Schema
+
+Define inputs users will provide:
+
+```typescript
+const inputSchema = [
+  {
+    name: 'targetCompany',
+    label: 'Company Name',
+    type: 'text',
+    required: true,
+    placeholder: 'Acme Inc'
+  },
+  {
+    name: 'action',
+    label: 'Action',
+    type: 'select',
+    required: true,
+    options: ['research', 'analyze', 'report']
+  },
+  {
+    name: 'depth',
+    label: 'Research Depth',
+    type: 'number',
+    required: false,
+    default: 3
+  }
+]
+```
+
+## Step 5: Handle Async Workflows
+
+For long-running tasks, use polling:
+
+### Initial Response
+
+```json
+{
+  "status": "pending",
+  "job_id": "job_123",
+  "message": "Processing started"
+}
+```
+
+### Poll Endpoint
+
+The poll endpoint is called until completion:
+
+```json
+{
+  "status": "completed",
+  "output": "Final results here",
+  "metadata": {...}
+}
+```
+
+### Status Values
+
+- `pending` - Still processing
+- `completed` - Success, results ready
+- `failed` - Error occurred
+
+## Step 6: Set Pricing
+
+Agents use custom pricing:
+
+```typescript
+const pricing = {
+  model: 'per-run',
+  amount: 0.10, // $0.10 per run
+  currency: 'USDC'
+}
+```
+
+Consider:
+- Your infrastructure costs
+- External API costs
+- Execution time
+- Value delivered
+
+## Step 7: Testing
+
+Before publishing:
+
+1. **Test the webhook** - Ensure it handles all inputs
+2. **Test timeouts** - Verify behavior on slow responses
+3. **Test errors** - Handle failures gracefully
+4. **Test polling** - For async workflows
+
+## Example: Lead Research Agent
+
+```typescript
+// RDA Configuration
+{
+  name: 'Lead Research Agent',
+  slug: 'lead-research',
+  type: 'agent',
+
+  agentConfig: {
+    webhookUrl: 'https://n8n.example.com/webhook/lead-research',
+    webhookMethod: 'POST',
+    timeoutSeconds: 120,
+    pollUrl: 'https://n8n.example.com/poll/lead-research',
+    pollIntervalMs: 5000
+  },
+
+  inputSchema: [
+    {
+      name: 'companyName',
+      label: 'Company to Research',
+      type: 'text',
+      required: true
+    },
+    {
+      name: 'researchDepth',
+      label: 'Research Depth',
+      type: 'select',
+      options: ['quick', 'standard', 'deep'],
+      default: 'standard'
+    }
+  ],
+
+  pricing: {
+    model: 'per-run',
+    amount: 0.15,
+    currency: 'USDC'
+  }
+}
+```
+
+## Best Practices
+
+### Webhook Design
+
+- Use authentication headers
+- Validate incoming payloads
+- Return meaningful errors
+- Log all requests
+
+### Error Handling
+
+- Return clear error messages
+- Include error codes
+- Provide recovery suggestions
+
+### Performance
+
+- Optimize for speed
+- Use async for long tasks
+- Set appropriate timeouts
+
+## Next Steps
+
+- [Creating a Tool](/hub/guides/creators/creating-tool)
+- [Input/Output Schemas](/hub/guides/creators/input-output-schemas)
+- [Pricing Your RDA](/hub/guides/creators/pricing-your-rda)

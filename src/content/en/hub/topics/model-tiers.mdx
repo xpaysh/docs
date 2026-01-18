@@ -1,0 +1,178 @@
+# Model Tiers
+
+Understanding AI model tiers for prompt RDAs.
+
+## Tier Overview
+
+| Tier | Price | Speed | Quality | Best For |
+|------|-------|-------|---------|----------|
+| **Fast** | $0.02 | 2-5s | Good | Simple tasks |
+| **Balanced** | $0.05 | 5-15s | Great | Most use cases |
+| **Reasoning** | $0.10 | 15-60s | Best | Complex analysis |
+
+## Fast Tier
+
+### Price: $0.02 per run
+
+### Models
+
+- **GPT-4o Mini** (OpenAI)
+- **Claude 3 Haiku** (Anthropic)
+- **Llama 3.1 8B** (Meta)
+- **Gemini Flash** (Google)
+- **Mistral 7B** (Mistral)
+
+### Characteristics
+
+- Fastest response times
+- Lower cost
+- Good for straightforward tasks
+- May miss nuance
+
+### Best For
+
+- Simple formatting
+- Quick translations
+- Basic summaries
+- Short answers
+- High-volume tasks
+
+### Example Use
+
+"Generate 5 creative name ideas for a SaaS product"
+
+## Balanced Tier
+
+### Price: $0.05 per run
+
+### Models
+
+- **GPT-4o** (OpenAI)
+- **Claude 3.5 Sonnet** (Anthropic)
+- **Llama 3.1 70B** (Meta)
+- **Gemini Pro** (Google)
+- **Mistral Large** (Mistral)
+
+### Characteristics
+
+- Optimal quality/speed balance
+- Handles complex tasks well
+- Good reasoning ability
+- Most popular choice
+
+### Best For
+
+- Code analysis
+- Content generation
+- Technical writing
+- Strategy development
+- Most general tasks
+
+### Example Use
+
+"Analyze this company's competitive positioning and provide strategic recommendations"
+
+## Reasoning Tier
+
+### Price: $0.10 per run
+
+### Models
+
+- **o1-preview** (OpenAI)
+- **o1-mini** (OpenAI)
+- **Claude 3 Opus** (Anthropic)
+- **Llama 3.1 405B** (Meta)
+- **DeepSeek V3** (DeepSeek)
+
+### Characteristics
+
+- Highest quality output
+- Deep reasoning ability
+- Handles complex analysis
+- Longer response times
+
+### Best For
+
+- Complex problem solving
+- Multi-step reasoning
+- Deep technical analysis
+- Critical decisions
+- Research tasks
+
+### Example Use
+
+"Perform a comprehensive market analysis examining competitive dynamics, pricing strategies, and growth opportunities in the B2B SaaS space"
+
+## Choosing a Tier
+
+### Consider Your Task
+
+| Task Type | Recommended |
+|-----------|-------------|
+| Quick lookup | Fast |
+| Formatting | Fast |
+| General content | Balanced |
+| Code review | Balanced |
+| Complex analysis | Reasoning |
+| Critical decisions | Reasoning |
+
+### Consider Your Budget
+
+- **High volume** → Fast tier saves money
+- **Quality critical** → Reasoning worth the cost
+- **General use** → Balanced is best value
+
+### Consider Speed
+
+- **Need results fast** → Fast tier
+- **Can wait for quality** → Reasoning tier
+- **Balance needed** → Balanced tier
+
+## Model Comparison
+
+### OpenAI Models
+
+| Model | Tier | Strengths |
+|-------|------|-----------|
+| GPT-4o Mini | Fast | Speed, efficiency |
+| GPT-4o | Balanced | Versatility, quality |
+| o1-preview | Reasoning | Deep reasoning, accuracy |
+
+### Anthropic Models
+
+| Model | Tier | Strengths |
+|-------|------|-----------|
+| Claude 3 Haiku | Fast | Speed, safety |
+| Claude 3.5 Sonnet | Balanced | Writing, analysis |
+| Claude 3 Opus | Reasoning | Complex tasks |
+
+### Meta Models
+
+| Model | Tier | Strengths |
+|-------|------|-----------|
+| Llama 3.1 8B | Fast | Efficiency |
+| Llama 3.1 70B | Balanced | Open source quality |
+| Llama 3.1 405B | Reasoning | Frontier open source |
+
+## For Creators
+
+When building prompt RDAs:
+
+### Default Model
+
+Choose a sensible default:
+- Simple prompts → Fast as default
+- Most prompts → Balanced as default
+- Complex prompts → Reasoning as default
+
+### Allowed Models
+
+Select which tiers to allow:
+- Enable all three for flexibility
+- Restrict if prompt needs specific tier
+- Consider your target audience
+
+## Related Topics
+
+- [Pricing Models](/hub/topics/pricing-models)
+- [Understanding Pricing](/hub/guides/users/understanding-pricing)

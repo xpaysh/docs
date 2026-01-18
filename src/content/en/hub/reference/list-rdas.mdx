@@ -1,0 +1,169 @@
+# List RDAs
+
+Retrieve a list of RDAs from the marketplace.
+
+## Endpoint
+
+```
+GET /rdas
+```
+
+## Authentication
+
+Optional. Some filters may require authentication.
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `type` | string | - | Filter by type (prompt, agent, tool) |
+| `status` | string | published | Filter by status |
+| `verified` | boolean | - | Only verified RDAs |
+| `featured` | boolean | - | Only featured RDAs |
+| `trending` | boolean | - | Only trending RDAs |
+| `ownerId` | string | - | Filter by creator |
+| `search` | string | - | Search in name/description |
+| `limit` | number | 20 | Results per page (max 100) |
+| `offset` | number | 0 | Pagination offset |
+
+## Response
+
+### Success (200)
+
+```json
+{
+  "rdas": [
+    {
+      "id": "rda_abc123",
+      "slug": "research-report-generator",
+      "name": "AI Research Report Generator",
+      "description": "Generate comprehensive research reports on any topic",
+      "type": "prompt",
+      "status": "published",
+      "verified": true,
+      "featured": false,
+      "trending": true,
+      "coverImage": "https://...",
+      "pricing": {
+        "model": "per-run",
+        "amount": 0.05,
+        "currency": "USDC"
+      },
+      "stats": {
+        "totalRuns": 1250,
+        "averageRating": 4.8,
+        "successRate": 98.5
+      },
+      "ownerId": "user_xyz",
+      "ownerName": "ResearchLabs",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-15T00:00:00Z"
+    }
+  ],
+  "total": 150,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `rdas` | array | List of RDA objects |
+| `total` | number | Total matching RDAs |
+| `limit` | number | Results per page |
+| `offset` | number | Current offset |
+
+### RDA Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier |
+| `slug` | string | URL-friendly identifier |
+| `name` | string | Display name |
+| `description` | string | Short description |
+| `type` | string | prompt, agent, or tool |
+| `status` | string | draft, published, archived |
+| `verified` | boolean | Verification status |
+| `featured` | boolean | Featured status |
+| `trending` | boolean | Trending status |
+| `pricing` | object | Pricing configuration |
+| `stats` | object | Usage statistics |
+| `ownerId` | string | Creator ID |
+| `ownerName` | string | Creator display name |
+
+## Examples
+
+### List All Published RDAs
+
+```bash
+curl https://api.xpay.sh/hub/rdas
+```
+
+### Filter by Type
+
+```bash
+curl "https://api.xpay.sh/hub/rdas?type=prompt"
+```
+
+### Search
+
+```bash
+curl "https://api.xpay.sh/hub/rdas?search=research%20report"
+```
+
+### Pagination
+
+```bash
+curl "https://api.xpay.sh/hub/rdas?limit=10&offset=20"
+```
+
+### Multiple Filters
+
+```bash
+curl "https://api.xpay.sh/hub/rdas?type=agent&verified=true"
+```
+
+## Code Examples
+
+### JavaScript
+
+```javascript
+const params = new URLSearchParams({
+  type: 'prompt',
+  limit: '20'
+})
+
+const response = await fetch(`https://api.xpay.sh/hub/rdas?${params}`)
+const { rdas, total } = await response.json()
+
+console.log(`Found ${total} RDAs`)
+rdas.forEach(r => console.log(r.name))
+```
+
+### Python
+
+```python
+import requests
+
+response = requests.get(
+    'https://api.xpay.sh/hub/rdas',
+    params={
+        'type': 'prompt',
+        'limit': 20
+    }
+)
+
+data = response.json()
+print(f"Found {data['total']} RDAs")
+for rda in data['rdas']:
+    print(rda['name'])
+```
+
+## Notes
+
+- Public endpoint, no auth required
+- Results sorted by relevance/trending by default
+- Maximum 100 results per request
+- Use pagination for large result sets

@@ -1,0 +1,152 @@
+# Understanding Pricing
+
+Learn how pricing works on xpay✦ Hub.
+
+## Pricing Models
+
+RDAs can use different pricing models:
+
+### Per-Run Pricing
+
+Fixed cost per execution:
+
+- **Example**: $0.05 per run
+- **Predictable** - Know the cost upfront
+- **Most common** - Used by most RDAs
+
+### Per-Token Pricing
+
+Cost based on input/output tokens:
+
+- **Example**: $0.001 per 1K tokens
+- **Variable** - Depends on content length
+- **Used by**: Some prompt RDAs
+
+### Per-Second Pricing
+
+Cost based on execution time:
+
+- **Example**: $0.01 per second
+- **Variable** - Depends on task complexity
+- **Used by**: Some agent RDAs
+
+### Free
+
+No cost to run:
+
+- **Good for**: Trying new RDAs
+- **May have**: Usage limits
+- **Creators use for**: Building reputation
+
+## Model Tiers (Prompts)
+
+Prompt RDAs offer different model tiers:
+
+| Tier | Price | Models | Best For |
+|------|-------|--------|----------|
+| **Fast** | $0.02/run | GPT-4o Mini, Claude Haiku, Llama 8B | Simple tasks |
+| **Balanced** | $0.05/run | GPT-4o, Claude 3.5 Sonnet, Llama 70B | Most use cases |
+| **Reasoning** | $0.10/run | o1-preview, Claude Opus, Llama 405B | Complex analysis |
+
+## Cost Estimation
+
+### Before Running
+
+The RDA page shows:
+
+- **Base price** - Minimum cost
+- **Model tier prices** - For prompts
+- **Estimated cost** - Based on typical usage
+
+### During Execution
+
+The Run button shows:
+
+- **Exact cost** - What will be charged
+- **Your balance** - Current available funds
+
+## What Affects Cost
+
+### For Prompts
+
+- **Model tier** - Fast < Balanced < Reasoning
+- **Input length** - More text = higher cost
+- **Output length** - Longer responses cost more
+
+### For Agents
+
+- **Base price** - Set by creator
+- **Execution time** - For time-based pricing
+- **External API costs** - Built into price
+
+### For Tools
+
+- **Base price** - Set by creator
+- **API rate limits** - May affect pricing
+- **Data volume** - For data-heavy tools
+
+## Payment Flow
+
+### How It Works
+
+1. **Lock** - Amount is locked when you click Run
+2. **Execute** - RDA runs
+3. **Success** - Locked amount is deducted
+4. **Failure** - Locked amount is released back
+
+### Failed Runs
+
+If an RDA fails:
+
+- You're NOT charged
+- Locked funds are released
+- Balance is restored immediately
+
+## Creator Earnings
+
+When you run an RDA:
+
+- **Creator receives** - Majority of the payment
+- **Platform fee** - Small percentage
+- **Instant settlement** - Creators paid immediately
+
+## Tips for Cost Optimization
+
+### Choose the Right Tier
+
+- Use **Fast** for simple tasks
+- Use **Balanced** for most work
+- Save **Reasoning** for complex analysis
+
+### Test with Examples
+
+- Check Examples tab first
+- Understand expected costs
+- Start with simpler inputs
+
+### Monitor Spending
+
+- Set spending limits
+- Review transaction history
+- Track monthly spending
+
+## Comparing Costs
+
+### Traditional AI APIs
+
+| Service | Cost per 1K tokens |
+|---------|-------------------|
+| OpenAI GPT-4 | ~$0.03 |
+| Anthropic Claude | ~$0.015 |
+| Direct API | Variable |
+
+### xpay✦ Hub
+
+- **Bundled pricing** - No token counting
+- **Predictable costs** - Fixed per-run prices
+- **No API keys** - Use immediately
+
+## Next Steps
+
+- [Model Tiers Deep Dive](/hub/topics/model-tiers)
+- [Pricing Models Explained](/hub/topics/pricing-models)

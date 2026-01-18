@@ -1,0 +1,159 @@
+# Running Agents
+
+Agents are workflow orchestration RDAs that execute multi-step tasks.
+
+## How Agents Work
+
+1. You provide input parameters
+2. The agent sends data to a webhook endpoint
+3. External workflow (n8n, Make, etc.) executes
+4. Results are returned to you
+
+## Agent Features
+
+### Webhooks
+
+Agents communicate via HTTP webhooks:
+
+- **POST requests** - Send data to external services
+- **Custom headers** - Authentication and metadata
+- **Payload transformation** - Format inputs for the endpoint
+
+### Async Execution
+
+For long-running tasks:
+
+- **Polling** - Agent checks for completion periodically
+- **Timeouts** - Up to 180 seconds for complex workflows
+- **Retries** - Automatic retry on transient failures
+
+### Multi-Step Workflows
+
+Agents can orchestrate complex flows:
+
+- Sequential task execution
+- Parallel processing
+- Conditional logic
+- Data aggregation
+
+## Running an Agent
+
+### Step 1: Review Requirements
+
+Check the agent's input schema:
+
+- Required fields (marked with *)
+- Field types and formats
+- Example values
+
+### Step 2: Fill Inputs
+
+Complete the input form:
+
+- Text inputs for queries/parameters
+- Numbers for quantities/limits
+- URLs for target resources
+- File uploads if supported
+
+### Step 3: Execute
+
+Click **Run Agent**:
+
+1. Inputs are sent to the webhook
+2. Progress updates appear in console
+3. Final results are displayed
+
+### Step 4: Monitor Progress
+
+Watch the console for:
+
+- Status updates
+- Intermediate results
+- Final output
+
+## Agent Output
+
+### Console View
+
+Results displayed in terminal-style output:
+
+- Timestamped log entries
+- Status indicators (running, success, error)
+- Final result payload
+
+### Structured Data
+
+Agents often return JSON data:
+
+```json
+{
+  "status": "success",
+  "result": {
+    "analysis": "...",
+    "recommendations": ["..."]
+  },
+  "metadata": {
+    "duration": 15000,
+    "steps_completed": 3
+  }
+}
+```
+
+## Common Agent Use Cases
+
+### Lead Enrichment
+
+- Research company information
+- Find contact details
+- Aggregate from multiple sources
+
+### Data Pipelines
+
+- Aggregate data from multiple sources
+- Transform and clean data
+- Store results in databases
+
+### Content Publishing
+
+- Generate content with LLMs
+- Format for different platforms
+- Schedule and publish
+
+### Monitoring
+
+- Watch for specific events
+- Alert on conditions
+- Track activities
+
+## Timeout and Retries
+
+### Timeouts
+
+- Default: 60 seconds
+- Maximum: 180 seconds
+- Shown in RDA details
+
+### Retries
+
+- Automatic retry on network errors
+- Configurable retry count
+- Exponential backoff
+
+## Error Handling
+
+### Common Errors
+
+- **Timeout**: Workflow took too long
+- **Webhook Error**: External service unavailable
+- **Invalid Input**: Data format incorrect
+
+### What to Do
+
+1. Check your inputs are valid
+2. Try running again (transient errors)
+3. Contact the creator for persistent issues
+
+## Next Steps
+
+- [Running Tools](/hub/guides/users/running-tools)
+- [Managing Your Wallet](/hub/guides/users/managing-wallet)

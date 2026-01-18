@@ -1,0 +1,208 @@
+# RDA Types
+
+Deep dive into the three types of Runnable Digital Assets.
+
+## Overview
+
+| Type | Description | Use Case | Pricing |
+|------|-------------|----------|---------|
+| **Prompts** | LLM-based generation | Text analysis, content creation | Model tiers |
+| **Agents** | Workflow orchestration | Automation, multi-step tasks | Custom |
+| **Tools** | API proxies | Data access, integrations | Custom |
+
+## Prompts
+
+### What They Are
+
+Prompts use large language models to generate text based on:
+- A prompt template
+- User-provided inputs
+- Selected model tier
+
+### How They Work
+
+```
+User Input → Prompt Template → LLM → Output
+```
+
+1. User fills input form
+2. Inputs are injected into template
+3. Template sent to LLM
+4. Response returned to user
+
+### Key Features
+
+- **Model selection** - Choose AI model tier
+- **Template variables** - Dynamic input injection
+- **Examples** - Pre-generated output samples
+- **Source purchase** - Buy the prompt template
+
+### Best For
+
+- Text generation and analysis
+- Creative content
+- Technical documentation
+- Planning and strategy
+
+## Agents
+
+### What They Are
+
+Agents orchestrate workflows by communicating with external services via webhooks.
+
+### How They Work
+
+```
+User Input → Webhook → External Service → Result
+```
+
+1. User provides inputs
+2. Agent calls webhook endpoint
+3. External service processes (n8n, Make, etc.)
+4. Result returned to user
+
+### Key Features
+
+- **Webhook integration** - Connect to any HTTP endpoint
+- **Async support** - Long-running task polling
+- **Multi-step** - Chain complex workflows
+- **Retries** - Automatic failure handling
+
+### Best For
+
+- Automation workflows
+- Multi-step processes
+- External service orchestration
+- Scheduled tasks
+
+## Tools
+
+### What They Are
+
+Tools wrap external APIs with payment handling and user-friendly inputs.
+
+### How They Work
+
+```
+User Input → Transform → API Call → Transform → Output
+```
+
+1. User provides inputs
+2. Request is transformed
+3. External API is called
+4. Response is transformed
+5. Result returned to user
+
+### Key Features
+
+- **API wrapping** - Any HTTP API
+- **Authentication** - Secure credential handling
+- **Transformation** - Request/response formatting
+- **Rate limiting** - Usage control
+
+### Best For
+
+- Data access
+- External service integration
+- API aggregation
+- Service proxying
+
+## Comparison
+
+### Execution Model
+
+| Aspect | Prompts | Agents | Tools |
+|--------|---------|--------|-------|
+| **Engine** | LLM API | Webhook | HTTP API |
+| **Latency** | 2-60s | Variable | 1-10s |
+| **Output** | Text | Any | JSON/Text |
+| **Async** | No | Yes | No |
+
+### Creator Requirements
+
+| Aspect | Prompts | Agents | Tools |
+|--------|---------|--------|-------|
+| **Needs** | Prompt engineering | Webhook endpoint | API access |
+| **Complexity** | Low | Medium | Medium |
+| **Hosting** | None | External | None |
+| **Secrets** | None | Optional | API keys |
+
+### Pricing
+
+| Aspect | Prompts | Agents | Tools |
+|--------|---------|--------|-------|
+| **Model** | Tier-based | Custom | Custom |
+| **Range** | $0.02-0.10 | $0.05+ | $0.01+ |
+| **Source** | Optional sale | N/A | N/A |
+
+## Choosing a Type
+
+### Create a Prompt When:
+
+- Your capability is text-based
+- Output comes from AI generation
+- You want tiered pricing
+- No external services needed
+
+### Create an Agent When:
+
+- You need multi-step workflows
+- Tasks are long-running
+- External services are involved
+- Complex orchestration needed
+
+### Create a Tool When:
+
+- Wrapping an existing API
+- Data access is the goal
+- Simple request/response
+- Authentication needed
+
+## Technical Details
+
+### Prompt Internals
+
+```typescript
+interface PromptConfig {
+  promptTemplate: string
+  systemPrompt?: string
+  allowedModels: ModelOption[]
+  defaultModelId: string
+  sourcePrice?: number
+  examples?: Example[]
+}
+```
+
+### Agent Internals
+
+```typescript
+interface AgentConfig {
+  webhookUrl: string
+  webhookMethod: 'GET' | 'POST'
+  webhookHeaders?: Record<string, string>
+  timeoutSeconds: number
+  maxRetries: number
+  pollUrl?: string
+  pollIntervalMs?: number
+}
+```
+
+### Tool Internals
+
+```typescript
+interface ToolConfig {
+  apiEndpoint: string
+  apiMethod: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  apiHeaders?: Record<string, string>
+  authType: 'none' | 'api_key' | 'bearer' | 'basic'
+  authConfig?: Record<string, string>
+  requestTransform?: string
+  responseTransform?: string
+  rateLimitPerMinute?: number
+}
+```
+
+## Related Topics
+
+- [Model Tiers](/hub/topics/model-tiers)
+- [Pricing Models](/hub/topics/pricing-models)

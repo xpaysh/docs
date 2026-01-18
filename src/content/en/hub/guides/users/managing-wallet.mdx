@@ -1,0 +1,136 @@
+# Managing Your Wallet
+
+Your xpay✦ wallet holds USDC for running RDAs.
+
+## Wallet Overview
+
+Access your wallet at [Account > Wallet](https://hub.xpay.sh/account/wallet).
+
+### Wallet Information
+
+- **Address** - Your Base network wallet address
+- **Balance** - Total USDC in your wallet
+- **Available** - Amount available for spending
+- **Locked** - Amount in pending transactions
+
+## Depositing Funds
+
+### From External Wallet
+
+1. Copy your xpay✦ wallet address
+2. Send USDC on Base network to this address
+3. Transaction confirms in ~2 seconds
+
+### Supported Methods
+
+- **MetaMask** - Send directly
+- **Coinbase Wallet** - Send directly
+- **Exchange** - Withdraw to Base network
+- **Bridge** - Bridge from other networks
+
+## Withdrawing Funds
+
+### To External Wallet
+
+1. Go to Wallet page
+2. Click **Withdraw**
+3. Enter destination address
+4. Enter amount
+5. Confirm transaction
+
+### Fees
+
+- Network gas fees apply
+- No platform withdrawal fee
+
+## Spending Controls
+
+### Global Allowance
+
+Set a maximum spending limit:
+
+- **Default** - $10 initial allowance
+- **Adjustable** - Change anytime
+- **Per-session** - Resets on login
+
+### Per-Transaction Limit
+
+Set maximum cost per RDA run:
+
+- Prevents expensive accidents
+- Configurable by you
+- Applies to all RDA types
+
+## Transaction History
+
+View all transactions at [Account > History](https://hub.xpay.sh/account/history).
+
+### Transaction Types
+
+- **Deposit** - USDC added to wallet
+- **Withdrawal** - USDC sent out
+- **RDA Run** - Cost of running an RDA
+- **Refund** - Failed run refund
+
+### Details
+
+Each transaction shows:
+
+- Date and time
+- Transaction type
+- Amount
+- Status (pending, completed, failed)
+- Transaction hash (for on-chain txs)
+
+## Security
+
+### Non-Custodial
+
+xpay✦ is non-custodial:
+
+- You control your private keys
+- Funds are in your wallet, not ours
+- Export keys via Privy if needed
+
+### Best Practices
+
+- Don't share your wallet address publicly
+- Only deposit what you plan to spend
+- Monitor transaction history regularly
+
+## API Access
+
+### Check Balance
+
+```bash
+curl -X GET https://api.xpay.sh/hub/wallet/balance \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Record Deposit
+
+```bash
+curl -X POST https://api.xpay.sh/hub/wallet/deposit \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 10.00, "transactionHash": "0x..."}'
+```
+
+## Troubleshooting
+
+### Balance Not Updating
+
+- Wait for blockchain confirmation
+- Refresh the page
+- Check transaction on Base explorer
+
+### Transaction Failed
+
+- Check you have enough balance
+- Verify the destination address
+- Try again with lower amount
+
+## Next Steps
+
+- [Understanding Pricing](/hub/guides/users/understanding-pricing)
+- [Run Your First RDA](/hub/get-started/run-first-rda)

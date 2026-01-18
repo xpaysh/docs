@@ -1,0 +1,190 @@
+# Record Deposit
+
+Record a USDC deposit to your wallet.
+
+## Endpoint
+
+```
+POST /wallet/deposit
+```
+
+## Authentication
+
+Required. Bearer token in Authorization header.
+
+## Request
+
+### Headers
+
+```
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+```
+
+### Body
+
+```json
+{
+  "amount": 50.00,
+  "transactionHash": "0xabc123..."
+}
+```
+
+### Parameters
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `amount` | number | Yes | USDC amount deposited |
+| `transactionHash` | string | No | On-chain transaction hash |
+
+## Response
+
+### Success (200)
+
+```json
+{
+  "deposited": true,
+  "amount": 50.00,
+  "transactionHash": "0xabc123...",
+  "newBalance": 150.50
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `deposited` | boolean | Whether deposit was recorded |
+| `amount` | number | Amount deposited |
+| `transactionHash` | string | Transaction hash (if provided) |
+| `newBalance` | number | Updated wallet balance |
+
+## Error Responses
+
+### Invalid Amount (400)
+
+```json
+{
+  "error": "Invalid amount",
+  "details": {
+    "amount": "Must be greater than 0"
+  }
+}
+```
+
+### Unauthorized (401)
+
+```json
+{
+  "error": "Authentication required"
+}
+```
+
+### Duplicate Transaction (409)
+
+```json
+{
+  "error": "Transaction already recorded",
+  "transactionHash": "0xabc123..."
+}
+```
+
+## Examples
+
+### Basic Deposit
+
+```bash
+curl -X POST https://api.xpay.sh/hub/wallet/deposit \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 50.00
+  }'
+```
+
+### With Transaction Hash
+
+```bash
+curl -X POST https://api.xpay.sh/hub/wallet/deposit \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 50.00,
+    "transactionHash": "0xabc123def456..."
+  }'
+```
+
+## Code Examples
+
+### JavaScript
+
+```javascript
+const response = await fetch('https://api.xpay.sh/hub/wallet/deposit', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    amount: 50.00,
+    transactionHash: txHash
+  })
+})
+
+const result = await response.json()
+console.log(`New balance: $${result.newBalance}`)
+```
+
+### Python
+
+```python
+import requests
+
+response = requests.post(
+    'https://api.xpay.sh/hub/wallet/deposit',
+    headers={
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'amount': 50.00,
+        'transactionHash': tx_hash
+    }
+)
+
+result = response.json()
+print(f"New balance: ${result['newBalance']}")
+```
+
+## How Deposits Work
+
+### 1. Send USDC
+
+Send USDC on Base network to your xpay✦ wallet address.
+
+### 2. Get Transaction Hash
+
+Copy the transaction hash from your wallet or block explorer.
+
+### 3. Record Deposit
+
+Call this endpoint to record the deposit and update your balance.
+
+### 4. Start Using
+
+Your balance is now available for running RDAs.
+
+## Auto-Detection
+
+In some cases, deposits are auto-detected:
+- Via blockchain monitoring
+- Through Privy wallet events
+
+Manual recording is optional but recommended for immediate balance updates.
+
+## Notes
+
+- Deposits must be USDC on Base network
+- Transaction hash helps prevent duplicates
+- Balance updates immediately after recording
+- Check balance with GET /wallet/balance

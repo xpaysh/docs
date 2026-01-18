@@ -1,0 +1,246 @@
+# Create an RDA
+
+Create a new RDA in the marketplace.
+
+## Endpoint
+
+```
+POST /rda
+```
+
+## Authentication
+
+Required. Bearer token in Authorization header.
+
+## Request
+
+### Headers
+
+```
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+```
+
+### Body
+
+```json
+{
+  "slug": "my-new-rda",
+  "type": "prompt",
+  "name": "My New RDA",
+  "description": "A short description of what this RDA does",
+  "longDescription": "A longer, more detailed description...",
+  "tags": ["tag1", "tag2"],
+  "coverImage": "https://...",
+  "codeSnippet": "const result = await run(input)",
+  "codeLanguage": "javascript",
+
+  "inputSchema": [
+    {
+      "name": "fieldName",
+      "label": "Field Label",
+      "type": "text",
+      "required": true,
+      "placeholder": "Enter value..."
+    }
+  ],
+
+  "outputSchema": {
+    "type": "markdown"
+  },
+
+  "promptConfig": {
+    "promptTemplate": "Your prompt template with {{variables}}",
+    "systemPrompt": "Optional system prompt",
+    "allowedModels": ["gpt-4o", "claude-3.5-sonnet"],
+    "defaultModelId": "gpt-4o",
+    "sourcePrice": 4.99,
+    "examples": []
+  }
+}
+```
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `slug` | string | Unique URL-friendly identifier |
+| `type` | string | prompt, agent, or tool |
+| `name` | string | Display name |
+| `description` | string | Short description |
+| `inputSchema` | array | Input field definitions |
+
+### Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `longDescription` | string | Detailed description |
+| `tags` | array | Discovery tags |
+| `coverImage` | string | Cover image URL |
+| `codeSnippet` | string | Example code |
+| `codeLanguage` | string | Code language |
+| `outputSchema` | object | Output format definition |
+
+### Type-Specific Config
+
+#### For Prompts
+
+```json
+{
+  "promptConfig": {
+    "promptTemplate": "Template with {{variables}}",
+    "systemPrompt": "System context",
+    "allowedModels": ["gpt-4o", "claude-3.5-sonnet"],
+    "defaultModelId": "gpt-4o",
+    "sourcePrice": 4.99,
+    "examples": [
+      {
+        "title": "Example 1",
+        "inputs": {"field": "value"},
+        "output": "Example output",
+        "model": "gpt-4o"
+      }
+    ]
+  }
+}
+```
+
+#### For Agents
+
+```json
+{
+  "agentConfig": {
+    "webhookUrl": "https://your-webhook.com/endpoint",
+    "webhookMethod": "POST",
+    "webhookHeaders": {"X-Custom": "value"},
+    "timeoutSeconds": 60,
+    "maxRetries": 3,
+    "pollUrl": "https://your-webhook.com/poll",
+    "pollIntervalMs": 2000,
+    "basePrice": 0.10
+  }
+}
+```
+
+#### For Tools
+
+```json
+{
+  "toolConfig": {
+    "apiEndpoint": "https://api.example.com/endpoint",
+    "apiMethod": "GET",
+    "apiHeaders": {},
+    "authType": "api_key",
+    "authConfig": {"headerName": "X-API-Key"},
+    "requestTransform": "...",
+    "responseTransform": "...",
+    "rateLimitPerMinute": 60,
+    "basePrice": 0.05
+  }
+}
+```
+
+## Response
+
+### Success (201)
+
+```json
+{
+  "created": true,
+  "rda": {
+    "id": "rda_abc123",
+    "slug": "my-new-rda",
+    "type": "prompt",
+    "status": "draft"
+  }
+}
+```
+
+## Error Responses
+
+### Validation Error (400)
+
+```json
+{
+  "error": "Validation failed",
+  "details": {
+    "slug": "Slug already exists",
+    "inputSchema": "At least one input field required"
+  }
+}
+```
+
+### Unauthorized (401)
+
+```json
+{
+  "error": "Authentication required"
+}
+```
+
+## Examples
+
+### Create a Prompt RDA
+
+```bash
+curl -X POST https://api.xpay.sh/hub/rda \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "slug": "competitor-analyzer",
+    "type": "prompt",
+    "name": "Competitor Analyzer",
+    "description": "Analyze competitors for strategic insights",
+    "inputSchema": [
+      {
+        "name": "companyName",
+        "label": "Company Name",
+        "type": "text",
+        "required": true
+      }
+    ],
+    "promptConfig": {
+      "promptTemplate": "Analyze the company {{companyName}}...",
+      "allowedModels": ["gpt-4o", "claude-3.5-sonnet"],
+      "defaultModelId": "gpt-4o"
+    }
+  }'
+```
+
+## Code Examples
+
+### JavaScript
+
+```javascript
+const response = await fetch('https://api.xpay.sh/hub/rda', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    slug: 'my-rda',
+    type: 'prompt',
+    name: 'My RDA',
+    description: 'Description here',
+    inputSchema: [
+      { name: 'input1', label: 'Input 1', type: 'text', required: true }
+    ],
+    promptConfig: {
+      promptTemplate: 'Process: {{input1}}',
+      allowedModels: ['gpt-4o'],
+      defaultModelId: 'gpt-4o'
+    }
+  })
+})
+
+const { rda } = await response.json()
+console.log(`Created: ${rda.id}`)
+```
+
+## Notes
+
+- RDAs are created in draft status
+- Publish via the Creator Dashboard
+- Slugs must be unique
+- Input schema is validated

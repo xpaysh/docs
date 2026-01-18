@@ -1,0 +1,215 @@
+# Pricing Your RDA
+
+Set competitive pricing that reflects value and covers costs.
+
+## Pricing Models
+
+### Per-Run (Recommended)
+
+Fixed price per execution:
+
+```typescript
+pricing: {
+  model: 'per-run',
+  amount: 0.05,
+  currency: 'USDC'
+}
+```
+
+**Best for:**
+- Prompts with predictable costs
+- Tools with fixed API costs
+- Simple, consistent outputs
+
+### Per-Token
+
+Cost based on input/output tokens:
+
+```typescript
+pricing: {
+  model: 'per-token',
+  amount: 0.001, // per 1K tokens
+  currency: 'USDC'
+}
+```
+
+**Best for:**
+- Variable-length prompts
+- Cost pass-through scenarios
+
+### Per-Second
+
+Cost based on execution time:
+
+```typescript
+pricing: {
+  model: 'per-second',
+  amount: 0.01,
+  currency: 'USDC'
+}
+```
+
+**Best for:**
+- Long-running agents
+- Compute-intensive tasks
+
+### Free
+
+No cost to run:
+
+```typescript
+pricing: {
+  model: 'free',
+  amount: 0,
+  currency: 'USDC'
+}
+```
+
+**Best for:**
+- Building reputation
+- Open source tools
+- Limited functionality demos
+
+## Model Tiers (Prompts Only)
+
+For prompt RDAs, users choose model tiers:
+
+| Tier | Your Revenue | Platform Fee |
+|------|-------------|--------------|
+| Fast ($0.02) | ~$0.018 | ~$0.002 |
+| Balanced ($0.05) | ~$0.045 | ~$0.005 |
+| Reasoning ($0.10) | ~$0.09 | ~$0.01 |
+
+## Pricing Strategy
+
+### Cost Calculation
+
+Factor in your costs:
+
+1. **API Costs**
+   - LLM API costs (for prompts)
+   - External API costs (for tools)
+   - Infrastructure costs (for agents)
+
+2. **Time Investment**
+   - Development time
+   - Maintenance effort
+   - Support time
+
+3. **Value Delivered**
+   - Time saved for users
+   - Quality of output
+   - Uniqueness of capability
+
+### Market Research
+
+Check comparable RDAs:
+
+1. Browse similar RDAs in marketplace
+2. Note their pricing
+3. Consider your differentiators
+4. Price competitively
+
+### Starting Point
+
+Suggested starting prices:
+
+| Type | Simple | Medium | Complex |
+|------|--------|--------|---------|
+| Prompts | $0.02-0.05 | $0.05-0.10 | $0.10+ |
+| Agents | $0.05-0.10 | $0.10-0.25 | $0.25+ |
+| Tools | $0.01-0.03 | $0.03-0.10 | $0.10+ |
+
+## Source Code Pricing (Prompts)
+
+Offer your prompt template for sale:
+
+```typescript
+promptSourcePrice: 4.99 // One-time purchase
+```
+
+### Pricing Factors
+
+- **Uniqueness** - How novel is your approach?
+- **Complexity** - How much engineering went in?
+- **Value** - How much would users save?
+
+### Suggested Prices
+
+| Complexity | Price |
+|------------|-------|
+| Simple | $1.99 - $4.99 |
+| Medium | $4.99 - $9.99 |
+| Complex | $9.99 - $24.99 |
+
+## Revenue & Fees
+
+### Creator Revenue
+
+You receive the majority of each payment:
+
+- **Platform fee**: ~10%
+- **Your revenue**: ~90%
+
+### Payment Timing
+
+- **Instant settlement** - Paid immediately
+- **USDC** - To your connected wallet
+- **No minimums** - Withdraw anytime
+
+## Optimization Tips
+
+### Price Testing
+
+1. Start with competitive pricing
+2. Monitor run volume
+3. Adjust based on demand
+4. Consider A/B testing
+
+### Value Perception
+
+- **Quality descriptions** - Explain the value
+- **Good examples** - Show what users get
+- **Verified badge** - Build trust
+
+### Volume vs. Margin
+
+- **Lower price** - More runs, lower margin
+- **Higher price** - Fewer runs, higher margin
+- **Find balance** - Test and optimize
+
+## Analytics
+
+Track your RDA performance:
+
+- **Total runs** - How often it's used
+- **Revenue** - Earnings over time
+- **Rating** - User satisfaction
+- **Success rate** - Reliability
+
+Use analytics to inform pricing decisions.
+
+## Common Mistakes
+
+### Pricing Too High
+
+- Users won't try it
+- No reviews/ratings
+- Low discoverability
+
+### Pricing Too Low
+
+- Unsustainable
+- Perceived as low quality
+- Race to bottom
+
+### Ignoring Costs
+
+- API costs add up
+- Infrastructure costs
+- Support time
+
+## Next Steps
+
+- [Publishing & Verification](/hub/guides/creators/publishing-verification)
+- RDA Analytics (coming soon)

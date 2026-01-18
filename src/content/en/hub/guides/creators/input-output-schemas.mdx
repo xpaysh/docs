@@ -1,0 +1,305 @@
+# Input/Output Schemas
+
+Define what data your RDA accepts and returns.
+
+## Input Schema
+
+The input schema defines the form users fill out to run your RDA.
+
+### Schema Structure
+
+```typescript
+type InputSchema = {
+  name: string       // Field identifier (used in templates)
+  label: string      // Display label for users
+  type: FieldType    // Input type
+  required: boolean  // Is this field required?
+  description?: string   // Help text
+  placeholder?: string   // Placeholder text
+  default?: any      // Default value
+  options?: string[] // For select fields
+  min?: number       // For number fields
+  max?: number       // For number fields
+  pattern?: string   // Regex validation
+}[]
+```
+
+### Field Types
+
+#### text
+
+Single-line text input.
+
+```typescript
+{
+  name: 'companyDomain',
+  label: 'Company Domain',
+  type: 'text',
+  required: true,
+  placeholder: 'example.com',
+  pattern: '^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
+}
+```
+
+#### textarea
+
+Multi-line text input.
+
+```typescript
+{
+  name: 'description',
+  label: 'Project Description',
+  type: 'textarea',
+  required: true,
+  placeholder: 'Describe your project...'
+}
+```
+
+#### number
+
+Numeric input with optional range.
+
+```typescript
+{
+  name: 'limit',
+  label: 'Result Limit',
+  type: 'number',
+  required: true,
+  min: 1,
+  max: 100,
+  default: 10
+}
+```
+
+#### select
+
+Dropdown selection.
+
+```typescript
+{
+  name: 'depth',
+  label: 'Analysis Depth',
+  type: 'select',
+  required: true,
+  options: ['quick', 'standard', 'comprehensive'],
+  default: 'standard'
+}
+```
+
+#### checkbox
+
+Boolean toggle.
+
+```typescript
+{
+  name: 'includeMetadata',
+  label: 'Include Metadata',
+  type: 'checkbox',
+  required: false,
+  default: true
+}
+```
+
+#### url
+
+URL input with validation.
+
+```typescript
+{
+  name: 'apiEndpoint',
+  label: 'API Endpoint',
+  type: 'url',
+  required: true,
+  placeholder: 'https://api.example.com'
+}
+```
+
+#### file
+
+File upload (supported types vary).
+
+```typescript
+{
+  name: 'document',
+  label: 'Upload Document',
+  type: 'file',
+  required: false,
+  accept: '.pdf,.doc,.docx'
+}
+```
+
+## Output Schema
+
+Define the structure of your RDA's output.
+
+### Output Types
+
+```typescript
+type OutputSchema = {
+  type: 'markdown' | 'json' | 'text' | 'file'
+  schema?: JSONSchema  // For JSON type
+}
+```
+
+#### markdown
+
+Formatted text output (most common for prompts).
+
+```typescript
+{
+  type: 'markdown'
+}
+```
+
+#### json
+
+Structured data output.
+
+```typescript
+{
+  type: 'json',
+  schema: {
+    type: 'object',
+    properties: {
+      score: { type: 'number' },
+      issues: { type: 'array' },
+      recommendation: { type: 'string' }
+    }
+  }
+}
+```
+
+#### text
+
+Plain text output.
+
+```typescript
+{
+  type: 'text'
+}
+```
+
+## Validation
+
+### Built-in Validation
+
+Fields are validated automatically:
+
+- **Required** - Must have a value
+- **Type** - Must match field type
+- **Pattern** - Must match regex (if provided)
+- **Min/Max** - Must be within range
+
+### Custom Validation
+
+Add patterns for specific formats:
+
+```typescript
+// Domain
+pattern: '^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
+
+// UUID
+pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+// URL
+pattern: '^https?://.*'
+
+// Email
+pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
+```
+
+## Examples
+
+### Competitor Analysis
+
+```typescript
+const schema = {
+  inputs: [
+    {
+      name: 'companyName',
+      label: 'Company Name',
+      type: 'text',
+      required: true
+    },
+    {
+      name: 'industry',
+      label: 'Industry',
+      type: 'select',
+      required: true,
+      options: ['saas', 'fintech', 'ecommerce', 'healthcare']
+    },
+    {
+      name: 'depth',
+      label: 'Analysis Depth',
+      type: 'select',
+      required: true,
+      options: ['quick', 'standard', 'comprehensive'],
+      default: 'standard'
+    }
+  ],
+  outputs: {
+    type: 'markdown'
+  }
+}
+```
+
+### Data Lookup Tool
+
+```typescript
+const schema = {
+  inputs: [
+    {
+      name: 'query',
+      label: 'Search Query',
+      type: 'text',
+      required: true,
+      placeholder: 'Company name or domain...'
+    },
+    {
+      name: 'limit',
+      label: 'Result Limit',
+      type: 'number',
+      required: false,
+      default: 10,
+      min: 1,
+      max: 100
+    }
+  ],
+  outputs: {
+    type: 'json',
+    schema: {
+      type: 'object',
+      properties: {
+        results: { type: 'array' },
+        total: { type: 'number' }
+      }
+    }
+  }
+}
+```
+
+## Best Practices
+
+### Input Design
+
+- **Clear labels** - Users should understand immediately
+- **Helpful descriptions** - Explain what's expected
+- **Sensible defaults** - Reduce friction
+- **Appropriate types** - Use select for fixed options
+
+### Validation
+
+- **Required wisely** - Only require what's truly needed
+- **Validate formats** - Use patterns for specific data
+- **Show errors clearly** - Help users fix issues
+
+### Output
+
+- **Consistent format** - Same structure every run
+- **Useful metadata** - Include timestamps, versions
+- **Error details** - Clear error messages
+
+## Next Steps
+
+- [Pricing Your RDA](/hub/guides/creators/pricing-your-rda)
+- [Publishing & Verification](/hub/guides/creators/publishing-verification)

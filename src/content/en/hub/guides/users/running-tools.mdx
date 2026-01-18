@@ -1,0 +1,154 @@
+# Running Tools
+
+Tools are API proxy RDAs that wrap external services with payment handling.
+
+## How Tools Work
+
+1. You provide input parameters
+2. The tool calls an external API
+3. The response is transformed and returned
+4. Payment is handled automatically
+
+## Tool Features
+
+### API Wrapping
+
+Tools wrap existing APIs:
+
+- **HTTP methods** - GET, POST, PUT, DELETE
+- **Authentication** - API keys, Bearer tokens, Basic auth
+- **Headers** - Custom request headers
+
+### Request Transformation
+
+Inputs are transformed before sending:
+
+- Variable substitution
+- JSON formatting
+- Query parameter building
+
+### Response Transformation
+
+API responses are processed:
+
+- Extract relevant fields
+- Format output
+- Handle errors gracefully
+
+## Running a Tool
+
+### Step 1: Review the Schema
+
+Check what inputs the tool requires:
+
+- Endpoint-specific parameters
+- Required vs optional fields
+- Data format expectations
+
+### Step 2: Provide Inputs
+
+Fill in the input form:
+
+- **Query parameters** - For search/filter
+- **Resource identifiers** - For lookups
+- **Data payloads** - For POST requests
+
+### Step 3: Execute
+
+Click **Run Tool**:
+
+1. Request is built from your inputs
+2. Tool calls the external API
+3. Response is processed
+4. Results displayed in console
+
+## Tool Output
+
+### JSON Response
+
+Most tools return structured JSON:
+
+```json
+{
+  "data": {
+    "id": "...",
+    "results": [...],
+    "metadata": {...}
+  },
+  "metadata": {
+    "source": "api-provider",
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+### Formatted Display
+
+Tools may provide formatted views:
+
+- Tables for lists
+- Charts for data visualization
+- Markdown for text
+
+## Common Tool Categories
+
+### Data Lookup
+
+- Company information
+- Contact enrichment
+- Market data
+
+### Analytics
+
+- Social media metrics
+- Usage analytics
+- Engagement tracking
+
+### External Services
+
+- AI model inference
+- Document processing
+- Data aggregation
+
+### Integrations
+
+- CRM data access
+- Marketing platform APIs
+- Communication services
+
+## Rate Limits
+
+Tools may have rate limits:
+
+- **Per-minute limits** - Maximum calls per minute
+- **Daily limits** - Maximum calls per day
+- **Shown in details** - Check before running
+
+## Authentication
+
+Tools handle auth automatically:
+
+- **API Key** - Stored securely, injected in requests
+- **Bearer Token** - OAuth-style authentication
+- **Basic Auth** - Username/password
+
+You don't need to provide credentials - the tool creator configures these.
+
+## Error Responses
+
+### API Errors
+
+- **Rate Limited** - Too many requests
+- **Not Found** - Resource doesn't exist
+- **Unauthorized** - API credentials invalid
+
+### What to Do
+
+1. Check your inputs are valid
+2. Wait and retry for rate limits
+3. Try an alternative tool if persistent
+
+## Next Steps
+
+- [Managing Your Wallet](/hub/guides/users/managing-wallet)
+- [Understanding Pricing](/hub/guides/users/understanding-pricing)

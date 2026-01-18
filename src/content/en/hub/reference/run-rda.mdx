@@ -1,0 +1,221 @@
+# Run an RDA
+
+Execute an RDA and receive the output.
+
+## Endpoint
+
+```
+POST /run
+```
+
+## Authentication
+
+Required. Bearer token in Authorization header.
+
+## Request
+
+### Headers
+
+```
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+```
+
+### Body
+
+```json
+{
+  "rdaSlug": "research-report-generator",
+  "inputs": {
+    "topic": "Competitor Analysis",
+    "industry": "SaaS"
+  },
+  "modelId": "claude-3.5-sonnet"
+}
+```
+
+### Parameters
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `rdaSlug` | string | Yes | RDA identifier (slug or ID) |
+| `inputs` | object | Yes | Input values matching RDA schema |
+| `modelId` | string | No | Model ID for prompts (uses default if omitted) |
+
+## Response
+
+### Success (200)
+
+```json
+{
+  "success": true,
+  "runId": "run_abc123",
+  "output": "## Research Report\n\n### Executive Summary...",
+  "cost": 0.05,
+  "duration": 3500,
+  "modelId": "claude-3.5-sonnet",
+  "usage": {
+    "prompt_tokens": 150,
+    "completion_tokens": 250,
+    "total_tokens": 400
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether execution succeeded |
+| `runId` | string | Unique run identifier |
+| `output` | string | RDA output (format varies by type) |
+| `cost` | number | Amount charged (USDC) |
+| `duration` | number | Execution time (ms) |
+| `modelId` | string | Model used (for prompts) |
+| `usage` | object | Token usage (for prompts) |
+
+## Error Responses
+
+### Insufficient Balance (402)
+
+```json
+{
+  "error": "Insufficient balance",
+  "required": 0.05,
+  "available": 0.02,
+  "runId": "run_abc123"
+}
+```
+
+### RDA Not Found (404)
+
+```json
+{
+  "error": "RDA not found: invalid-slug",
+  "runId": "run_abc123"
+}
+```
+
+### Invalid Input (400)
+
+```json
+{
+  "error": "Invalid input",
+  "details": {
+    "topic": "Required field missing"
+  },
+  "runId": "run_abc123"
+}
+```
+
+### Execution Error (500)
+
+```json
+{
+  "error": "Execution failed: LLM timeout",
+  "runId": "run_abc123"
+}
+```
+
+## Examples
+
+### Run a Prompt RDA
+
+```bash
+curl -X POST https://api.xpay.sh/hub/run \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "rdaSlug": "competitor-analysis",
+    "inputs": {
+      "companyName": "Acme Corp",
+      "industry": "saas",
+      "depth": "detailed"
+    },
+    "modelId": "gpt-4o"
+  }'
+```
+
+### Run an Agent RDA
+
+```bash
+curl -X POST https://api.xpay.sh/hub/run \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "rdaSlug": "lead-research",
+    "inputs": {
+      "companyName": "Acme Corp",
+      "researchDepth": "standard"
+    }
+  }'
+```
+
+### Run a Tool RDA
+
+```bash
+curl -X POST https://api.xpay.sh/hub/run \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "rdaSlug": "company-lookup",
+    "inputs": {
+      "domain": "example.com"
+    }
+  }'
+```
+
+## Code Examples
+
+### JavaScript
+
+```javascript
+const response = await fetch('https://api.xpay.sh/hub/run', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    rdaSlug: 'research-report-generator',
+    inputs: {
+      topic: 'SaaS Pricing',
+      depth: 'comprehensive'
+    }
+  })
+})
+
+const result = await response.json()
+console.log(result.output)
+```
+
+### Python
+
+```python
+import requests
+
+response = requests.post(
+    'https://api.xpay.sh/hub/run',
+    headers={
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'rdaSlug': 'research-report-generator',
+        'inputs': {
+            'topic': 'SaaS Pricing',
+            'depth': 'comprehensive'
+        }
+    }
+)
+
+result = response.json()
+print(result['output'])
+```
+
+## Notes
+
+- Failed runs are not charged
+- Runs are logged in your history
+- Cost is deducted from available balance
+- Long-running agents may take up to 180 seconds

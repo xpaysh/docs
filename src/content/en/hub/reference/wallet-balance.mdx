@@ -1,0 +1,141 @@
+# Check Wallet Balance
+
+Get your current wallet balance and status.
+
+## Endpoint
+
+```
+GET /wallet/balance
+```
+
+## Authentication
+
+Required. Bearer token in Authorization header.
+
+## Request
+
+### Headers
+
+```
+Authorization: Bearer YOUR_TOKEN
+```
+
+## Response
+
+### Success (200)
+
+```json
+{
+  "wallet": {
+    "userId": "did:privy:abc123",
+    "walletAddress": "0x1234567890abcdef1234567890abcdef12345678",
+    "balance": 100.50,
+    "availableBalance": 95.00,
+    "pendingLocks": {
+      "run_abc123": 5.50
+    },
+    "totalLocked": 5.50,
+    "totalDeposited": 500.00,
+    "totalSpent": 399.50
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `userId` | string | Your Privy user ID |
+| `walletAddress` | string | Your Base wallet address |
+| `balance` | number | Total USDC balance |
+| `availableBalance` | number | Balance available for spending |
+| `pendingLocks` | object | Funds locked for pending runs |
+| `totalLocked` | number | Total locked amount |
+| `totalDeposited` | number | Lifetime deposits |
+| `totalSpent` | number | Lifetime spending |
+
+## Error Responses
+
+### Unauthorized (401)
+
+```json
+{
+  "error": "Authentication required"
+}
+```
+
+### Wallet Not Found (404)
+
+```json
+{
+  "error": "Wallet not found for user"
+}
+```
+
+## Examples
+
+### Basic Request
+
+```bash
+curl https://api.xpay.sh/hub/wallet/balance \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+## Code Examples
+
+### JavaScript
+
+```javascript
+const response = await fetch('https://api.xpay.sh/hub/wallet/balance', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+
+const { wallet } = await response.json()
+
+console.log(`Balance: $${wallet.balance}`)
+console.log(`Available: $${wallet.availableBalance}`)
+console.log(`Locked: $${wallet.totalLocked}`)
+```
+
+### Python
+
+```python
+import requests
+
+response = requests.get(
+    'https://api.xpay.sh/hub/wallet/balance',
+    headers={'Authorization': f'Bearer {token}'}
+)
+
+wallet = response.json()['wallet']
+
+print(f"Balance: ${wallet['balance']}")
+print(f"Available: ${wallet['availableBalance']}")
+```
+
+## Understanding Balance States
+
+### Balance vs Available
+
+- **Balance**: Total USDC in your wallet
+- **Available**: What you can spend right now
+- **Locked**: Reserved for pending operations
+
+### Locked Funds
+
+Funds are locked when:
+- An RDA run is in progress
+- Waiting for execution to complete
+
+Funds are released when:
+- Run completes successfully (deducted)
+- Run fails (returned to available)
+
+## Notes
+
+- Balance updates in real-time
+- Locked funds are temporary
+- Available balance is what you can spend
+- All amounts are in USDC

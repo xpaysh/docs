@@ -1,0 +1,225 @@
+# Creating a Prompt
+
+This guide walks you through creating your first Prompt RDA.
+
+## What is a Prompt RDA?
+
+A Prompt RDA uses large language models (LLMs) to generate text based on user inputs and a prompt template.
+
+## Prerequisites
+
+- xpay✦ Hub account
+- Understanding of prompt engineering
+- Ideas for valuable AI capabilities
+
+## Step 1: Define Your RDA
+
+### Basic Information
+
+- **Name** - Clear, descriptive title (e.g., "Competitor Analysis Report")
+- **Slug** - URL-friendly identifier (e.g., "competitor-analysis-report")
+- **Description** - What the RDA does (1-2 sentences)
+- **Long Description** - Detailed explanation (optional)
+
+### Tags
+
+Add relevant tags for discoverability:
+- Function tags: "analysis", "generation", "research", "planning"
+- Industry tags: "saas", "marketing", "sales"
+
+## Step 2: Design Your Input Schema
+
+Define what users need to provide:
+
+```typescript
+const inputSchema = [
+  {
+    name: 'companyName',
+    label: 'Company Name',
+    type: 'text',
+    required: true,
+    placeholder: 'Acme Corp',
+    description: 'The company to analyze'
+  },
+  {
+    name: 'analysisDepth',
+    label: 'Analysis Depth',
+    type: 'select',
+    required: true,
+    options: ['basic', 'detailed', 'comprehensive']
+  },
+  {
+    name: 'focusAreas',
+    label: 'Focus Areas',
+    type: 'text',
+    required: false,
+    placeholder: 'pricing, features, positioning'
+  }
+]
+```
+
+### Field Types
+
+| Type | Description | Use For |
+|------|-------------|---------|
+| `text` | Single-line input | Short text, names |
+| `textarea` | Multi-line input | Long text, descriptions |
+| `number` | Numeric input | Quantities, limits |
+| `select` | Dropdown | Fixed options |
+| `checkbox` | Boolean toggle | Flags, options |
+| `url` | URL input | Links, endpoints |
+| `file` | File upload | Documents |
+
+## Step 3: Write Your Prompt Template
+
+Create the prompt that will be sent to the LLM:
+
+```
+You are an expert business analyst.
+
+Analyze the company {{companyName}} with {{analysisDepth}} depth.
+
+{{#if focusAreas}}
+Focus particularly on: {{focusAreas}}
+{{/if}}
+
+Provide:
+1. Executive summary
+2. Product/service overview
+3. Competitive positioning
+4. Strengths and weaknesses
+5. Actionable recommendations
+
+Format your response in clear markdown with headers and bullet points.
+```
+
+### Template Syntax
+
+- `{{variable}}` - Insert variable value
+- `{{#if var}}...{{/if}}` - Conditional sections
+- `{{#each items}}...{{/each}}` - Loop over arrays
+
+### System Prompt (Optional)
+
+Add a system prompt for consistent behavior:
+
+```
+You are a business analyst with deep experience in market research, competitive analysis, and strategic consulting.
+```
+
+## Step 4: Configure Models
+
+Select which models users can choose from:
+
+```typescript
+const allowedModels = [
+  {
+    id: 'gpt-4o-mini',
+    name: 'GPT-4o Mini',
+    tier: 'fast',
+    pricePerRun: 0.02
+  },
+  {
+    id: 'claude-3.5-sonnet',
+    name: 'Claude 3.5 Sonnet',
+    tier: 'balanced',
+    pricePerRun: 0.05
+  },
+  {
+    id: 'o1-preview',
+    name: 'o1 Preview',
+    tier: 'reasoning',
+    pricePerRun: 0.10
+  }
+]
+```
+
+### Available Models
+
+**Fast Tier ($0.02)**
+- GPT-4o Mini
+- Claude 3 Haiku
+- Llama 3.1 8B
+- Gemini Flash
+
+**Balanced Tier ($0.05)**
+- GPT-4o
+- Claude 3.5 Sonnet
+- Llama 3.1 70B
+- Gemini Pro
+
+**Reasoning Tier ($0.10)**
+- o1-preview
+- Claude 3 Opus
+- Llama 3.1 405B
+
+## Step 5: Add Examples
+
+Create pre-generated examples to showcase your RDA:
+
+```typescript
+const examples = [
+  {
+    id: 'ex_001',
+    title: 'SaaS Competitor Analysis',
+    inputs: {
+      companyName: 'Salesforce',
+      analysisDepth: 'detailed',
+      focusAreas: 'pricing, enterprise features'
+    },
+    output: '## Competitor Analysis\n\n...',
+    model: 'claude-3.5-sonnet'
+  }
+]
+```
+
+## Step 6: Set Pricing
+
+### Per-Run Price
+
+Included in model tier pricing above.
+
+### Source Code Price (Optional)
+
+Allow users to buy your prompt template:
+
+```typescript
+const promptSourcePrice = 4.99 // USDC
+```
+
+## Step 7: Submit for Review
+
+Before publishing:
+
+1. **Test thoroughly** - Run with various inputs
+2. **Check output quality** - Ensure consistent results
+3. **Review pricing** - Compare to similar RDAs
+4. **Add examples** - Show best use cases
+
+Submit your RDA for verification review.
+
+## Best Practices
+
+### Prompt Quality
+
+- Be specific about output format
+- Include examples in the prompt
+- Handle edge cases gracefully
+
+### User Experience
+
+- Use clear field labels
+- Provide helpful descriptions
+- Show placeholder examples
+
+### Pricing
+
+- Start competitive
+- Consider your costs
+- Offer value vs alternatives
+
+## Next Steps
+
+- [Input/Output Schemas](/hub/guides/creators/input-output-schemas)
+- [Pricing Your RDA](/hub/guides/creators/pricing-your-rda)
+- [Publishing & Verification](/hub/guides/creators/publishing-verification)

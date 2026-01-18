@@ -1,0 +1,188 @@
+# Payment Flow
+
+How payments work on xpay✦ Hub.
+
+## Overview
+
+xpay✦ Hub uses USDC on Base network for instant micropayments.
+
+```
+Deposit → Lock → Execute → Settle
+```
+
+## Currency & Network
+
+### USDC
+
+- **Type**: Stablecoin (1 USDC = $1 USD)
+- **Contract**: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (Base)
+- **Decimals**: 6
+
+### Base Network
+
+- **Type**: Layer 2 (Coinbase)
+- **Chain ID**: 8453 (mainnet), 84532 (testnet)
+- **Speed**: ~2 second finality
+- **Cost**: Very low gas fees
+
+## Payment Steps
+
+### 1. Deposit
+
+Users add USDC to their xpay✦ wallet:
+
+1. Send USDC on Base to wallet address
+2. Transaction confirms (~2 seconds)
+3. Balance updates automatically
+
+### 2. Lock
+
+When running an RDA:
+
+1. Click "Run"
+2. Cost is locked from available balance
+3. Locked funds reserved for this run
+
+### 3. Execute
+
+The RDA runs:
+
+1. Inputs processed
+2. Execution happens
+3. Output generated
+
+### 4. Settle
+
+After execution:
+
+**On Success:**
+- Locked funds deducted
+- Creator receives payment
+- User sees result
+
+**On Failure:**
+- Locked funds released
+- Balance restored
+- User not charged
+
+## Non-Custodial Design
+
+xpay✦ never holds your funds:
+
+- **Your keys** - Controlled via Privy
+- **Your wallet** - On Base network
+- **Direct settlement** - Creator paid directly
+
+## Spending Controls
+
+### Global Allowance
+
+Set maximum spending:
+
+```typescript
+{
+  allowance: 10.00, // Max $10 per session
+  refreshOnLogin: true
+}
+```
+
+### Per-Transaction Limit
+
+Limit individual runs:
+
+```typescript
+{
+  maxPerTransaction: 1.00 // Max $1 per run
+}
+```
+
+## API Integration
+
+### Check Balance
+
+```bash
+GET /wallet/balance
+```
+
+```json
+{
+  "balance": 100.50,
+  "availableBalance": 95.00,
+  "totalLocked": 5.50
+}
+```
+
+### Record Deposit
+
+```bash
+POST /wallet/deposit
+{
+  "amount": 50.00,
+  "transactionHash": "0x..."
+}
+```
+
+## Fee Structure
+
+### Platform Fee
+
+- ~10% of transaction
+- Covers infrastructure
+- Instant settlement
+
+### Network Fees
+
+- Base gas fees (very low)
+- Paid by platform
+- No user gas needed
+
+## Security
+
+### Transaction Safety
+
+- Funds locked only for execution
+- Released on failure
+- No pre-authorization abuse
+
+### Wallet Security
+
+- Privy-managed keys
+- MPC technology
+- Non-custodial
+
+## Troubleshooting
+
+### Balance Not Updating
+
+1. Check transaction on Base explorer
+2. Wait for confirmation
+3. Refresh the page
+
+### Transaction Failed
+
+1. Check sufficient balance
+2. Verify inputs are valid
+3. Try again
+
+### Funds Locked
+
+Funds are released:
+- After successful execution
+- On execution failure
+- If timeout occurs
+
+## xpay✦ Infrastructure
+
+xpay✦ Hub uses the xpay✦ payment infrastructure:
+
+- x402 protocol support
+- Spending controls
+- Transaction logging
+- Instant settlement
+
+Learn more in the [xpay✦ documentation](/getting-started).
+
+## Related Topics
+
+- [Managing Your Wallet](/hub/guides/users/managing-wallet)
+- [Fund Your Wallet](/hub/get-started/fund-wallet)

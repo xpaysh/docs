@@ -1,0 +1,253 @@
+# Creating a Tool
+
+This guide walks you through creating a Tool RDA that wraps external APIs.
+
+## What is a Tool RDA?
+
+A Tool RDA acts as an API proxy, wrapping external services with payment handling and user-friendly inputs.
+
+## Prerequisites
+
+- xpay✦ Hub account
+- API endpoint to wrap
+- API credentials (if required)
+
+## Step 1: Choose an API to Wrap
+
+Good candidates for Tool RDAs:
+
+- **Data APIs** - Company data, market intelligence
+- **Enrichment APIs** - Lead enrichment, company lookup
+- **Analytics APIs** - Social metrics, usage data
+- **AI APIs** - Replicate, Hugging Face
+
+## Step 2: Configure the Tool
+
+```typescript
+const toolConfig = {
+  apiEndpoint: 'https://api.example.com/v1/data',
+  apiMethod: 'GET', // or POST, PUT, DELETE
+  apiHeaders: {
+    'Content-Type': 'application/json'
+  },
+
+  // Authentication
+  authType: 'api_key', // 'none', 'api_key', 'bearer', 'basic'
+  authConfig: {
+    headerName: 'X-API-Key',
+    // Key is stored securely, not in config
+  },
+
+  // Optional transformations
+  requestTransform: null, // Jinja2 template
+  responseTransform: null, // JSONPath extraction
+
+  // Rate limiting
+  rateLimitPerMinute: 60
+}
+```
+
+### Authentication Types
+
+| Type | Description | Config |
+|------|-------------|--------|
+| `none` | No authentication | - |
+| `api_key` | API key in header | `headerName` |
+| `bearer` | Bearer token | - |
+| `basic` | Basic auth | `username`, `password` |
+
+## Step 3: Design Input Schema
+
+Map user inputs to API parameters:
+
+```typescript
+const inputSchema = [
+  {
+    name: 'companyDomain',
+    label: 'Company Domain',
+    type: 'text',
+    required: true,
+    description: 'Company website domain to look up'
+  },
+  {
+    name: 'dataType',
+    label: 'Data Type',
+    type: 'select',
+    required: true,
+    options: ['company_info', 'contacts', 'financials']
+  }
+]
+```
+
+## Step 4: Request Transformation
+
+Transform user inputs into API request:
+
+### URL Parameters
+
+```typescript
+// Input: { companyDomain: 'acme.com', dataType: 'company_info' }
+// API URL: https://api.example.com/v1/company?domain=acme.com&type=company_info
+
+const requestTransform = `
+domain={{ companyDomain }}
+&type={{ dataType }}
+`
+```
+
+### JSON Body
+
+```typescript
+const requestTransform = `
+{
+  "query": "{{ query }}",
+  "limit": {{ limit | default(10) }},
+  "filters": {{ filters | tojson }}
+}
+`
+```
+
+## Step 5: Response Transformation
+
+Extract relevant data from API response:
+
+```typescript
+// JSONPath extraction
+const responseTransform = '$.result.data'
+
+// Or complex transformation
+const responseTransform = `
+{
+  "company": $.result.name,
+  "employees": $.result.employeeCount,
+  "industry": $.result.industry
+}
+`
+```
+
+## Step 6: Set Pricing
+
+Tools use custom pricing:
+
+```typescript
+const pricing = {
+  model: 'per-run',
+  amount: 0.02, // $0.02 per API call
+  currency: 'USDC'
+}
+```
+
+Factor in:
+- External API costs
+- Rate limit value
+- Data value
+
+## Step 7: Handle Errors
+
+Define error handling:
+
+```typescript
+// Common API errors to handle
+const errorMapping = {
+  401: 'API authentication failed',
+  429: 'Rate limit exceeded, try again later',
+  404: 'Resource not found',
+  500: 'External service error'
+}
+```
+
+## Example: Company Lookup Tool
+
+```typescript
+{
+  name: 'Company Lookup',
+  slug: 'company-lookup',
+  type: 'tool',
+
+  toolConfig: {
+    apiEndpoint: 'https://api.clearbit.com/v2/companies/find',
+    apiMethod: 'GET',
+    authType: 'bearer',
+    rateLimitPerMinute: 10
+  },
+
+  inputSchema: [
+    {
+      name: 'domain',
+      label: 'Company Domain',
+      type: 'text',
+      required: true,
+      placeholder: 'example.com'
+    }
+  ],
+
+  requestTransform: `domain={{ domain }}`,
+
+  responseTransform: '$.company',
+
+  pricing: {
+    model: 'per-run',
+    amount: 0.05,
+    currency: 'USDC'
+  }
+}
+```
+
+## Storing API Credentials
+
+API keys are stored securely:
+
+1. Go to Creator Dashboard
+2. Navigate to Secrets
+3. Add your API key
+4. Reference in tool config
+
+Keys are:
+- Encrypted at rest
+- Never exposed to users
+- Injected at runtime
+
+## Rate Limiting
+
+Configure rate limits:
+
+```typescript
+const rateLimitConfig = {
+  perMinute: 60,
+  perHour: 1000,
+  perDay: 10000
+}
+```
+
+When limits are hit:
+- Request is queued
+- User sees wait time
+- Or error if exceeded
+
+## Best Practices
+
+### API Selection
+
+- Choose reliable APIs
+- Check rate limits
+- Verify pricing/costs
+- Test availability
+
+### Input Design
+
+- Clear labels
+- Helpful descriptions
+- Sensible defaults
+- Input validation
+
+### Error Messages
+
+- User-friendly errors
+- Actionable guidance
+- Don't expose internals
+
+## Next Steps
+
+- [Input/Output Schemas](/hub/guides/creators/input-output-schemas)
+- [Pricing Your RDA](/hub/guides/creators/pricing-your-rda)
+- [Publishing & Verification](/hub/guides/creators/publishing-verification)
