@@ -19,8 +19,11 @@ export const config = {
      * - img (image files)
      * - *.xml (XML files like sitemap.xml, RSS feeds, etc.)
      * - robots.txt (robots file)
-     * - llms.txt (LLM training file)
+     * - llms.txt, llms-full.txt (LLM files)
+     * - skill.md (Claude skill file)
+     * - openapi.json (OpenAPI spec)
+     * - .well-known (well-known files)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|favicon|logo|img|_pagefind|.*\\.xml|robots.txt|llms.txt).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|favicon|logo|img|_pagefind|.*\\.xml|robots.txt|llms\\.txt|llms-full\\.txt|skill\\.md|openapi\\.json|\\.well-known).*)',
   ],
 }
