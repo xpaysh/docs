@@ -51,7 +51,7 @@ sequenceDiagram
      "type": "x402",
      "amount": "0.10",
      "currency": "USDC",
-     "facilitator": "https://facilitator.base.org",
+     "facilitator": "https://facilitator.xpay.sh",
      "recipient": "0x742d35Cc6635C0532925a3b8D"
    }
    ```
@@ -97,7 +97,7 @@ Servers include payment details in 402 responses:
   "type": "x402",
   "amount": "0.05",           // Price in USD or token units
   "currency": "USDC",         // Payment token
-  "facilitator": "https://facilitator.base.org",
+  "facilitator": "https://facilitator.xpay.sh",
   "recipient": "0x...",       // Receiving wallet address
   "memo": "API access",       // Optional payment description
   "expires": "2024-01-01T00:00:00Z"  // Payment expiration
@@ -111,7 +111,7 @@ Servers verify payments before granting access:
 ```typescript
 import { X402Facilitator } from '@x402/sdk'
 
-const facilitator = new X402Facilitator('https://facilitator.base.org')
+const facilitator = new X402Facilitator('https://facilitator.xpay.sh')
 
 async function verifyPayment(paymentId: string) {
   const payment = await facilitator.verify(paymentId)
@@ -146,7 +146,7 @@ X-Payment-Token: eyJ0eXAiOiJKV1QiLCJhbGc...
 X-Payment-Required: x402
 X-Payment-Amount: 0.10
 X-Payment-Currency: USDC
-X-Payment-Facilitator: https://facilitator.base.org
+X-Payment-Facilitator: https://facilitator.xpay.sh
 ```
 
 ## Use Cases

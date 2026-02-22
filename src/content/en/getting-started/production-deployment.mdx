@@ -49,7 +49,7 @@ XPAY_RECEIVING_WALLET=0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555
 XPAY_KMS_KEY_ID=arn:aws:kms:us-east-1:123456789:key/...
 
 # Network Configuration
-XPAY_FACILITATOR_URL=https://facilitator.base.org
+XPAY_FACILITATOR_URL=https://facilitator.xpay.sh
 XPAY_NETWORK=base-mainnet
 XPAY_BLOCK_CONFIRMATIONS=3
 
@@ -655,7 +655,7 @@ export const securityMiddleware = helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://facilitator.base.org"]
+      connectSrc: ["'self'", "https://facilitator.xpay.sh"]
     }
   },
   hsts: {

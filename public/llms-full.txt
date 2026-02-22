@@ -492,7 +492,7 @@ await simulator.simulatePattern('random', { averageRequestsPerMinute: 2 })
 import { X402Debug } from '@xpaysh/sdk'
 
 const debug = new X402Debug({
-  facilitator: 'https://facilitator.base.org',
+  facilitator: 'https://facilitator.xpay.sh',
   network: 'base-sepolia'
 })
 
@@ -2426,7 +2426,7 @@ import { Callout } from 'nextra/components'
 
 3. **Wrong facilitator URL**
    ```bash
-   Expected: https://facilitator.base.org
+   Expected: https://facilitator.xpay.sh
    Used: https://facilitator.ethereum.org
    ```
 
@@ -3410,7 +3410,7 @@ app.use(express.json())
 
 const paywall = new Paywall({
   receivingWallet: '0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555',
-  facilitatorUrl: 'https://facilitator.base.org',
+  facilitatorUrl: 'https://facilitator.xpay.sh',
   apiKey: 'xpay_pw_...'
 })
 
@@ -3676,7 +3676,7 @@ RECEIVING_WALLET_ADDRESS=0x...
 
 # x402 Network
 X402_NETWORK=base-sepolia  # or 'base-mainnet' for production
-X402_FACILITATOR_URL=https://facilitator.base.org
+X402_FACILITATOR_URL=https://facilitator.xpay.sh
 
 # Optional: Custom RPC
 BASE_RPC_URL=https://base-sepolia.g.alchemy.com/v2/...
@@ -3949,7 +3949,7 @@ XPAY_RECEIVING_WALLET=0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555
 XPAY_KMS_KEY_ID=arn:aws:kms:us-east-1:123456789:key/...
 
 # Network Configuration
-XPAY_FACILITATOR_URL=https://facilitator.base.org
+XPAY_FACILITATOR_URL=https://facilitator.xpay.sh
 XPAY_NETWORK=base-mainnet
 XPAY_BLOCK_CONFIRMATIONS=3
 
@@ -4555,7 +4555,7 @@ export const securityMiddleware = helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://facilitator.base.org"]
+      connectSrc: ["'self'", "https://facilitator.xpay.sh"]
     }
   },
   hsts: {
@@ -11279,7 +11279,7 @@ import express from 'express'
 const app = express()
 const paywall = new Paywall({
   receivingWallet: '0x742d35Cc6634C0532925a3b8D3Ac2d00fBc1d555',
-  facilitatorUrl: 'https://facilitator.base.org'
+  facilitatorUrl: 'https://facilitator.xpay.sh'
 })
 
 // Protect your valuable API
@@ -11733,7 +11733,7 @@ Protect your receiving wallet:
 ```typescript
 const paywall = new Paywall({
   receivingWallet: process.env.XPAY_RECEIVING_WALLET, // Use environment variables
-  facilitatorUrl: 'https://facilitator.base.org',
+  facilitatorUrl: 'https://facilitator.xpay.sh',
   security: {
     requireHttps: true,           // Only accept HTTPS requests
     validateOrigin: true,         // Validate request origin
@@ -12664,7 +12664,7 @@ sequenceDiagram
      "type": "x402",
      "amount": "0.10",
      "currency": "USDC",
-     "facilitator": "https://facilitator.base.org",
+     "facilitator": "https://facilitator.xpay.sh",
      "recipient": "0x742d35Cc6635C0532925a3b8D"
    }
    ```
@@ -12710,7 +12710,7 @@ Servers include payment details in 402 responses:
   "type": "x402",
   "amount": "0.05",           // Price in USD or token units
   "currency": "USDC",         // Payment token
-  "facilitator": "https://facilitator.base.org",
+  "facilitator": "https://facilitator.xpay.sh",
   "recipient": "0x...",       // Receiving wallet address
   "memo": "API access",       // Optional payment description
   "expires": "2024-01-01T00:00:00Z"  // Payment expiration
@@ -12724,7 +12724,7 @@ Servers verify payments before granting access:
 ```typescript
 import { X402Facilitator } from '@x402/sdk'
 
-const facilitator = new X402Facilitator('https://facilitator.base.org')
+const facilitator = new X402Facilitator('https://facilitator.xpay.sh')
 
 async function verifyPayment(paymentId: string) {
   const payment = await facilitator.verify(paymentId)
@@ -12759,7 +12759,7 @@ X-Payment-Token: eyJ0eXAiOiJKV1QiLCJhbGc...
 X-Payment-Required: x402
 X-Payment-Amount: 0.10
 X-Payment-Currency: USDC
-X-Payment-Facilitator: https://facilitator.base.org
+X-Payment-Facilitator: https://facilitator.xpay.sh
 ```
 
 ## Use Cases
