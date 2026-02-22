@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "xpay - AI Agent Payments",
+  "name_for_model": "xpay",
+  "description_for_human": "AI Agent Payment Control Platform - spending controls and API monetization via the x402 protocol on Base.",
+  "description_for_model": "xpay provides non-custodial payment infrastructure for AI agents using the x402 protocol (HTTP 402). Products: Smart Proxy (agent spending limits), Paywall-as-a-Service (API monetization), MCP Monetization (pay-per-tool-call for MCP servers), and xpay Hub (AI agent marketplace). Payments use USDC on Base (Coinbase L2) with ~2s settlement. The xpay Facilitator at facilitator.xpay.sh handles payment verification and settlement.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://docs.xpay.sh/openapi.json"
+  },
+  "logo_url": "https://www.xpay.sh/logo/logo-full.png",
+  "contact_email": "support@xpay.sh",
+  "legal_info_url": "https://www.xpay.sh/terms"
+}

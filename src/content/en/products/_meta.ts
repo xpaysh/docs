@@ -1,3 +1,5 @@
 export default {
-  "smart-proxy": "Smart Proxy"
+  "smart-proxy": "Smart Proxy",
+  "paywall-service": "Paywall-as-a-Service",
+  "mcp-monetization": "MCP Monetization"
 }

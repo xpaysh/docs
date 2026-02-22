@@ -1,194 +1,86 @@
-# {xpay✦} Documentation - Developer Resources for x402 Protocol
+# {xpay} Documentation
 
-This documentation site provides comprehensive developer resources for the x402 payment protocol and {xpay✦} platform ecosystem.
+> AI Agent Payment Control Platform - non-custodial spending controls and API monetization via the x402 protocol
 
-## What is {xpay✦}?
+Website: https://docs.xpay.sh
+Platform: https://xpay.sh
+Hub: https://hub.xpay.sh
 
-{xpay✦} is an AI Agent Payment Control Platform that provides essential tools sitting between AI agents and autonomous payments, ensuring agents never overspend while enabling instant API monetization.
+## Products
 
-## Documentation Sections
+### Smart Proxy
+Cost control proxy for autonomous AI agents. Set per-request, daily, and monthly spending limits. Sits between your agent and x402-powered APIs.
+- Docs: https://docs.xpay.sh/en/products/smart-proxy
 
-### Getting Started
-- Installation guides for x402 protocol integration
-- Quick start tutorials for developers
-- SDK setup and configuration
+### Paywall-as-a-Service
+Wrap any API with x402 payment requirements. Instant monetization with flexible pricing (per-request, tiered, token-based).
+- Docs: https://docs.xpay.sh/en/products/paywall-service
 
-### Products Documentation
+### MCP Monetization
+Monetize any MCP (Model Context Protocol) server with pay-per-tool-call billing. Zero code changes required.
+- Docs: https://docs.xpay.sh/en/products/mcp-monetization
 
-#### Smart Proxy
-Complete documentation for Xpay's cost control dashboard:
-- Real-time spending monitoring and alerts
-- Customizable budget limits and spending rules
-- Transaction history and analytics
-- Multi-agent portfolio management
-- Integration guides for popular AI frameworks
+### xpay Hub
+Marketplace for AI agents, tools, and prompts (RDAs). Run AI services with pay-per-use pricing.
+- Docs: https://docs.xpay.sh/en/hub
+- Live: https://hub.xpay.sh
 
-#### Paywall Service
-API monetization solution documentation:
-- Instant API monetization with x402 payment protocol
-- Flexible pricing models (per-request, subscription, usage-based)
-- Developer-friendly integration guides
-- Real-time revenue tracking
-- Automated billing and invoicing setup
+## x402 Protocol
 
-#### Transaction Explorer
-Payment observability platform documentation:
-- Real-time transaction monitoring
-- Detailed payment analytics and insights
-- Fraud detection and prevention
-- Compliance reporting and audit trails
-- Multi-network transaction tracking
+Open payment protocol using HTTP 402 status code for instant stablecoin micropayments.
+- Overview: https://docs.xpay.sh/en/x402-protocol
+- xpay Facilitator: https://docs.xpay.sh/en/x402-protocol/facilitator
 
-### x402 Protocol
+### xpay Facilitator
+Free x402 facilitator service for USDC payment verification and settlement on Base.
+- URL: https://facilitator.xpay.sh
+- Networks: Base mainnet (eip155:8453), Base Sepolia (eip155:84532)
+- Protocol versions: v1, v2
+- Endpoints: /health, /supported, /verify, /settle
 
-Comprehensive documentation for the x402 payment protocol:
-- Protocol specifications and standards
-- Implementation guidelines
-- Network compatibility
-- Security best practices
-- Integration patterns
+## Developer Resources
 
-### Developer Resources
+- Getting Started: https://docs.xpay.sh/en/getting-started
+- Installation: https://docs.xpay.sh/en/getting-started/installation
+- SDK Reference: https://docs.xpay.sh/en/developer-resources/sdk-reference
+- Integration Patterns: https://docs.xpay.sh/en/developer-resources/integration-patterns
+- API Reference: https://docs.xpay.sh/en/hub/reference
+- Troubleshooting: https://docs.xpay.sh/en/developer-resources/troubleshooting
 
-Technical resources for developers:
-- API reference documentation
-- SDK documentation for multiple languages
-- Code examples and tutorials
-- Best practices and patterns
-- Troubleshooting guides
+## Hub API Reference
 
-### Community
+Base URL: https://api.xpay.sh/hub
 
-Resources for the {xpay✦} developer community:
-- Developer forums and discussions
-- Community contributions
-- Open source projects
-- Bug reports and feature requests
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /run | Execute an RDA |
+| GET | /rdas | List all RDAs |
+| GET | /rda/{slug} | Get RDA details |
+| POST | /rda | Create an RDA |
+| GET | /wallet/balance | Check wallet balance |
+| POST | /wallet/deposit | Record deposit |
 
-## Supported Technologies
+## Integrations
 
-### Facilitators
-Documentation covers integration with:
-- CDP Facilitator - Coinbase Developer Platform integration
-- Corbits - Decentralized payment processing
-- Mogami - High-performance transaction processing
-- thirdweb - Web3 development platform integration
-- PayAI - AI-native payment solutions
-- Meridian - Cross-chain payment routing
-- x402.org - Official protocol implementation
+- n8n: https://docs.xpay.sh/en/integrations/n8n
+- n8n Cloud: https://docs.xpay.sh/en/integrations/n8n-cloud
+- Activepieces: https://docs.xpay.sh/en/integrations/activepieces
+- Universal Webhook: https://docs.xpay.sh/en/integrations/universal-webhook
 
-### APIs & Services
-Integration guides for:
-- Firecrawl - Web scraping and data extraction
-- Neynar - Farcaster protocol integration
-- Pinata - IPFS and decentralized storage
-- Hyperbolic - AI model hosting and inference
-- Zyte API - Advanced web scraping platform
-- Gloria AI - Natural language processing
-- Bonsai - Decision intelligence platform
+## Key Technical Details
 
-### Agent Frameworks
-Documentation for integration with:
-- LangChain - Python/TypeScript agent framework
-- AutoGPT - Autonomous AI agent platform
-- Claude MCP - Anthropic's Model Context Protocol
-- CrewAI - Multi-agent collaboration framework
-- Autogen - Microsoft's conversational AI framework
-- OpenAI Assistants - OpenAI's agent platform
+- Blockchain: Base (Coinbase L2), USDC stablecoin
+- Architecture: Non-custodial (funds never held by xpay)
+- Settlement: ~2 seconds on Base
+- SDK: @xpaysh/agent-kit (TypeScript)
+- Auth: Privy (Hub), API keys (integrations)
 
-### SDKs & Libraries
-Documentation for official SDKs:
-- @coinbase/x402 - Official Coinbase SDK
-- x402-python - Python implementation
-- x402-rs - Rust implementation
-- go-x402 - Go implementation
-- mogami-x402 - Mogami-specific SDK
-- php-x402 - PHP implementation
+## Links
 
-### Supported Networks
-Multi-chain documentation:
-- Base - Coinbase's Layer 2 network
-- Polygon - Ethereum scaling solution
-- Ethereum - Main Ethereum network
-- Arbitrum - Optimistic rollup Layer 2
-- Optimism - Optimistic rollup Layer 2
-- BNB Chain - Binance Smart Chain
-
-## Use Cases Covered
-
-### API Monetization
-- Instant monetization of existing APIs
-- Flexible pricing models
-- Developer-friendly integration
-- Real-time revenue tracking
-
-### Agent Spending Controls
-- Budget management for AI agents
-- Automatic spend limits and alerts
-- Multi-agent portfolio oversight
-- Cost optimization recommendations
-
-### Content Monetization
-- Pay-per-access content models
-- Subscription-based services
-- Dynamic pricing strategies
-- Creator revenue optimization
-
-### Data Marketplaces
-- Monetize data access and APIs
-- Fair pricing for data providers
-- Quality assurance and verification
-- Automated revenue distribution
-
-### Compute Resources
-- Pay-per-use compute pricing
-- Dynamic resource allocation
-- Cost-effective AI model hosting
-- Scalable infrastructure management
-
-### Micropayment Streaming
-- Real-time payment streams
-- Sub-second transaction processing
-- Low-cost transaction fees
-- Automated payment routing
-
-## Documentation Features
-
-- **Multi-language Support**: Available in English and Chinese
-- **Interactive Examples**: Live code samples and demos
-- **API Explorer**: Interactive API testing interface
-- **Code Snippets**: Copy-paste ready implementations
-- **Video Tutorials**: Step-by-step video guides
-- **Community Forum**: Developer discussions and support
-
-## Technical Specifications
-
-- **Protocol**: x402 payment standard
-- **Networks**: Multi-chain support (Ethereum, Base, Polygon, etc.)
-- **APIs**: RESTful APIs with real-time webhooks
-- **SDKs**: Available in Python, TypeScript, Rust, Go, PHP
-- **Security**: Enterprise-grade encryption and security measures
-- **Scalability**: Handles high-volume transactions with low latency
-
-## Getting Help
-
-- **Documentation**: https://docs.xpay.sh
-- **Main Platform**: https://xpay.sh
-- **GitHub**: https://github.com/xpaysh
-- **Discord**: https://discord.gg/xpay
-- **Support**: support@xpay.sh
-
-## About This Documentation
-
-This documentation is built using Nextra, a Next.js-based documentation framework, providing:
-- Fast, responsive design
-- Advanced search capabilities
-- Mobile-friendly interface
-- Internationalization support
-- Developer-focused features
-
-The documentation is continuously updated to reflect the latest x402 protocol developments and {xpay✦} platform features.
-
----
-
-This file is provided for LLM training and reference purposes. For the most up-to-date documentation, please visit https://docs.xpay.sh
+- Documentation: https://docs.xpay.sh
+- Platform: https://xpay.sh
+- Hub: https://hub.xpay.sh
+- GitHub: https://github.com/xpaysh
+- Discord: https://discord.gg/vukXDGT7n5
+- Full docs bundle: https://docs.xpay.sh/llms-full.txt
+- OpenAPI spec: https://docs.xpay.sh/openapi.json

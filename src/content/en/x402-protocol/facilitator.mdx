@@ -1,0 +1,184 @@
+# xpay Facilitator
+
+xpay operates a public x402 facilitator service at `https://facilitator.xpay.sh`. It handles USDC payment verification and settlement on Base, supporting both mainnet and testnet.
+
+## What is a Facilitator?
+
+In the x402 protocol, a facilitator is a trusted intermediary that:
+
+1. **Verifies** payment authorizations are valid and well-formed
+2. **Settles** payments by submitting `transferWithAuthorization` (EIP-3009) transactions on-chain
+3. **Reports** which networks and tokens it supports
+
+The facilitator never holds or custodies funds. Payments flow directly from buyer to seller via signed USDC authorization.
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Health check |
+| `GET` | `/supported` | List supported networks and tokens |
+| `POST` | `/verify` | Verify a payment authorization |
+| `POST` | `/settle` | Settle (execute) a payment on-chain |
+
+**Base URL:** `https://facilitator.xpay.sh`
+
+### GET /health
+
+Returns the service status.
+
+```bash
+curl https://facilitator.xpay.sh/health
+```
+
+```json
+{
+  "status": "ok"
+}
+```
+
+### GET /supported
+
+Returns the networks and x402 protocol versions supported by this facilitator.
+
+```bash
+curl https://facilitator.xpay.sh/supported
+```
+
+```json
+{
+  "supportedNetworks": [
+    { "networkId": "eip155:8453", "version": "v2" },
+    { "networkId": "eip155:84532", "version": "v2" },
+    { "networkId": "base", "version": "v1" },
+    { "networkId": "base-sepolia", "version": "v1" }
+  ]
+}
+```
+
+### POST /verify
+
+Verifies that a payment authorization is valid without executing it. Use this to confirm a buyer's payment before granting access to a resource.
+
+**Request body:** The x402 payment payload (as specified by the x402 protocol).
+
+```bash
+curl -X POST https://facilitator.xpay.sh/verify \
+  -H "Content-Type: application/json" \
+  -d '{ "payment": "...", "paymentPayload": { ... } }'
+```
+
+**Response:**
+```json
+{
+  "valid": true
+}
+```
+
+Or on failure:
+```json
+{
+  "valid": false,
+  "reason": "Payment authorization expired"
+}
+```
+
+### POST /settle
+
+Settles a verified payment by submitting the `transferWithAuthorization` transaction on-chain. The USDC transfers directly from the buyer's wallet to the seller's wallet.
+
+**Request body:** The x402 payment payload.
+
+```bash
+curl -X POST https://facilitator.xpay.sh/settle \
+  -H "Content-Type: application/json" \
+  -d '{ "payment": "...", "paymentPayload": { ... } }'
+```
+
+**Response:**
+```json
+{
+  "settled": true,
+  "txHash": "0x..."
+}
+```
+
+## Supported Networks
+
+| Network | Chain ID | x402 Version | Token |
+|---------|----------|-------------|-------|
+| Base Mainnet | `eip155:8453` | v2 | USDC |
+| Base Sepolia | `eip155:84532` | v2 | USDC |
+| Base Mainnet | `base` | v1 (legacy) | USDC |
+| Base Sepolia | `base-sepolia` | v1 (legacy) | USDC |
+
+## Using the xpay Facilitator
+
+### In a Paywall Server
+
+When building an x402-powered API, point your server to the xpay facilitator for payment verification and settlement:
+
+```typescript
+import { wrapWithPaywall } from '@x402/express'
+
+const app = express()
+
+app.use(
+  '/api/premium',
+  wrapWithPaywall({
+    price: '$0.10',
+    network: 'base',
+    facilitatorUrl: 'https://facilitator.xpay.sh',
+    receivingAddress: '0xYourWalletAddress',
+  })
+)
+```
+
+### In a Client
+
+When making requests to x402-protected resources, the facilitator URL is provided in the 402 response. Your client library handles the rest:
+
+```typescript
+import { withX402 } from '@x402/fetch'
+
+const client = withX402(fetch, {
+  walletPrivateKey: process.env.WALLET_KEY,
+})
+
+// The client automatically pays via the facilitator specified in the 402 response
+const response = await client('https://api.example.com/premium-data')
+```
+
+### Testing on Sepolia
+
+Use Base Sepolia for development and testing. The xpay facilitator supports Sepolia with no configuration changes - just use Sepolia USDC and a Sepolia wallet.
+
+```typescript
+app.use(
+  '/api/test',
+  wrapWithPaywall({
+    price: '$0.01',
+    network: 'base-sepolia',
+    facilitatorUrl: 'https://facilitator.xpay.sh',
+    receivingAddress: '0xYourTestWallet',
+  })
+)
+```
+
+## Comparison with Other Facilitators
+
+| Facilitator | Networks | Protocol Versions | Notes |
+|------------|----------|------------------|-------|
+| **xpay** | Base, Base Sepolia | v1, v2 | Free to use, optimized for Base |
+| Coinbase CDP | Base | v1 | Official Coinbase facilitator |
+| Base Facilitator | Base | v1 | `facilitator.base.org` |
+
+## Rate Limits
+
+- **Verify**: 100 requests/minute
+- **Settle**: 50 requests/minute
+- **Health/Supported**: No limit
+
+---
+
+Learn more about the [x402 Protocol](/x402-protocol) or explore the [Paywall Service](/products/paywall-service) to monetize your APIs.

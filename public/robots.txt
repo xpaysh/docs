@@ -2,8 +2,40 @@
 User-agent: *
 Allow: /
 
+# GPTBot
+User-agent: GPTBot
+Allow: /
+
+# OAI-SearchBot
+User-agent: OAI-SearchBot
+Allow: /
+
+# ClaudeBot
+User-agent: ClaudeBot
+Allow: /
+
+# Claude-Web
+User-agent: Claude-Web
+Allow: /
+
+# Google-Extended
+User-agent: Google-Extended
+Allow: /
+
+# PerplexityBot
+User-agent: PerplexityBot
+Allow: /
+
+# Bytespider
+User-agent: Bytespider
+Allow: /
+
+# CCBot
+User-agent: CCBot
+Allow: /
+
 # Host
-Host: https://nextra.likemashang.com
+Host: https://docs.xpay.sh
 
 # Sitemaps
-Sitemap: https://nextra.likemashang.com/sitemap.xml
+Sitemap: https://docs.xpay.sh/sitemap.xml

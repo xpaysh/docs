@@ -1,0 +1,822 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "xpay Hub API",
+    "description": "REST API for the xpay Hub marketplace. Run AI agents, tools, and prompts (RDAs) with pay-per-use USDC pricing.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "xpay Support",
+      "email": "support@xpay.sh",
+      "url": "https://docs.xpay.sh"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.xpay.sh/hub",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/rdas": {
+      "get": {
+        "summary": "List RDAs",
+        "description": "Retrieve a list of RDAs from the marketplace.",
+        "operationId": "listRdas",
+        "security": [],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by RDA type",
+            "schema": {
+              "type": "string",
+              "enum": ["prompt", "agent", "tool"]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "published", "archived"],
+              "default": "published"
+            }
+          },
+          {
+            "name": "verified",
+            "in": "query",
+            "description": "Only verified RDAs",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "featured",
+            "in": "query",
+            "description": "Only featured RDAs",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "trending",
+            "in": "query",
+            "description": "Only trending RDAs",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "ownerId",
+            "in": "query",
+            "description": "Filter by creator ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search in name and description",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Results per page (max 100)",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Pagination offset",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of RDAs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rdas": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RdaSummary"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rda/{identifier}": {
+      "get": {
+        "summary": "Get RDA details",
+        "description": "Retrieve detailed information about a specific RDA by slug or ID.",
+        "operationId": "getRda",
+        "security": [],
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "description": "RDA slug or ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RDA details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rda": {
+                      "$ref": "#/components/schemas/RdaDetail"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RDA not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rda": {
+      "post": {
+        "summary": "Create an RDA",
+        "description": "Create a new RDA in the marketplace.",
+        "operationId": "createRda",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRdaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "RDA created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rda": {
+                      "$ref": "#/components/schemas/RdaDetail"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/run": {
+      "post": {
+        "summary": "Run an RDA",
+        "description": "Execute an RDA and receive the output. Cost is deducted from your wallet balance.",
+        "operationId": "runRda",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rdaSlug", "inputs"],
+                "properties": {
+                  "rdaSlug": {
+                    "type": "string",
+                    "description": "RDA identifier (slug or ID)"
+                  },
+                  "inputs": {
+                    "type": "object",
+                    "description": "Input values matching the RDA's input schema",
+                    "additionalProperties": true
+                  },
+                  "modelId": {
+                    "type": "string",
+                    "description": "Model ID for prompt RDAs (uses default if omitted)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful execution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "required": {
+                      "type": "number"
+                    },
+                    "available": {
+                      "type": "number"
+                    },
+                    "runId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RDA not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallet/balance": {
+      "get": {
+        "summary": "Check wallet balance",
+        "description": "Get your current wallet balance, available balance, and locked funds.",
+        "operationId": "getWalletBalance",
+        "responses": {
+          "200": {
+            "description": "Wallet balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "wallet": {
+                      "$ref": "#/components/schemas/Wallet"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallet/deposit": {
+      "post": {
+        "summary": "Record deposit",
+        "description": "Record a USDC deposit to your wallet. Send USDC on Base to your wallet address, then call this endpoint to update your balance.",
+        "operationId": "recordDeposit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "description": "USDC amount deposited",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "transactionHash": {
+                    "type": "string",
+                    "description": "On-chain transaction hash"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deposit recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deposited": {
+                      "type": "boolean"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "transactionHash": {
+                      "type": "string"
+                    },
+                    "newBalance": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid amount",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Duplicate transaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Privy authentication token"
+      }
+    },
+    "schemas": {
+      "RdaSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["prompt", "agent", "tool"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "published", "archived"]
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "trending": {
+            "type": "boolean"
+          },
+          "coverImage": {
+            "type": "string"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/Pricing"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/Stats"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "ownerName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RdaDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RdaSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "longDescription": {
+                "type": "string"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "codeSnippet": {
+                "type": "string"
+              },
+              "codeLanguage": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inputs": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/InputField"
+                    }
+                  },
+                  "outputs": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "promptConfig": {
+                "type": "object",
+                "properties": {
+                  "allowedModels": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "tier": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "defaultModelId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "ownerVerified": {
+                "type": "boolean"
+              },
+              "publishedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "CreateRdaRequest": {
+        "type": "object",
+        "required": ["slug", "type", "name", "description", "inputSchema"],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly identifier"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["prompt", "agent", "tool"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "longDescription": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "coverImage": {
+            "type": "string"
+          },
+          "codeSnippet": {
+            "type": "string"
+          },
+          "codeLanguage": {
+            "type": "string"
+          },
+          "inputSchema": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InputField"
+            }
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "promptConfig": {
+            "type": "object"
+          }
+        }
+      },
+      "RunResult": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "output": {
+            "type": "string",
+            "description": "RDA output (format varies by type)"
+          },
+          "cost": {
+            "type": "number",
+            "description": "Amount charged in USDC"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Execution time in milliseconds"
+          },
+          "modelId": {
+            "type": "string"
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer"
+              },
+              "completion_tokens": {
+                "type": "integer"
+              },
+              "total_tokens": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "Wallet": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "walletAddress": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "number",
+            "description": "Total USDC balance"
+          },
+          "availableBalance": {
+            "type": "number",
+            "description": "Balance available for spending"
+          },
+          "pendingLocks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "totalLocked": {
+            "type": "number"
+          },
+          "totalDeposited": {
+            "type": "number"
+          },
+          "totalSpent": {
+            "type": "number"
+          }
+        }
+      },
+      "Pricing": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": ["per-run", "per-token"]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["USDC"]
+          },
+          "estimatedCost": {
+            "type": "string"
+          }
+        }
+      },
+      "Stats": {
+        "type": "object",
+        "properties": {
+          "totalRuns": {
+            "type": "integer"
+          },
+          "totalRevenue": {
+            "type": "number"
+          },
+          "averageRating": {
+            "type": "number"
+          },
+          "totalRatings": {
+            "type": "integer"
+          },
+          "successRate": {
+            "type": "number"
+          },
+          "averageLatency": {
+            "type": "integer",
+            "description": "Average execution time in ms"
+          }
+        }
+      },
+      "InputField": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["text", "textarea", "number", "select", "boolean"]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}
