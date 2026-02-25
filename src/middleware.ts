@@ -23,7 +23,8 @@ export const config = {
      * - skill.md (Claude skill file)
      * - openapi.json (OpenAPI spec)
      * - .well-known (well-known files)
+     * - *.txt files in root (IndexNow key files, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|favicon|logo|img|_pagefind|.*\\.xml|robots.txt|llms\\.txt|llms-full\\.txt|skill\\.md|openapi\\.json|\\.well-known).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|favicon|logo|img|_pagefind|.*\\.xml|robots.txt|llms\\.txt|llms-full\\.txt|skill\\.md|openapi\\.json|\\.well-known|[a-f0-9]{32}\\.txt).*)',
   ],
 }
