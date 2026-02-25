@@ -1,6 +1,24 @@
+import { Callout } from 'nextra/components'
+
 # xpay Facilitator
 
+<Callout type="info">
+**Officially listed in the x402 ecosystem** — xpay is listed alongside Coinbase CDP, thirdweb, and 20+ facilitators in the [x402 ecosystem directory](https://www.x402.org/ecosystem). See [PR #1248](https://github.com/coinbase/x402/pull/1248).
+</Callout>
+
 xpay operates a public x402 facilitator service at `https://facilitator.xpay.sh`. It handles USDC payment verification and settlement on Base, supporting both mainnet and testnet.
+
+## Key Features
+
+| Feature | Detail |
+|---------|--------|
+| **Protocol fees** | Zero — no fees for verify or settle |
+| **Gas sponsorship** | xpay pays gas (~$0.0001/tx on Base) |
+| **Authentication** | None required — fully permissionless |
+| **Custody** | Non-custodial — USDC flows buyer → seller |
+| **Protocol versions** | x402 v1 and v2 |
+| **Networks** | Base mainnet + Base Sepolia testnet |
+| **Latency** | Sub-second (~200ms warm) |
 
 ## What is a Facilitator?
 
@@ -87,6 +105,10 @@ Or on failure:
 
 Settles a verified payment by submitting the `transferWithAuthorization` transaction on-chain. The USDC transfers directly from the buyer's wallet to the seller's wallet.
 
+<Callout type="warning">
+**Gas-sponsored settlement:** xpay pays the gas fee for every settlement transaction. Sellers receive the full USDC amount with zero deductions. On Base L2, gas costs approximately $0.0001 per transaction.
+</Callout>
+
 **Request body:** The x402 payment payload.
 
 ```bash
@@ -151,7 +173,7 @@ const response = await client('https://api.example.com/premium-data')
 
 ### Testing on Sepolia
 
-Use Base Sepolia for development and testing. The xpay facilitator supports Sepolia with no configuration changes - just use Sepolia USDC and a Sepolia wallet.
+Use Base Sepolia for development and testing. The xpay facilitator supports Sepolia with no configuration changes — just use Sepolia USDC and a Sepolia wallet.
 
 ```typescript
 app.use(
@@ -167,17 +189,33 @@ app.use(
 
 ## Comparison with Other Facilitators
 
-| Facilitator | Networks | Protocol Versions | Notes |
-|------------|----------|------------------|-------|
-| **xpay** | Base, Base Sepolia | v1, v2 | Free to use, optimized for Base |
-| Coinbase CDP | Base | v1 | Official Coinbase facilitator |
-| Base Facilitator | Base | v1 | `facilitator.base.org` |
+| Feature | **xpay** | Coinbase CDP | x402.org |
+|---------|----------|-------------|----------|
+| Protocol fees | **0%** | 0% | 0% |
+| Gas sponsored | **Yes** | No | No |
+| Authentication | **None (permissionless)** | API Key + OAuth | None |
+| Non-custodial | Yes | Yes | Yes |
+| x402 v1 + v2 | **Both** | Both | v1 |
+| Testnet | **Base Sepolia** | Yes | Yes |
+| OFAC compliance | No | **Yes** | No |
+| Platform integration | **Smart Proxy + Paywall + Observability** | CDP ecosystem | Standalone |
+
+<Callout type="info">
+Browse all facilitators in the [x402 ecosystem directory](https://www.x402.org/ecosystem) or compare them on the [xpay facilitator page](https://www.xpay.sh/x402-facilitators/xpay/).
+</Callout>
 
 ## Rate Limits
 
 - **Verify**: 100 requests/minute
 - **Settle**: 50 requests/minute
 - **Health/Supported**: No limit
+
+## Resources
+
+- [x402 Ecosystem Directory](https://www.x402.org/ecosystem) — Official listing of all x402 facilitators
+- [xpay Facilitator Landing Page](https://www.xpay.sh/x402-facilitators/xpay/) — Detailed comparison and integration guides
+- [Blog: xpay x402 Facilitator](https://www.xpay.sh/blog/article/xpay-x402-facilitator) — Architecture deep-dive and announcement
+- [GitHub PR #1248](https://github.com/coinbase/x402/pull/1248) — Ecosystem listing with test results
 
 ---
 
