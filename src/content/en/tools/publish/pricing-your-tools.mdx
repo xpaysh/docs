@@ -1,0 +1,79 @@
+# Pricing Your Tools
+
+Set per-tool or flat-rate pricing for your MCP server on xpay✦ Tools.
+
+## Pricing Models
+
+### Flat Rate
+
+Charge the same price for every tool call:
+
+```json
+{
+  "pricing": {
+    "model": "flat",
+    "price": 0.05,
+    "currency": "USDC"
+  }
+}
+```
+
+**Best for:** Servers where all tools have similar compute costs.
+
+### Per-Tool Pricing
+
+Set individual prices for each tool:
+
+```json
+{
+  "pricing": {
+    "model": "per_tool",
+    "currency": "USDC",
+    "tools": {
+      "search": 0.01,
+      "analyze": 0.05,
+      "generate": 0.10
+    },
+    "default": 0.02
+  }
+}
+```
+
+The `default` price applies to any tool not explicitly listed.
+
+**Best for:** Servers with tools that vary significantly in compute cost or value.
+
+### Free Tools
+
+Set the price to `0` for tools you want to offer for free:
+
+```json
+{
+  "tools": {
+    "list_options": 0,
+    "execute_query": 0.05
+  }
+}
+```
+
+Free tools still require an API key but don't deduct from the user's balance.
+
+## Pricing Guidelines
+
+| Tool Type | Suggested Range |
+|-----------|----------------|
+| Simple lookups (search, list) | $0.001 – $0.01 |
+| Data enrichment | $0.01 – $0.05 |
+| Web scraping / crawling | $0.01 – $0.05 |
+| AI generation (text, image) | $0.02 – $0.25 |
+| Complex analysis / reports | $0.10 – $1.00 |
+
+## Changing Prices
+
+You can update pricing at any time through the dashboard. Price changes take effect immediately for new tool calls.
+
+## Revenue
+
+- Users pay from their prepaid credit balance
+- Revenue accumulates in your creator account
+- Withdraw to your USDC wallet on Base at any time

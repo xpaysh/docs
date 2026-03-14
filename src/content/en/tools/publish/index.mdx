@@ -1,0 +1,43 @@
+# Publish Your Server
+
+Monetize any MCP server with pay-per-tool-call billing — zero code changes required.
+
+import { Callout } from 'nextra/components'
+
+## How It Works
+
+1. **Register** your MCP server URL on xpay
+2. **Set pricing** for each tool (or a flat rate for all tools)
+3. **Share** your proxy URL — users connect via `https://{your-slug}.mcp.xpay.sh/mcp`
+4. **Earn** USDC for every tool call
+
+xpay sits between the user and your server as a transparent proxy. Your server stays exactly as-is — no SDK, no code changes, no x402 integration needed.
+
+<Callout type="info">
+Revenue flows directly to your wallet in USDC on Base. xpay never holds your funds.
+</Callout>
+
+## What You Get
+
+- **Dedicated MCP endpoint** at `{your-slug}.mcp.xpay.sh`
+- **Automatic billing** — every tool call is metered and charged
+- **Discovery** — your tools appear on [xpay.tools](https://xpay.tools) and in `xpay_discover`
+- **Analytics** — see call volumes, revenue, and unique users
+- **Discovery files** — auto-generated `llms.txt`, `skill.md`, and `.well-known/mcp.json`
+
+## Getting Started
+
+1. [Register your server →](/tools/publish/register-server)
+2. [Set tool pricing →](/tools/publish/pricing-your-tools)
+3. [Get verified →](/tools/publish/verification)
+
+## Supported Transports
+
+- **Streamable HTTP** (recommended) — Modern HTTP-based MCP transport
+- **SSE** — Server-Sent Events transport (legacy)
+
+## Revenue Model
+
+- Users pay per tool call from their xpay credit balance
+- Revenue is accumulated and can be withdrawn to your wallet at any time
+- No monthly fees, no minimum volumes — you earn from the first call

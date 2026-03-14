@@ -1,0 +1,68 @@
+# Discovery Files
+
+xpay✦ Tools provides machine-readable discovery files so AI agents and search engines can find and understand available tools.
+
+## Overview
+
+Every xpay MCP endpoint publishes standard discovery files:
+
+| File | URL | Purpose |
+|------|-----|---------|
+| `llms.txt` | `https://{slug}.mcp.xpay.sh/llms.txt` | LLM-friendly tool catalog |
+| `skill.md` | `https://{slug}.mcp.xpay.sh/skill.md` | Skill definition for AI agents |
+| `.well-known/mcp.json` | `https://{slug}.mcp.xpay.sh/.well-known/mcp.json` | MCP server metadata |
+
+These files are also available on the platform domain:
+
+| File | URL |
+|------|-----|
+| `llms.txt` | `https://xpay.tools/llms.txt` |
+| `agents.txt` | `https://xpay.tools/agents.txt` |
+| `skill.md` | `https://xpay.tools/skill.md` |
+| `openapi.json` | `https://xpay.tools/openapi.json` |
+| `.well-known/mcp.json` | `https://xpay.tools/.well-known/mcp.json` |
+
+## llms.txt
+
+A text file designed for LLMs to quickly understand what tools are available. It lists each tool with its name, description, and pricing.
+
+```
+# Firecrawl MCP Server
+> Web scraping and crawling tools
+
+- firecrawl_scrape: Scrape a single URL ($0.01)
+- firecrawl_crawl: Crawl a website ($0.05)
+- firecrawl_search: Search the web ($0.01)
+```
+
+## skill.md
+
+A Markdown file that describes the MCP server's capabilities in a format that AI agents can use to decide whether to connect.
+
+## .well-known/mcp.json
+
+A JSON file following the emerging `.well-known/mcp.json` standard for MCP server discovery:
+
+```json
+{
+  "name": "xpay✦ Tools",
+  "description": "1000+ pay-per-use AI tools",
+  "url": "https://mcp.xpay.sh/mcp",
+  "transport": "streamable-http",
+  "authentication": {
+    "type": "query",
+    "parameter": "key"
+  }
+}
+```
+
+## How Agents Use Discovery Files
+
+AI agents (like Claude, ChatGPT, or custom agents) can:
+
+1. Fetch `llms.txt` to get a quick overview of available tools
+2. Read `skill.md` to understand the server's capabilities
+3. Parse `.well-known/mcp.json` to get the connection URL and auth method
+4. Connect to the MCP endpoint and start using tools
+
+This enables fully autonomous tool discovery — agents can find and connect to xpay✦ Tools without human configuration.

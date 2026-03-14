@@ -4,7 +4,32 @@
 
 Website: https://docs.xpay.sh
 Platform: https://xpay.sh
-Hub: https://hub.xpay.sh
+Tools: https://xpay.tools
+
+## xpay✦ Tools
+
+1000+ pay-per-use MCP tools for AI agents. One API key, any MCP client.
+- Overview: https://docs.xpay.sh/en/tools
+- Get Started: https://docs.xpay.sh/en/tools/get-started
+- Connect Your Client: https://docs.xpay.sh/en/tools/connect
+- Browse & Search: https://docs.xpay.sh/en/tools/discover
+- Master Server: https://docs.xpay.sh/en/tools/discover/master-server
+- Publish Your Server: https://docs.xpay.sh/en/tools/publish
+- API Reference: https://docs.xpay.sh/en/tools/reference
+- Connection URLs: https://docs.xpay.sh/en/tools/reference/connection-urls
+- Meta-Tools: https://docs.xpay.sh/en/tools/reference/meta-tools
+
+### Client Setup Guides
+- Cursor: https://docs.xpay.sh/en/tools/connect/cursor
+- Claude Code: https://docs.xpay.sh/en/tools/connect/claude-code
+- Claude Desktop: https://docs.xpay.sh/en/tools/connect/claude-desktop
+- VS Code: https://docs.xpay.sh/en/tools/connect/vscode
+- Windsurf: https://docs.xpay.sh/en/tools/connect/windsurf
+- ChatGPT: https://docs.xpay.sh/en/tools/connect/chatgpt
+- Gemini CLI: https://docs.xpay.sh/en/tools/connect/gemini-cli
+- Cline: https://docs.xpay.sh/en/tools/connect/cline
+- API / cURL: https://docs.xpay.sh/en/tools/connect/api-curl
+- SDK: https://docs.xpay.sh/en/tools/connect/sdk
 
 ## Products
 
@@ -19,11 +44,6 @@ Wrap any API with x402 payment requirements. Instant monetization with flexible 
 ### MCP Monetization
 Monetize any MCP (Model Context Protocol) server with pay-per-tool-call billing. Zero code changes required.
 - Docs: https://docs.xpay.sh/en/products/mcp-monetization
-
-### xpay Hub
-Marketplace for AI agents, tools, and prompts (RDAs). Run AI services with pay-per-use pricing.
-- Docs: https://docs.xpay.sh/en/hub
-- Live: https://hub.xpay.sh
 
 ## x402 Protocol
 
@@ -44,21 +64,7 @@ Free x402 facilitator service for USDC payment verification and settlement on Ba
 - Installation: https://docs.xpay.sh/en/getting-started/installation
 - SDK Reference: https://docs.xpay.sh/en/developer-resources/sdk-reference
 - Integration Patterns: https://docs.xpay.sh/en/developer-resources/integration-patterns
-- API Reference: https://docs.xpay.sh/en/hub/reference
 - Troubleshooting: https://docs.xpay.sh/en/developer-resources/troubleshooting
-
-## Hub API Reference
-
-Base URL: https://api.xpay.sh/hub
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /run | Execute an RDA |
-| GET | /rdas | List all RDAs |
-| GET | /rda/{slug} | Get RDA details |
-| POST | /rda | Create an RDA |
-| GET | /wallet/balance | Check wallet balance |
-| POST | /wallet/deposit | Record deposit |
 
 ## Integrations
 
@@ -73,13 +79,13 @@ Base URL: https://api.xpay.sh/hub
 - Architecture: Non-custodial (funds never held by xpay)
 - Settlement: ~2 seconds on Base
 - SDK: @xpaysh/agent-kit (TypeScript)
-- Auth: Privy (Hub), API keys (integrations)
+- Auth: API keys (tools platform), Privy (legacy hub)
 
 ## Links
 
 - Documentation: https://docs.xpay.sh
 - Platform: https://xpay.sh
-- Hub: https://hub.xpay.sh
+- Tools: https://xpay.tools
 - GitHub: https://github.com/xpaysh
 - Discord: https://discord.gg/vukXDGT7n5
 - Full docs bundle: https://docs.xpay.sh/llms-full.txt

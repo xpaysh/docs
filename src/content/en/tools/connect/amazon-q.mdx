@@ -1,0 +1,45 @@
+# Amazon Q
+
+Connect xpay✦ Tools to [Amazon Q Developer](https://aws.amazon.com/q/developer/).
+
+## Prerequisites
+
+- Amazon Q Developer with MCP support
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+Add to your Amazon Q Developer MCP config:
+
+### Master Server (all tools)
+
+```json
+{
+  "mcpServers": {
+    "xpay": {
+      "url": "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Single Provider
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "url": "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+## Verify
+
+Ask Amazon Q to list available MCP tools — your xpay tools should appear.
+
+## Troubleshooting
+
+- **MCP not available**: Ensure you're running a version of Amazon Q that supports MCP
+- **Config location**: Check Amazon Q documentation for the correct config file path

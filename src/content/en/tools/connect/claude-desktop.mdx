@@ -1,0 +1,74 @@
+# Claude Desktop
+
+Connect xpay✦ Tools to [Claude Desktop](https://claude.ai/download).
+
+import { Callout } from 'nextra/components'
+
+<Callout type="warning">
+Claude Desktop uses stdio-based MCP servers. Since xpay✦ Tools is a remote HTTP server, you need the `mcp-remote` bridge package.
+</Callout>
+
+## Prerequisites
+
+- Claude Desktop app
+- Node.js 18+ (for `npx`)
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+Edit your Claude Desktop config file:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+### Master Server (all tools)
+
+```json
+{
+  "mcpServers": {
+    "xpay": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+### Single Provider
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+### Collection
+
+```json
+{
+  "mcpServers": {
+    "lead-gen": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://lead-gen.mcp.xpay.sh/mcp?key=YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+## Verify
+
+1. Restart Claude Desktop
+2. Click the MCP icon (hammer) in the chat input area
+3. You should see your tools listed
+4. Ask: "What tools do you have available?"
+
+## Troubleshooting
+
+- **"npx not found"**: Ensure Node.js is installed and `npx` is on your PATH
+- **Server not appearing**: Restart Claude Desktop completely (quit and reopen)
+- **Slow startup**: The first run downloads `mcp-remote` — subsequent launches are faster

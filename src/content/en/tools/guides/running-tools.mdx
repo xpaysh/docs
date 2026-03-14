@@ -1,0 +1,69 @@
+# Running Tools
+
+How tool execution and billing works on xpay✦ Tools.
+
+import { Callout } from 'nextra/components'
+
+## Making a Tool Call
+
+When your AI agent calls a tool through xpay✦ Tools, the flow is:
+
+1. Your agent sends a `tools/call` request to the MCP endpoint
+2. The xpay proxy authenticates your API key
+3. The proxy checks your balance and spending limits
+4. The call is forwarded to the upstream provider
+5. The provider's response is returned with a billing receipt appended
+
+## Billing Receipts
+
+Every tool call includes a billing receipt at the end of the response:
+
+```
+Cost: $0.01 | Balance: $4.99 | xpay✦
+```
+
+This tells you:
+- **Cost** — How much this specific call cost
+- **Balance** — Your remaining credit balance
+
+<Callout>
+Your AI agent sees these receipts too. If you ask "how much did that cost?" the agent can read the receipt and tell you.
+</Callout>
+
+## Pricing
+
+Tool pricing is set by each provider. Common price ranges:
+
+| Tool Type | Typical Cost |
+|-----------|-------------|
+| Web search / scrape | $0.005 – $0.02 |
+| Email / contact lookup | $0.01 – $0.05 |
+| Data enrichment | $0.01 – $0.10 |
+| Image generation | $0.02 – $0.10 |
+| Financial data | $0.001 – $0.05 |
+
+Check exact pricing on each tool's page at [xpay.tools](https://xpay.tools) or use `xpay_details` to query pricing programmatically.
+
+## Error Handling
+
+If a tool call fails, you'll get an MCP error response:
+
+| Error | Meaning |
+|-------|---------|
+| `INSUFFICIENT_BALANCE` | Your account doesn't have enough credits |
+| `SPENDING_LIMIT_EXCEEDED` | The call would exceed your API key's spending limit |
+| `UPSTREAM_ERROR` | The provider's server returned an error |
+| `RATE_LIMITED` | Too many requests — try again shortly |
+
+## Topping Up Credits
+
+When your balance runs low:
+
+1. Go to [xpay.tools](https://xpay.tools) → Account → Billing
+2. Add credits via credit card or crypto (USDC on Base)
+3. Credits are available immediately
+
+## Next Steps
+
+- [Set spending limits →](/tools/guides/spending-controls)
+- [Check tool pricing →](https://xpay.tools/explore)

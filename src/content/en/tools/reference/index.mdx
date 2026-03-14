@@ -1,0 +1,65 @@
+# API Overview
+
+Technical reference for the xpay✦ Tools MCP API.
+
+## Base URL
+
+```
+https://mcp.xpay.sh/mcp
+```
+
+All endpoints use the MCP JSON-RPC protocol over Streamable HTTP.
+
+## Authentication
+
+Pass your API key as a query parameter:
+
+```
+https://mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+API keys start with `xpay_sk_` and can be created at [xpay.tools](https://xpay.tools) → Account → API Keys.
+
+## Protocol
+
+All requests use the [MCP protocol](https://modelcontextprotocol.io) (JSON-RPC 2.0):
+
+```bash
+curl -X POST "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
+```
+
+### Standard MCP Methods
+
+| Method | Description |
+|--------|-------------|
+| `initialize` | Initialize the MCP session |
+| `tools/list` | List available tools |
+| `tools/call` | Call a tool |
+
+## Error Codes
+
+| Code | Error | Description |
+|------|-------|-------------|
+| 401 | `UNAUTHORIZED` | Invalid or missing API key |
+| 402 | `INSUFFICIENT_BALANCE` | Not enough credits for this call |
+| 403 | `SPENDING_LIMIT_EXCEEDED` | API key spending limit reached |
+| 429 | `RATE_LIMITED` | Too many requests |
+| 500 | `UPSTREAM_ERROR` | The provider's server returned an error |
+| 502 | `UPSTREAM_UNAVAILABLE` | The provider's server is unreachable |
+
+## Rate Limits
+
+- **Default**: 60 requests per minute per API key
+- **Burst**: Up to 10 concurrent requests
+- Rate limit headers are included in responses
+
+## Content Type
+
+All requests and responses use `Content-Type: application/json`.
+
+## Further Reference
+
+- [Connection URLs](/tools/reference/connection-urls) — URL patterns for master, provider, and collection endpoints
+- [Meta-Tools](/tools/reference/meta-tools) — Detailed docs for xpay_discover, xpay_details, xpay_run, xpay_balance

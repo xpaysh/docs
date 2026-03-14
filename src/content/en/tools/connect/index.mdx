@@ -1,0 +1,44 @@
+# Connect Your Client
+
+xpay✦ Tools works with any MCP-compatible AI client. Pick yours below for a copy-paste setup guide.
+
+import { Cards } from 'nextra/components'
+
+## AI Coding Assistants
+
+- [**Cursor**](/tools/connect/cursor) — `~/.cursor/mcp.json`
+- [**Claude Code**](/tools/connect/claude-code) — CLI command
+- [**Claude Desktop**](/tools/connect/claude-desktop) — Desktop config (via mcp-remote)
+- [**VS Code**](/tools/connect/vscode) — `.vscode/mcp.json`
+- [**Windsurf**](/tools/connect/windsurf) — `~/.windsurf/mcp.json`
+- [**Cline**](/tools/connect/cline) — Cline MCP settings
+- [**Roo Code**](/tools/connect/roo-code) — Roo Code MCP settings
+- [**Amazon Q**](/tools/connect/amazon-q) — Amazon Q Developer config
+- [**Augment**](/tools/connect/augment) — Augment MCP settings
+- [**Goose**](/tools/connect/goose) — Goose MCP config
+
+## AI Chat Clients
+
+- [**ChatGPT**](/tools/connect/chatgpt) — Remote MCP server in settings
+- [**Gemini CLI**](/tools/connect/gemini-cli) — `~/.gemini/settings.json`
+
+## Automation & Workflow
+
+- [**n8n**](/tools/connect/n8n) — Community node
+
+## Programmatic Access
+
+- [**API / cURL**](/tools/connect/api-curl) — Direct HTTP calls
+- [**SDK**](/tools/connect/sdk) — Vercel AI SDK & MCP TypeScript SDK
+
+## Connection URL Patterns
+
+All clients use the same URL format:
+
+| Level | URL Pattern |
+|-------|-------------|
+| Master (all tools) | `https://mcp.xpay.sh/mcp?key=YOUR_API_KEY` |
+| Provider (single) | `https://{provider}.mcp.xpay.sh/mcp?key=YOUR_API_KEY` |
+| Collection (curated) | `https://{collection}.mcp.xpay.sh/mcp?key=YOUR_API_KEY` |
+
+See [Connection URLs](/tools/reference/connection-urls) for the full reference.

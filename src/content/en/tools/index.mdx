@@ -1,0 +1,68 @@
+# xpay✦ Tools
+
+**1000+ pay-per-use AI tools for your agents — one API key, any MCP client.**
+
+import { Callout, Cards } from 'nextra/components'
+
+<Callout type="info">
+Browse the full catalog at [xpay.tools](https://xpay.tools)
+</Callout>
+
+## Three Ways to Connect
+
+Choose the level of access that fits your workflow:
+
+### 1. Master Server — All Tools
+
+Connect once, access every tool on the platform through 4 meta-tools:
+
+```json
+{
+  "mcpServers": {
+    "xpay": {
+      "url": "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+The master server exposes `xpay_discover`, `xpay_details`, `xpay_run`, and `xpay_balance` — your AI agent searches, selects, and executes any tool dynamically.
+
+### 2. Collection Server — Curated Subset
+
+Connect to a role-specific bundle (e.g., lead generation, finance, dev tools):
+
+```json
+{
+  "mcpServers": {
+    "lead-gen": {
+      "url": "https://lead-gen.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+Each collection has its own MCP endpoint with pre-selected tools from multiple providers.
+
+### 3. Provider Server — Single Provider
+
+Connect directly to one provider's tools (e.g., Firecrawl, Hunter, Exa):
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "url": "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+You get that provider's full tool list directly — no meta-tools, just the native tools.
+
+## Quick Links
+
+- **[Get Started](/tools/get-started)** — Get your API key and make your first tool call in 3 minutes
+- **[Connect Your Client](/tools/connect)** — Setup guides for Cursor, Claude, VS Code, ChatGPT, and 12 more
+- **[Browse Tools](https://xpay.tools/explore)** — Search and filter the full catalog
+- **[Publish Your Server](/tools/publish)** — Monetize your MCP server with zero code changes

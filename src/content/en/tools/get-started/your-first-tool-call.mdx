@@ -1,0 +1,83 @@
+# Your First Tool Call
+
+This walkthrough uses Cursor as an example, but the experience is similar across all MCP clients.
+
+import { Steps, Callout } from 'nextra/components'
+
+## Using a Provider Server
+
+The simplest way to start — connect directly to one provider.
+
+<Steps>
+
+### Add the MCP server
+
+Add this to your `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "url": "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+Replace `YOUR_API_KEY` with your actual key.
+
+### Ask your agent to use a tool
+
+In Cursor's chat, type:
+
+> Scrape the homepage of https://example.com and summarize it
+
+Cursor will call the `firecrawl_scrape` tool, which costs about $0.01 per call.
+
+### Check the result
+
+The tool result will include a billing receipt at the end:
+
+```
+Cost: $0.01 | Balance: $4.99 | xpay✦
+```
+
+</Steps>
+
+## Using the Master Server
+
+For access to all 1000+ tools through dynamic discovery:
+
+<Steps>
+
+### Add the master MCP server
+
+```json
+{
+  "mcpServers": {
+    "xpay": {
+      "url": "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Ask your agent anything
+
+The agent will use `xpay_discover` to find the right tool, `xpay_details` to check pricing, and `xpay_run` to execute it — all automatically.
+
+> Find the LinkedIn profile for the CEO of Stripe
+
+The agent discovers Hunter's `find_email` tool, checks the price ($0.01), runs it, and returns the result.
+
+</Steps>
+
+<Callout>
+**Tip:** Start with a provider server for a focused experience, then switch to the master server when you need broader access.
+</Callout>
+
+## Next Steps
+
+- [Browse all available tools →](https://xpay.tools/explore)
+- [Understand billing receipts →](/tools/guides/running-tools)
+- [Set spending limits →](/tools/guides/spending-controls)

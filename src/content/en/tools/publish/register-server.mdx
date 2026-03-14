@@ -1,0 +1,58 @@
+# Register Your Server
+
+Step-by-step guide to adding your MCP server to xpay✦ Tools.
+
+import { Steps, Callout } from 'nextra/components'
+
+<Steps>
+
+### Prepare your MCP server
+
+Ensure your server:
+- Is accessible over the internet (HTTPS)
+- Supports Streamable HTTP or SSE transport
+- Responds to `tools/list` with your tool definitions
+
+### Sign up as a creator
+
+Go to [xpay.tools](https://xpay.tools) and sign in. Navigate to your account settings and enable creator mode.
+
+### Register your server
+
+Provide:
+- **Server URL** — Your MCP server's public endpoint (e.g., `https://your-server.com/mcp`)
+- **Slug** — A short, unique name for your endpoint (e.g., `my-service`)
+- **Receiving wallet** — Your USDC wallet address on Base network
+- **Transport type** — Streamable HTTP (recommended) or SSE
+
+### Set pricing
+
+Configure per-tool or flat-rate pricing. See [Pricing Your Tools](/tools/publish/pricing-your-tools) for details.
+
+### Verify and publish
+
+xpay introspects your server to discover tools. Review the tool list and pricing, then publish.
+
+</Steps>
+
+Your server is now live at:
+
+```
+https://{your-slug}.mcp.xpay.sh/mcp
+```
+
+<Callout>
+**Tip:** Test your endpoint by connecting to it from any MCP client (e.g., Cursor) before sharing it publicly.
+</Callout>
+
+## What Happens During Registration
+
+1. xpay calls `tools/list` on your server to discover available tools
+2. Tool names, descriptions, and input schemas are stored
+3. A proxy endpoint is created at `{slug}.mcp.xpay.sh`
+4. Discovery files (`llms.txt`, `skill.md`) are auto-generated
+5. Your tools become searchable on [xpay.tools](https://xpay.tools)
+
+## Authentication
+
+If your upstream server requires authentication (API key, bearer token, etc.), you provide the credentials during registration. xpay stores them securely and includes them when forwarding requests to your server.

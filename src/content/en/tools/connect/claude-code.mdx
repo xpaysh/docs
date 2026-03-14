@@ -1,0 +1,48 @@
+# Claude Code
+
+Connect xpay✦ Tools to [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (Anthropic's CLI).
+
+import { Callout } from 'nextra/components'
+
+## Prerequisites
+
+- Claude Code CLI installed
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+Run in your terminal:
+
+### Master Server (all tools)
+
+```bash
+claude mcp add --transport http xpay "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+```
+
+### Single Provider
+
+```bash
+claude mcp add --transport http firecrawl "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+```
+
+### Collection
+
+```bash
+claude mcp add --transport http dev-tools "https://devtools.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+```
+
+## Verify
+
+Start a new Claude Code session and ask:
+
+```
+What MCP tools do you have available?
+```
+
+You should see the xpay tools listed.
+
+## Troubleshooting
+
+- **Tools not showing**: Start a new session after adding the server (`claude` or `/mcp`)
+- **Authentication errors**: Double-check your API key — it should start with `xpay_sk_`
+- **Remove a server**: `claude mcp remove xpay`

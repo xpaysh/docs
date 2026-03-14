@@ -1,0 +1,54 @@
+# Collections
+
+A **collection** is a curated bundle of tools from multiple providers, organized by use case. Each collection has its own MCP endpoint.
+
+## What is a Collection?
+
+Collections solve a common problem: you want tools for a specific task (e.g., lead generation) but the best tools come from different providers. Instead of connecting to 5 separate providers, connect to one collection endpoint.
+
+## Available Collections
+
+| Collection | Slug | Description |
+|------------|------|-------------|
+| Lead Generation | `lead-gen` | Company enrichment, email finding, social profiles |
+| Competitive Intelligence | `compete` | Domain analysis, keyword research, traffic data |
+| Content Research & Creation | `content` | Web search, academic papers, image generation |
+| Web Scraping Toolkit | `scraping` | Page scraping, crawling, screenshot capture |
+| Academic Research | `research` | Paper search, citation analysis, full-text access |
+| Developer Tools | `devtools` | Code execution, package analysis, documentation |
+| Finance Tools | `finance` | Stock data, financial statements, crypto markets |
+| Social Media Scrapers | `social` | Social profile and content extraction |
+| AI Image & Media Studio | `media` | Image generation, video, text-to-speech |
+
+## Connecting to a Collection
+
+```
+https://{collection-slug}.mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+For example, to connect to the Lead Generation collection in Cursor:
+
+```json
+{
+  "mcpServers": {
+    "lead-gen": {
+      "url": "https://lead-gen.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+When you connect, you get all tools from all providers in that collection — plus the 4 meta-tools (`xpay_discover`, `xpay_details`, `xpay_run`, `xpay_balance`).
+
+## Collection vs Provider
+
+| Feature | Collection | Provider |
+|---------|-----------|----------|
+| Tools from | Multiple providers | Single provider |
+| Scope | Use-case focused | Provider-specific |
+| Meta-tools | Included | Not included |
+| Best for | Role-specific workflows | Using one service |
+
+## Browse Collections
+
+See all collections and their tools at [xpay.tools/explore](https://xpay.tools/explore).

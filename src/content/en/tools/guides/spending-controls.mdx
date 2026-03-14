@@ -1,0 +1,50 @@
+# Spending Controls
+
+Manage your AI agent spending with API key limits and balance monitoring.
+
+import { Callout } from 'nextra/components'
+
+## API Key Limits
+
+Each API key can have optional spending limits:
+
+| Limit | Description |
+|-------|-------------|
+| **Per-call** | Maximum cost for a single tool call |
+| **Daily** | Maximum total spend in a 24-hour period |
+| **Monthly** | Maximum total spend in a calendar month |
+
+When a limit is hit, the tool call is rejected with a `SPENDING_LIMIT_EXCEEDED` error. No charges are incurred.
+
+### Setting Limits
+
+1. Go to [xpay.tools](https://xpay.tools) → Account → API Keys
+2. Click on a key to edit its limits
+3. Set per-call, daily, and/or monthly limits
+4. Save changes — limits take effect immediately
+
+<Callout type="info">
+**Tip:** Create separate API keys for different agents or projects, each with its own spending limit.
+</Callout>
+
+## Balance Management
+
+### Checking Your Balance
+
+- **In the dashboard**: Account → Billing shows your current balance
+- **Programmatically**: Use the `xpay_balance` meta-tool through the master server
+- **In tool responses**: Every billing receipt shows your remaining balance
+
+### Topping Up
+
+Add credits at [xpay.tools](https://xpay.tools) → Account → Billing:
+
+- **Credit card** — Instant top-up via Stripe
+- **Crypto** — Send USDC on Base to your account wallet
+
+## Best Practices
+
+1. **Create per-project keys** — Separate keys for each project or agent makes spending easy to track
+2. **Set conservative limits** — Start with low limits and increase as you understand your usage patterns
+3. **Monitor the billing receipts** — The `Balance` in each receipt helps you track spend in real-time
+4. **Use provider endpoints for predictable costs** — When you connect directly to a provider, you know exactly which tools (and prices) are available

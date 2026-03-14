@@ -7,3 +7,4 @@ node_modules/
 .turbo
 dist/
 build/
+public/_pagefind/

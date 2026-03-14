@@ -1,0 +1,47 @@
+# Browse & Search
+
+Find the right tools for your AI agents across 1000+ options from dozens of providers.
+
+import { Callout } from 'nextra/components'
+
+## Browse at xpay.tools
+
+The easiest way to explore tools:
+
+1. Go to [xpay.tools/explore](https://xpay.tools/explore)
+2. Search by keyword, filter by provider or collection
+3. Click any tool to see its description, parameters, and pricing
+4. Copy the connection config for your AI client
+
+## Search Programmatically
+
+If you're connected to the [master server](/tools/discover/master-server), your AI agent can search tools dynamically using the `xpay_discover` meta-tool:
+
+```
+> Find tools for scraping websites
+
+The agent calls xpay_discover(query: "scraping websites") and gets back
+a list of matching tools with their providers and prices.
+```
+
+## Organization
+
+Tools on the platform are organized in three ways:
+
+### Providers
+
+A provider is a single MCP server publisher (e.g., Firecrawl, Hunter, Exa). Each provider has its own endpoint and tool set.
+
+[Learn about providers →](/tools/discover/providers)
+
+### Collections
+
+Collections are curated bundles of tools from multiple providers, organized by use case (e.g., Lead Generation, Finance, Dev Tools).
+
+[Learn about collections →](/tools/discover/collections)
+
+### Master Server
+
+The unified endpoint that gives access to everything through 4 meta-tools.
+
+[Learn about the master server →](/tools/discover/master-server)

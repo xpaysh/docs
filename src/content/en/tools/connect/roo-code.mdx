@@ -1,0 +1,45 @@
+# Roo Code
+
+Connect xpay✦ Tools to [Roo Code](https://roocode.com).
+
+## Prerequisites
+
+- Roo Code with MCP support
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+In Roo Code's MCP settings, add:
+
+### Master Server (all tools)
+
+```json
+{
+  "mcpServers": {
+    "xpay": {
+      "url": "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Single Provider
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "url": "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+## Verify
+
+Ask Roo Code to list available tools — your xpay tools should appear.
+
+## Troubleshooting
+
+- **Server not connecting**: Check that your Roo Code version supports remote MCP servers
+- **Auth errors**: Verify your API key starts with `xpay_sk_`

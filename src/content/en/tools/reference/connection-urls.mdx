@@ -1,0 +1,63 @@
+# Connection URLs
+
+Reference for all xpay✦ Tools endpoint URL patterns.
+
+## URL Patterns
+
+| Level | URL Pattern | Tools Exposed |
+|-------|-------------|---------------|
+| **Master** | `https://mcp.xpay.sh/mcp?key=KEY` | 4 meta-tools (discover, details, run, balance) |
+| **Provider** | `https://{provider}.mcp.xpay.sh/mcp?key=KEY` | Provider's native tools |
+| **Collection** | `https://{collection}.mcp.xpay.sh/mcp?key=KEY` | All tools in collection + 4 meta-tools |
+
+## Master Server
+
+```
+https://mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+Access all 1000+ tools via the 4 meta-tools. Best for dynamic, multi-provider workflows.
+
+## Provider Endpoints
+
+Connect directly to a single provider's tools:
+
+```
+https://{provider-slug}.mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+Examples:
+- `https://firecrawl.mcp.xpay.sh/mcp?key=KEY` — Firecrawl web scraping
+- `https://hunter.mcp.xpay.sh/mcp?key=KEY` — Hunter email finding
+- `https://exa.mcp.xpay.sh/mcp?key=KEY` — Exa web search
+
+Browse all providers at [xpay.tools/explore](https://xpay.tools/explore).
+
+## Collection Endpoints
+
+Connect to a curated bundle of tools from multiple providers:
+
+```
+https://{collection-slug}.mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+| Collection | Slug | Endpoint |
+|------------|------|----------|
+| Lead Generation | `lead-gen` | `https://lead-gen.mcp.xpay.sh/mcp?key=KEY` |
+| Competitive Intelligence | `compete` | `https://compete.mcp.xpay.sh/mcp?key=KEY` |
+| Content Research | `content` | `https://content.mcp.xpay.sh/mcp?key=KEY` |
+| Web Scraping | `scraping` | `https://scraping.mcp.xpay.sh/mcp?key=KEY` |
+| Developer Tools | `devtools` | `https://devtools.mcp.xpay.sh/mcp?key=KEY` |
+| Finance | `finance` | `https://finance.mcp.xpay.sh/mcp?key=KEY` |
+| AI Media | `media` | `https://media.mcp.xpay.sh/mcp?key=KEY` |
+
+## Discovery URLs
+
+Each endpoint also publishes discovery files:
+
+| File | Path |
+|------|------|
+| Server info | `https://{slug}.mcp.xpay.sh/` |
+| LLM description | `https://{slug}.mcp.xpay.sh/llms.txt` |
+| Skill definition | `https://{slug}.mcp.xpay.sh/skill.md` |
+| MCP metadata | `https://{slug}.mcp.xpay.sh/.well-known/mcp.json` |

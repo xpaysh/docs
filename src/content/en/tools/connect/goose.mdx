@@ -1,0 +1,45 @@
+# Goose
+
+Connect xpay✦ Tools to [Goose](https://block.github.io/goose/).
+
+## Prerequisites
+
+- Goose installed
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+Add to your Goose MCP config:
+
+### Master Server (all tools)
+
+```json
+{
+  "mcpServers": {
+    "xpay": {
+      "url": "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Single Provider
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "url": "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+## Verify
+
+Start a Goose session and ask about available tools.
+
+## Troubleshooting
+
+- **Config location**: Check Goose documentation for your platform's config file path
+- **Server not connecting**: Ensure Goose supports remote HTTP MCP servers

@@ -1,0 +1,71 @@
+# SDK
+
+Connect xpay✦ Tools programmatically using the Vercel AI SDK or MCP TypeScript SDK.
+
+## Vercel AI SDK
+
+```bash
+npm install ai @ai-sdk/openai
+```
+
+```typescript
+import { createMCPClient } from "ai";
+import { generateText } from "ai";
+
+const client = await createMCPClient({
+  transport: {
+    type: "sse",
+    url: "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY",
+  },
+});
+
+const tools = await client.tools();
+const { text } = await generateText({
+  model: yourModel,
+  tools,
+  prompt: "Scrape example.com and summarize it",
+});
+```
+
+## MCP TypeScript SDK
+
+```bash
+npm install @modelcontextprotocol/sdk
+```
+
+```typescript
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+
+const client = new Client({
+  name: "my-client",
+  version: "1.0.0",
+});
+
+await client.connect(
+  new StreamableHTTPClientTransport(
+    new URL("https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY")
+  )
+);
+
+// List tools
+const { tools } = await client.listTools();
+console.log(tools);
+
+// Call a tool
+const result = await client.callTool({
+  name: "firecrawl_scrape",
+  arguments: { url: "https://example.com" },
+});
+console.log(result);
+```
+
+## URL Patterns
+
+Use any connection level:
+
+| Level | URL |
+|-------|-----|
+| Master | `https://mcp.xpay.sh/mcp?key=YOUR_API_KEY` |
+| Provider | `https://{provider}.mcp.xpay.sh/mcp?key=YOUR_API_KEY` |
+| Collection | `https://{collection}.mcp.xpay.sh/mcp?key=YOUR_API_KEY` |

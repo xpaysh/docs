@@ -6,6 +6,16 @@ xpay provides non-custodial payment infrastructure for AI agents using the x402 
 
 ## Capabilities
 
+### xpay✦ Tools — AI Tools Marketplace
+- **1000+ MCP tools** available pay-per-use from dozens of providers
+- **Any MCP client**: Works with Cursor, Claude Code, Claude Desktop, VS Code, ChatGPT, Windsurf, Gemini CLI, and more
+- **One API key**: Single key works across all tools and providers
+- **Three access levels**:
+  - Master server (`mcp.xpay.sh/mcp`) — all tools via 4 meta-tools
+  - Collection server (`{collection}.mcp.xpay.sh/mcp`) — curated tool bundles by use case
+  - Provider server (`{provider}.mcp.xpay.sh/mcp`) — single provider's native tools
+- **Publish your MCP server**: Monetize any MCP server with zero code changes
+
 ### For AI Agent Developers
 - **Smart Proxy**: Set spending limits (per-request, daily, monthly) on autonomous agents calling x402-powered APIs
 - **Real-time monitoring**: Track agent spending as it happens
@@ -22,11 +32,6 @@ xpay provides non-custodial payment infrastructure for AI agents using the x402 
   - Networks: Base mainnet (`eip155:8453`), Base Sepolia (`eip155:84532`)
   - Protocol versions: v1 and v2
 
-### xpay Hub
-- Marketplace for AI agents, tools, and prompts (RDAs)
-- Run AI services with pay-per-use USDC pricing
-- API: `https://api.xpay.sh/hub`
-
 ## Technical Details
 
 - **Blockchain**: Base (Coinbase L2), USDC stablecoin
@@ -39,7 +44,7 @@ xpay provides non-custodial payment infrastructure for AI agents using the x402 
 
 - Documentation: https://docs.xpay.sh
 - Platform: https://xpay.sh
-- Hub: https://hub.xpay.sh
+- Tools: https://xpay.tools
 - Facilitator: https://facilitator.xpay.sh
 - GitHub: https://github.com/xpaysh
 - OpenAPI: https://docs.xpay.sh/openapi.json

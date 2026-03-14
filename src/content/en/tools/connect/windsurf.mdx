@@ -1,0 +1,60 @@
+# Windsurf
+
+Connect xpay✦ Tools to [Windsurf](https://codeium.com/windsurf) (by Codeium).
+
+## Prerequisites
+
+- Windsurf with MCP support
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+Add to `~/.windsurf/mcp.json`:
+
+### Master Server (all tools)
+
+```json
+{
+  "mcpServers": {
+    "xpay": {
+      "url": "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Single Provider
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "url": "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Collection
+
+```json
+{
+  "mcpServers": {
+    "lead-gen": {
+      "url": "https://lead-gen.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+## Verify
+
+1. Open Windsurf Settings → MCP Servers
+2. Your server should be listed and connected
+3. In Cascade, ask: "What tools do you have available?"
+
+## Troubleshooting
+
+- **Server not appearing**: Restart Windsurf after editing `mcp.json`
+- **Authentication errors**: Verify your API key is correct
+- **Config location**: On Windows, the config is at `%USERPROFILE%\.windsurf\mcp.json`

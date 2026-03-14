@@ -1,0 +1,47 @@
+# Providers
+
+A **provider** is a publisher that offers one or more tools through xpay✦ Tools. Each provider has its own MCP endpoint.
+
+## What is a Provider?
+
+Providers register their MCP servers on the platform. xpay wraps each server with:
+
+- **Pay-per-call billing** — users pay per tool invocation
+- **API key authentication** — one key works across all providers
+- **Usage tracking** — billing receipts on every call
+
+## Connecting to a Provider
+
+Every provider gets a dedicated endpoint:
+
+```
+https://{provider-slug}.mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+For example:
+- Firecrawl: `https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY`
+- Hunter: `https://hunter.mcp.xpay.sh/mcp?key=YOUR_API_KEY`
+- Exa: `https://exa.mcp.xpay.sh/mcp?key=YOUR_API_KEY`
+
+When you connect to a provider endpoint, you get that provider's native tools directly — no meta-tools, no indirection.
+
+## Browse Providers
+
+See all available providers at [xpay.tools/explore](https://xpay.tools/explore).
+
+Each provider page shows:
+- Description and website
+- Full list of tools with descriptions and pricing
+- Connection configs for every supported client
+- Total usage statistics
+
+## Provider vs Master Server
+
+| Feature | Provider endpoint | Master server |
+|---------|------------------|---------------|
+| Tools exposed | Provider's native tools | 4 meta-tools |
+| Discovery | Automatic (tools/list) | Via `xpay_discover` |
+| Execution | Direct tool calls | Via `xpay_run` |
+| Best for | Focused use of one service | Dynamic multi-provider access |
+
+**Recommendation**: Use provider endpoints when you know which tools you need. Use the [master server](/tools/discover/master-server) when you want your agent to discover and choose tools dynamically.

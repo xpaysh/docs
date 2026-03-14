@@ -1,0 +1,111 @@
+# Master Server
+
+The **master server** is the unified xpay✦ Tools endpoint that gives your AI agent access to every tool on the platform through 4 meta-tools.
+
+import { Callout } from 'nextra/components'
+
+## Connection
+
+```
+https://mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+When you connect, your agent gets exactly 4 tools:
+
+| Meta-Tool | Purpose |
+|-----------|---------|
+| `xpay_discover` | Search and filter available tools by keyword |
+| `xpay_details` | Get full schema, parameters, and pricing for a specific tool |
+| `xpay_run` | Execute any tool on the platform |
+| `xpay_balance` | Check your remaining credit balance |
+
+## How It Works
+
+Your AI agent uses the meta-tools to dynamically find and execute tools:
+
+1. **User asks** a question or gives a task
+2. **Agent calls** `xpay_discover` to find relevant tools
+3. **Agent calls** `xpay_details` to check parameters and pricing
+4. **Agent calls** `xpay_run` to execute the chosen tool
+5. **Result** is returned with a billing receipt
+
+This all happens automatically — the agent decides which tools to use based on the task.
+
+## Meta-Tool Details
+
+### xpay_discover
+
+Search for tools by keyword.
+
+```json
+{
+  "name": "xpay_discover",
+  "arguments": {
+    "query": "web scraping"
+  }
+}
+```
+
+Returns a list of matching tools with provider name, description, and pricing.
+
+### xpay_details
+
+Get the full schema for a specific tool.
+
+```json
+{
+  "name": "xpay_details",
+  "arguments": {
+    "tool": "firecrawl_scrape"
+  }
+}
+```
+
+Returns the tool's input parameters, descriptions, and per-call cost.
+
+### xpay_run
+
+Execute any tool on the platform.
+
+```json
+{
+  "name": "xpay_run",
+  "arguments": {
+    "tool": "firecrawl_scrape",
+    "input": {
+      "url": "https://example.com"
+    }
+  }
+}
+```
+
+Returns the tool's output plus a billing receipt.
+
+### xpay_balance
+
+Check your remaining credits.
+
+```json
+{
+  "name": "xpay_balance",
+  "arguments": {}
+}
+```
+
+Returns your current balance and credit information.
+
+<Callout>
+See [Meta-Tools Reference](/tools/reference/meta-tools) for complete parameter documentation.
+</Callout>
+
+## When to Use the Master Server
+
+**Use the master server when:**
+- You want your agent to dynamically discover and use tools
+- You don't know in advance which tools you'll need
+- You want access to the full catalog from one connection
+
+**Use a [provider](/tools/discover/providers) or [collection](/tools/discover/collections) endpoint when:**
+- You know exactly which tools you need
+- You want the native tool names (not routed through `xpay_run`)
+- You want a focused tool set for a specific task

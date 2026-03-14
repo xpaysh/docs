@@ -1,0 +1,62 @@
+# Cursor
+
+Connect xpay✦ Tools to [Cursor](https://cursor.com) for AI-powered coding with 1000+ tools.
+
+import { Callout } from 'nextra/components'
+
+## Prerequisites
+
+- Cursor 0.45+ (MCP support)
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+Add to `~/.cursor/mcp.json`:
+
+### Master Server (all tools)
+
+```json
+{
+  "mcpServers": {
+    "xpay": {
+      "url": "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Single Provider
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "url": "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Collection
+
+```json
+{
+  "mcpServers": {
+    "dev-tools": {
+      "url": "https://devtools.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+## Verify
+
+1. Open Cursor Settings → MCP
+2. You should see your server listed with a green status indicator
+3. In chat, ask: "What tools do you have available?"
+
+## Troubleshooting
+
+- **Server shows red/disconnected**: Check that your API key is correct and has credits remaining
+- **Tools not appearing**: Restart Cursor after editing `mcp.json`
+- **"Connection refused" errors**: Ensure you're using `https://` (not `http://`)

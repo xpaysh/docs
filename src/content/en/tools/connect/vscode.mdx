@@ -1,0 +1,67 @@
+# VS Code
+
+Connect xpay✦ Tools to [Visual Studio Code](https://code.visualstudio.com/) with GitHub Copilot's MCP support.
+
+import { Callout } from 'nextra/components'
+
+## Prerequisites
+
+- VS Code 1.99+ (MCP support)
+- GitHub Copilot extension
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+Add to `.vscode/mcp.json` in your project (or user-level settings):
+
+### Master Server (all tools)
+
+```json
+{
+  "servers": {
+    "xpay": {
+      "type": "http",
+      "url": "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Single Provider
+
+```json
+{
+  "servers": {
+    "firecrawl": {
+      "type": "http",
+      "url": "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Collection
+
+```json
+{
+  "servers": {
+    "dev-tools": {
+      "type": "http",
+      "url": "https://devtools.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+## Verify
+
+1. Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
+2. Search for "MCP: List Servers"
+3. Your server should appear with a connected status
+4. In Copilot Chat, ask about available tools
+
+## Troubleshooting
+
+- **No MCP option**: Ensure you have VS Code 1.99+ and the latest Copilot extension
+- **Server not connecting**: Check that the `type` field is set to `"http"`
+- **Project vs user scope**: `.vscode/mcp.json` is project-scoped; for global access, add to user settings JSON under `"mcp.servers"`

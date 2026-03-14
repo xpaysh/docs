@@ -1,0 +1,47 @@
+# n8n
+
+Connect xpay✦ Tools to [n8n](https://n8n.io) workflow automation.
+
+import { Callout } from 'nextra/components'
+
+## Prerequisites
+
+- n8n instance (self-hosted or cloud)
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+### Install the community node
+
+```bash
+npm install n8n-nodes-xpay
+```
+
+Then restart your n8n instance.
+
+### Build a workflow
+
+1. Drag the **XPay Discover** node into your workflow to search for tools
+2. Connect it to an **XPay Run** node to execute the selected tool
+3. Configure both nodes with your API key
+
+<Callout type="info">
+For n8n Cloud, see our [n8n Cloud integration guide](/integrations/n8n-cloud) for installing community nodes.
+</Callout>
+
+## Example Workflow
+
+```
+Trigger → XPay Discover (query: "scrape website") → XPay Run → Process Result
+```
+
+## Verify
+
+1. After installing, the XPay nodes should appear in the node palette
+2. Create a test workflow with XPay Discover → check that it returns tools
+
+## Troubleshooting
+
+- **Node not appearing**: Restart n8n after installing the community node
+- **Auth errors**: Enter your API key in each XPay node's credentials
+- **n8n Cloud**: Community nodes require the "Starter" plan or higher

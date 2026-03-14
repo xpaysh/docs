@@ -1,0 +1,46 @@
+# ChatGPT
+
+Connect xpay✦ Tools to [ChatGPT](https://chat.openai.com) as a remote MCP server.
+
+import { Callout } from 'nextra/components'
+
+## Prerequisites
+
+- ChatGPT Plus, Team, or Enterprise plan (MCP support)
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+1. Open ChatGPT Settings → **Connections** (or **MCP Servers**)
+2. Click **Add MCP Server**
+3. Paste the server URL:
+
+### Master Server (all tools)
+
+```
+https://mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+### Single Provider
+
+```
+https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+### Collection
+
+```
+https://lead-gen.mcp.xpay.sh/mcp?key=YOUR_API_KEY
+```
+
+4. Click **Save**
+
+## Verify
+
+Start a new chat and ask ChatGPT to use one of the connected tools. The tools will appear in the tool picker.
+
+## Troubleshooting
+
+- **MCP not available**: Ensure you're on a ChatGPT Plus or higher plan
+- **Tools not loading**: Try removing and re-adding the server URL
+- **Billing**: Each tool call deducts from your xpay balance, not your OpenAI account

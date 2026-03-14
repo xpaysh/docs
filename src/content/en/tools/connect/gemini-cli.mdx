@@ -1,0 +1,59 @@
+# Gemini CLI
+
+Connect xpay✦ Tools to [Gemini CLI](https://github.com/google-gemini/gemini-cli).
+
+## Prerequisites
+
+- Gemini CLI installed
+- An [xpay API key](/tools/get-started/get-api-key)
+
+## Setup
+
+Add to `~/.gemini/settings.json`:
+
+### Master Server (all tools)
+
+```json
+{
+  "mcpServers": {
+    "xpay": {
+      "uri": "https://mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Single Provider
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "uri": "https://firecrawl.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+### Collection
+
+```json
+{
+  "mcpServers": {
+    "dev-tools": {
+      "uri": "https://devtools.mcp.xpay.sh/mcp?key=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+Note: Gemini CLI uses `uri` instead of `url`.
+
+## Verify
+
+Start a new Gemini CLI session and ask about available tools.
+
+## Troubleshooting
+
+- **Config not loading**: Ensure the JSON is valid and the file is at `~/.gemini/settings.json`
+- **"uri" vs "url"**: Gemini CLI requires `uri` — using `url` will not work

@@ -1,0 +1,144 @@
+# Meta-Tools
+
+Detailed reference for the 4 meta-tools available on the master server (`mcp.xpay.sh`) and collection endpoints.
+
+## xpay_discover
+
+Search for tools across all providers.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | Search keywords (matches tool names, descriptions, and provider names) |
+
+### Example
+
+```json
+{
+  "name": "xpay_discover",
+  "arguments": {
+    "query": "web scraping"
+  }
+}
+```
+
+### Response
+
+Returns a formatted list of matching tools:
+
+```
+Found 5 tools matching "web scraping":
+
+1. firecrawl_scrape (Firecrawl) — $0.01/call
+   Scrape a single URL and return clean markdown
+
+2. firecrawl_crawl (Firecrawl) — $0.05/call
+   Crawl an entire website following links
+
+3. scrape_as_markdown (Web Scraping Toolkit) — $0.01/call
+   Scrape a URL and return as markdown
+
+...
+```
+
+---
+
+## xpay_details
+
+Get the full schema and pricing for a specific tool or server.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tool` | string | Yes | Tool name or server slug to look up |
+
+### Example
+
+```json
+{
+  "name": "xpay_details",
+  "arguments": {
+    "tool": "firecrawl_scrape"
+  }
+}
+```
+
+### Response
+
+Returns the tool's full input schema, description, and pricing.
+
+---
+
+## xpay_run
+
+Execute any tool on the platform.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tool` | string | Yes | The tool name to execute |
+| `input` | object | Yes | The tool's input arguments (must match the tool's schema) |
+
+### Example
+
+```json
+{
+  "name": "xpay_run",
+  "arguments": {
+    "tool": "firecrawl_scrape",
+    "input": {
+      "url": "https://example.com"
+    }
+  }
+}
+```
+
+### Response
+
+Returns the tool's output followed by a billing receipt:
+
+```
+[...tool output...]
+
+Cost: $0.01 | Balance: $4.99 | xpay✦
+```
+
+### Error Responses
+
+| Error | Cause |
+|-------|-------|
+| `Tool not found` | The tool name doesn't match any registered tool |
+| `INSUFFICIENT_BALANCE` | Not enough credits to cover the tool's cost |
+| `SPENDING_LIMIT_EXCEEDED` | The call would exceed your API key's limit |
+| `UPSTREAM_ERROR` | The provider returned an error |
+
+---
+
+## xpay_balance
+
+Check your remaining credit balance.
+
+### Parameters
+
+None required.
+
+### Example
+
+```json
+{
+  "name": "xpay_balance",
+  "arguments": {}
+}
+```
+
+### Response
+
+Returns your current balance and credit information:
+
+```
+Balance: $4.99
+Credits: $4.99 available
+```
