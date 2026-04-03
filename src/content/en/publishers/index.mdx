@@ -1,0 +1,69 @@
+# Agent-Ready: Content Monetization for Publishers
+
+Turn your RSS feed or sitemap into a monetized MCP endpoint that AI agents discover and pay to query.
+
+import { Callout, Cards, Card } from 'nextra/components'
+
+<Callout type="info">
+**Non-technical?** Start with the [publisher guide on xpay.sh/docs/publishers](https://xpay.sh/docs/publishers) for a visual walkthrough. This section covers the technical integration details.
+</Callout>
+
+## How It Works
+
+1. **Paste your RSS/sitemap URL** into the [dashboard](https://app.xpay.sh) or call the Content Server API
+2. **Content is indexed** into DynamoDB — titles, descriptions, full article markdown
+3. **MCP endpoint goes live** at `{your-slug}.mcp.xpay.sh`
+4. **AI agents query** your content via 3 MCP tools: `search-content`, `get-article`, `list-recent`
+5. **You earn 95%** of every query payment (5% platform fee)
+
+## Architecture
+
+```
+Publisher RSS Feed → Content Server API (introspect + index)
+                         ↓
+                    DynamoDB (content index)
+                         ↓
+AI Agent → MCP Proxy → Content Server (MCP tools) → Return markdown
+              ↓
+        Billing: lock → deduct → log execution
+```
+
+The Content Server is an internal MCP server that the [MCP Proxy](/tools) routes to. Billing, auth, and execution logging are handled by the proxy — the content server only handles content retrieval.
+
+## Key Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Content Server** | Lambda service that indexes RSS/sitemap content and serves it via MCP tools |
+| **MCP Proxy** | Billing + routing layer at `*.mcp.xpay.sh` — handles auth, fund lock/deduct, logging |
+| **Content Index** | DynamoDB table storing indexed articles per publisher (PK: serverId, SK: articleId) |
+| **Feed Refresh** | Scheduled every 6 hours — detects new articles, updates index |
+| **upstreamType: content** | Server record flag that routes MCP proxy to the content server instead of an external URL |
+
+## API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/introspect` | POST | Validate and preview RSS/sitemap feed |
+| `/index` | POST | Index feed content into DynamoDB |
+| `/mcp` | POST | MCP JSON-RPC (tools/list, tools/call) |
+| `/health` | GET | Health check |
+
+**Production base:** `https://6wot6b04te.execute-api.us-east-1.amazonaws.com/prod`
+**Dev base:** `https://e3ssbx7b1f.execute-api.us-east-1.amazonaws.com/dev`
+
+## Guides
+
+<Cards>
+  <Card title="Content Server API" href="/publishers/content-server-api" />
+  <Card title="MCP Tool Schemas" href="/publishers/mcp-tool-schemas" />
+  <Card title="Content Indexing" href="/publishers/content-indexing" />
+  <Card title="Pricing Guide" href="/publishers/pricing-guide" />
+  <Card title="WordPress Plugin" href="/publishers/wordpress-plugin" />
+</Cards>
+
+## Related
+
+- [Publish Your MCP Server](/tools/publish) — for developers with existing MCP servers
+- [MCP Monetization](/products/mcp-monetization) — product overview
+- [Publisher Landing Page](https://xpay.sh/agent-ready) — non-technical overview

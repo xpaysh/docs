@@ -1,0 +1,108 @@
+# Content Indexing Pipeline
+
+How publisher content is indexed, stored, and refreshed.
+
+import { Callout } from 'nextra/components'
+
+## Indexing Flow
+
+```
+Publisher RSS/Atom Feed
+        ↓
+POST /introspect (validate + preview)
+        ↓
+POST /servers (create MCP server record with upstreamType: "content")
+        ↓
+POST /index (fetch feed → parse → store in DynamoDB)
+        ↓
+Content live at {slug}.mcp.xpay.sh
+        ↓
+Every 6 hours: contentRefresher detects new articles
+```
+
+## DynamoDB Schema
+
+**Table:** `xpay-content-server-index-{stage}`
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `serverId` (PK) | String | The MCP server ID this content belongs to |
+| `articleId` (SK) | String | SHA-256 hash of the article URL (first 16 chars) |
+
+### Attributes
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `url` | String | Original article URL |
+| `title` | String | Article title |
+| `description` | String | Plain text description (max 500 chars) |
+| `content` | String | Full article as markdown (max 50KB) |
+| `publishedAt` | Number | Unix timestamp (ms) of publish date |
+| `author` | String | Author name |
+| `categories` | List | Category tags from feed |
+| `lastIndexed` | Number | When this article was last indexed |
+| `source` | String | `"rss"` or `"sitemap"` |
+| `titleLower` | String | Lowercase title for keyword search |
+| `descriptionLower` | String | Lowercase description for keyword search |
+
+### GSI: PublishedAtIndex
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `serverId` (PK) | String | Partition by server |
+| `publishedAt` (SK) | Number | Sort by publish date |
+
+Used by `list-recent` tool to query articles sorted by date.
+
+## Feed Refresh (Scheduled)
+
+The `contentRefresher` Lambda runs every 6 hours:
+
+1. **Scans** `xpay-mcp-proxy-servers` for servers with `upstreamType: "content"` and `status: "active"`
+2. **Fetches** each server's `feedUrl`
+3. **Parses** the feed and compares article URLs against existing index
+4. **Indexes** only new articles (URL hash not in existing set)
+5. **Updates** the server record with `lastRefreshed` timestamp and incremented `articleCount`
+
+<Callout type="info">
+The refresher only adds new articles — it does not update or delete existing ones. Deleted articles remain in the index until they expire via TTL (if configured).
+</Callout>
+
+### Performance
+
+- Each server refresh takes 1–3 seconds (feed fetch + DynamoDB writes)
+- Lambda timeout: 300 seconds (can handle ~100 servers per run)
+- At scale (1000+ servers), consider partitioning refreshes across multiple scheduled invocations
+
+## HTML to Markdown Conversion
+
+Article content is converted from HTML to markdown during indexing:
+
+| HTML Element | Markdown Output |
+|-------------|-----------------|
+| `<h1>` – `<h6>` | `#` – `######` |
+| `<strong>`, `<b>` | `**bold**` |
+| `<em>`, `<i>` | `*italic*` |
+| `<a href="...">` | `[text](url)` |
+| `<img>` | `![alt](src)` |
+| `<li>` | `- item` |
+| `<blockquote>` | `> quote` |
+| `<code>` | `` `code` `` |
+| `<pre>` | ```` ``` code ``` ```` |
+| `<p>` | Paragraph with blank line |
+| `<script>`, `<style>`, `<nav>`, `<header>`, `<footer>` | Removed entirely |
+
+HTML entities (`&amp;`, `&lt;`, `&gt;`, `&quot;`, `&#39;`, `&nbsp;`) are decoded.
+
+## Server Record Fields
+
+When a publisher server is created, these additional fields are set on the `xpay-mcp-proxy-servers` record:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `upstreamType` | String | `"content"` — tells the MCP Proxy to route to the content server |
+| `feedUrl` | String | The RSS/sitemap URL |
+| `feedType` | String | `"rss2.0"`, `"atom"`, `"rss1.0"`, or `"sitemap"` |
+| `articleCount` | Number | Total indexed articles |
+| `lastRefreshed` | Number | Timestamp of last successful refresh |
+| `category` | String | `"Content & Knowledge"` |

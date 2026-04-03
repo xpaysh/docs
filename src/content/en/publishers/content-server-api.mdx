@@ -1,0 +1,175 @@
+# Content Server API
+
+The Content Server API handles feed introspection, content indexing, and MCP tool serving for publisher content.
+
+import { Callout } from 'nextra/components'
+
+## Base URLs
+
+| Environment | URL |
+|-------------|-----|
+| **Production** | `https://6wot6b04te.execute-api.us-east-1.amazonaws.com/prod` |
+| **Development** | `https://e3ssbx7b1f.execute-api.us-east-1.amazonaws.com/dev` |
+
+## POST /introspect
+
+Validates an RSS/Atom/sitemap URL and returns feed metadata with sample articles.
+
+### Request
+
+```json
+{
+  "url": "https://yoursite.com/feed"
+}
+```
+
+### Response (RSS/Atom feed)
+
+```json
+{
+  "feedType": "rss2.0",
+  "url": "https://yoursite.com/feed",
+  "title": "Your Site Name",
+  "description": "Site description from the feed",
+  "link": "https://yoursite.com",
+  "language": "en-us",
+  "contentCount": 247,
+  "sampleArticles": [
+    {
+      "title": "Article Title",
+      "url": "https://yoursite.com/article-slug",
+      "description": "First 200 chars of article description...",
+      "publishedAt": 1775222193000,
+      "author": "Author Name"
+    }
+  ],
+  "tools": [
+    {
+      "name": "search-content",
+      "description": "Search across 247 articles by keyword.",
+      "inputSchema": { "type": "object", "properties": { "query": { "type": "string" } }, "required": ["query"] }
+    },
+    {
+      "name": "get-article",
+      "description": "Get the full content of a specific article as markdown.",
+      "inputSchema": { "type": "object", "properties": { "url": { "type": "string" } }, "required": ["url"] }
+    },
+    {
+      "name": "list-recent",
+      "description": "List the most recently published articles.",
+      "inputSchema": { "type": "object", "properties": { "limit": { "type": "number" } } }
+    }
+  ]
+}
+```
+
+### Response (Sitemap)
+
+```json
+{
+  "feedType": "sitemap",
+  "url": "https://yoursite.com/sitemap.xml",
+  "contentCount": 1250,
+  "sampleUrls": ["https://yoursite.com/page-1", "..."],
+  "tools": [ "..." ],
+  "message": "Found 1250 URLs in sitemap. Content will be fetched and indexed from each URL."
+}
+```
+
+### Supported Feed Formats
+
+| Format | Detection |
+|--------|-----------|
+| RSS 2.0 | `<rss>` or `<channel>` tags |
+| Atom | `<feed>` tag |
+| RSS 1.0 (RDF) | `<item>` tags with RDF namespace |
+| Sitemap | `<urlset>` or `<sitemapindex>` tags |
+
+### Error Responses
+
+| Status | Meaning |
+|--------|---------|
+| 400 | Missing or invalid URL |
+| 408 | Feed fetch timed out (15s limit) |
+| 502 | Feed returned non-200 status |
+
+---
+
+## POST /index
+
+Indexes feed content into DynamoDB for a given server. Called after server creation to populate the content index.
+
+### Request
+
+```json
+{
+  "serverId": "mcs_1234567890_abc",
+  "feedUrl": "https://yoursite.com/feed"
+}
+```
+
+### Response
+
+```json
+{
+  "serverId": "mcs_1234567890_abc",
+  "indexedCount": 247,
+  "feedType": "rss2.0",
+  "message": "Successfully indexed 247 articles"
+}
+```
+
+### What Gets Indexed
+
+For **RSS/Atom feeds**, each article is stored with:
+- `title` — Article title
+- `url` — Original article URL
+- `description` — First 500 chars of description (plain text)
+- `content` — Full article content converted to markdown (capped at 50KB)
+- `publishedAt` — Publish date as Unix timestamp (ms)
+- `author` — Author name
+- `categories` — Array of category tags from the feed
+
+For **sitemaps**, only URL metadata is stored. Full content is fetched on-demand when an agent calls `get-article`.
+
+<Callout type="warning">
+Articles are capped at 50KB of markdown content. Very long articles will be truncated.
+</Callout>
+
+### Side Effects
+
+After indexing, the server record in `xpay-mcp-proxy-servers` is updated with:
+- `articleCount` — Total indexed articles
+- `lastRefreshed` — Timestamp of last index
+- `feedUrl` — The RSS/sitemap URL
+- `feedType` — Detected feed format
+
+---
+
+## POST /mcp
+
+MCP JSON-RPC endpoint for content tools. This is the upstream that the MCP Proxy forwards to.
+
+See [MCP Tool Schemas](/publishers/mcp-tool-schemas) for the full tool definitions and example calls.
+
+### Query Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `serverId` | Yes | The server ID to serve content for |
+
+The `serverId` is passed by the MCP Proxy via query string or `x-xpay-server-id` header.
+
+---
+
+## GET /health
+
+Returns service status.
+
+```json
+{
+  "status": "ok",
+  "service": "xpay-content-server",
+  "timestamp": 1775225130016
+}
+```

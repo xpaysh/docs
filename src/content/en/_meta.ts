@@ -4,6 +4,7 @@ export default {
   "x402-protocol": "x402 Protocol",
   "products": "Products",
   "hub": { title: "xpay✦ Hub", display: "hidden" },
+  "publishers": "Publishers (Agent-Ready)",
   "tools": "xpay✦ Tools",
   "integrations": "Integrations",
   "developer-resources": "Developer Resources",

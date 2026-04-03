@@ -1,0 +1,70 @@
+# Pricing Guide
+
+How to price your content for AI agent queries.
+
+import { Callout } from 'nextra/components'
+
+## Pricing Model
+
+Publisher content uses **flat per-query pricing** — every tool call (`search-content`, `get-article`, `list-recent`) costs the same amount. The price is set per server, not per tool.
+
+| Parameter | Range | Default |
+|-----------|-------|---------|
+| Price per query | $0.01 – $1.00 | $0.05 |
+| Platform fee | 5% | Fixed |
+| Publisher revenue | 95% of query price | — |
+
+## Recommended Pricing by Vertical
+
+| Vertical | Suggested Range | Rationale |
+|----------|-----------------|-----------|
+| Recipes & Food | $0.03 – $0.08 | High volume, commodity content |
+| Finance & Investing | $0.10 – $0.50 | Specialized, high-value data |
+| Health & Medical | $0.10 – $0.30 | Professional, research-grade |
+| Travel & Lifestyle | $0.05 – $0.15 | Planning and reference use |
+| Technology & News | $0.05 – $0.10 | Time-sensitive, frequent queries |
+| Academic & Research | $0.15 – $0.50 | Deep, unique, hard-to-find content |
+
+<Callout type="info">
+Start at the lower end of your vertical's range and increase as demand grows. You can change pricing anytime from the dashboard.
+</Callout>
+
+## Revenue Examples
+
+| Price/Query | Queries/Day | Monthly Revenue (95%) |
+|-------------|-------------|----------------------|
+| $0.03 | 50 | $42.75 |
+| $0.05 | 100 | $142.50 |
+| $0.10 | 100 | $285.00 |
+| $0.10 | 500 | $1,425.00 |
+| $0.25 | 200 | $1,425.00 |
+| $0.50 | 100 | $1,425.00 |
+
+## Pricing Tips
+
+1. **Lower prices = more queries.** AI agents are cost-sensitive. A recipe blog at $0.03/query will get 10x more calls than one at $0.30.
+
+2. **Unique content commands premium.** If your content can't be found elsewhere (proprietary research, exclusive interviews, original analysis), price higher.
+
+3. **Watch your analytics.** The dashboard shows query volume trends. If queries are flat, try lowering price. If queries are surging, you can afford to increase.
+
+4. **Compare with alternatives.** AI agents can also scrape your site directly (for free, if not blocked). Your pricing should reflect the convenience and quality of structured, clean markdown vs raw HTML scraping.
+
+## How Billing Works
+
+1. **Agent sends query** → MCP Proxy receives it
+2. **Fund lock** — Proxy locks the query price from the agent's credit balance (atomic DynamoDB operation)
+3. **Content served** — Content Server returns the article/search results
+4. **Fund deduct** — On success, locked funds are permanently deducted. On failure, funds are unlocked (refunded)
+5. **Receipt** — Agent receives a cost receipt: `"Cost: $0.05 | Balance: $4.95 | xpay✦"`
+6. **Publisher credit** — 95% of the query price is credited to the publisher's wallet
+
+<Callout type="warning">
+Agents are never charged for failed queries. The lock/deduct/unlock pattern ensures fair billing.
+</Callout>
+
+## Changing Prices
+
+Update pricing from the [dashboard](https://app.xpay.sh) under Charge-per-use → MCP Servers → your server → Edit Pricing.
+
+Price changes take effect immediately for new queries. In-flight queries use the price at the time of the fund lock.

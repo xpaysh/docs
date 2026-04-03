@@ -1,0 +1,201 @@
+# MCP Tool Schemas
+
+Every publisher content server exposes three MCP tools. AI agents discover these via `tools/list` and execute them via `tools/call`.
+
+import { Callout } from 'nextra/components'
+
+## tools/list Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "tools": [
+      {
+        "name": "search-content",
+        "description": "Search articles by keyword. Returns matching titles, URLs, and snippets.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": { "type": "string", "description": "Search query keywords" },
+            "limit": { "type": "number", "description": "Max results (default 5, max 20)" }
+          },
+          "required": ["query"]
+        }
+      },
+      {
+        "name": "get-article",
+        "description": "Get the full content of a specific article as markdown.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string", "description": "The article URL to retrieve" }
+          },
+          "required": ["url"]
+        }
+      },
+      {
+        "name": "list-recent",
+        "description": "List the most recently published articles.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": { "type": "number", "description": "Number of articles (default 10, max 50)" }
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## search-content
+
+Searches the publisher's indexed articles by keyword. Matches against title and description, ranked by relevance.
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "search-content",
+    "arguments": {
+      "query": "chocolate cake recipe",
+      "limit": 5
+    }
+  },
+  "id": 2
+}
+```
+
+### Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "content": [{
+      "type": "text",
+      "text": "[{\"title\":\"Best Chocolate Cake\",\"url\":\"https://...\",\"snippet\":\"Rich, moist chocolate...\",\"publishedAt\":\"2026-03-15T10:00:00.000Z\",\"author\":\"Chef Name\"}]"
+    }]
+  }
+}
+```
+
+### Ranking
+
+Keywords are matched against `title` (3x weight) and `description` (1x weight). Results are sorted by total score, then limited.
+
+<Callout type="info">
+Search is keyword-based, not semantic. For best results, use specific terms rather than natural language queries.
+</Callout>
+
+---
+
+## get-article
+
+Fetches the full content of a specific article as markdown.
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "get-article",
+    "arguments": {
+      "url": "https://yoursite.com/best-chocolate-cake"
+    }
+  },
+  "id": 3
+}
+```
+
+### Response
+
+The article is returned as formatted markdown:
+
+```
+# Best Chocolate Cake
+**Author:** Chef Name
+**Published:** 2026-03-15T10:00:00.000Z
+**Source:** https://yoursite.com/best-chocolate-cake
+
+---
+
+Rich, moist chocolate cake with a deep cocoa flavor...
+```
+
+### Content Source Priority
+
+1. **Indexed content** — If the article was indexed from RSS (has `content` field), returns the cached markdown
+2. **Live fetch** — If no cached content (sitemap sources, or content was empty), fetches the article HTML live and converts to markdown
+
+Live fetches have a 10-second timeout.
+
+---
+
+## list-recent
+
+Lists the most recently published articles, sorted by publish date (newest first).
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "list-recent",
+    "arguments": {
+      "limit": 10
+    }
+  },
+  "id": 4
+}
+```
+
+### Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "content": [{
+      "type": "text",
+      "text": "[{\"title\":\"Latest Article\",\"url\":\"https://...\",\"publishedAt\":\"2026-04-03T13:35:11.000Z\",\"author\":\"Author\",\"snippet\":\"First 150 chars...\"}]"
+    }]
+  }
+}
+```
+
+---
+
+## Error Responses
+
+MCP errors are returned with HTTP 200 but with an `error` field in the JSON-RPC response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "error": {
+    "code": -32602,
+    "message": "query is required"
+  }
+}
+```
+
+| Code | Meaning |
+|------|---------|
+| -32601 | Method not supported |
+| -32602 | Invalid params (missing required field) |
+| -32603 | Internal error (upstream fetch failed, timeout) |
