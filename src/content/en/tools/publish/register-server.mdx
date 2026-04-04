@@ -13,23 +13,17 @@ Ensure your server:
 - Supports Streamable HTTP or SSE transport
 - Responds to `tools/list` with your tool definitions
 
-### Sign up as a creator
+### Register and set pricing
 
-Go to [xpay.tools](https://xpay.tools) and sign in. Navigate to your account settings and enable creator mode.
+The fastest way is the **[Monetize Wizard](https://www.xpay.sh/monetize-mcp-server/)** — no account needed to start:
 
-### Register your server
+1. Paste your server URL → tools are auto-discovered
+2. Set per-tool or flat-rate pricing (see [Pricing Your Tools](/tools/publish/pricing-your-tools))
+3. Sign in to claim your proxy URL and set your receiving wallet
 
-Provide:
-- **Server URL** — Your MCP server's public endpoint (e.g., `https://your-server.com/mcp`)
-- **Slug** — A short, unique name for your endpoint (e.g., `my-service`)
-- **Receiving wallet** — Your USDC wallet address on Base network
-- **Transport type** — Streamable HTTP (recommended) or SSE
+Alternatively, sign in at **[app.xpay.sh](https://app.xpay.sh/dashboard/charge-per-use/mcp-servers/)** and click **Add MCP Server** for the full dashboard experience. Configure your wallet and portal branding under **[Account Config](https://app.xpay.sh/dashboard/charge-per-use/account-config/)**.
 
-### Set pricing
-
-Configure per-tool or flat-rate pricing. See [Pricing Your Tools](/tools/publish/pricing-your-tools) for details.
-
-### Verify and publish
+### Review and publish
 
 xpay introspects your server to discover tools. Review the tool list and pricing, then publish.
 
