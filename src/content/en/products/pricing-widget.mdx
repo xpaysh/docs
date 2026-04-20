@@ -1,0 +1,133 @@
+# Pricing Page Widget
+
+Add an AI-powered pricing assistant to your SaaS pricing page. Convert visitors who would otherwise bounce into pay-per-use customers, and make your product discoverable to AI agents.
+
+## Overview
+
+The xpay Pricing Page Widget is an embeddable JavaScript widget that:
+
+- **Converts bouncing visitors** — An AI pricing assistant engages visitors, answers their questions, and offers a $5 pay-per-use option for those who aren't ready to subscribe
+- **Makes your product AI-discoverable** — Auto-generates `agents.txt`, `llms.txt`, and `ai-pricing.json` files so AI agents can find and evaluate your product programmatically
+- **Requires zero backend work** — One `<script>` tag on your pricing page. No API integration needed.
+
+## Quick Start
+
+### 1. Sign Up
+
+Go to [app.xpay.sh](https://app.xpay.sh) and create an account.
+
+### 2. Configure Your Widget
+
+Navigate to **Dashboard > Charge-Per-Use > Pricing Widget** and fill in:
+
+- **Company info** — Name, website, logo
+- **Product & pricing knowledge** — Describe your product and paste your pricing details
+- **Pricing plans** — Add your subscription tiers with features
+- **PPU offer** — Set the pay-per-use starting amount (default: $5)
+- **Widget appearance** — Choose accent color, position, and greeting message
+
+### 3. Add the Script Tag
+
+Copy the embed snippet from the setup wizard and add it to your pricing page:
+
+```html
+<script
+  src="https://widget.xpay.sh/v1/chat.js"
+  data-xpay-key="xp_widget_your_key_here"
+  async
+  defer
+></script>
+```
+
+Add this before the closing `</body>` tag. Works with any website platform — Webflow, Framer, WordPress, custom HTML.
+
+### 4. Deploy Discovery Files
+
+Download the generated AI discoverability files from your dashboard and deploy them to your domain:
+
+| File | Path | Purpose |
+|------|------|---------|
+| `agents.txt` | `/agents.txt` | Machine-readable agent discovery |
+| `llms.txt` | `/llms.txt` | LLM-friendly product description |
+| `ai-pricing.json` | `/.well-known/ai-pricing.json` | Structured pricing metadata |
+
+## How the Widget Works
+
+When a visitor opens the widget on your pricing page:
+
+1. **AI greets them** with customizable starter questions ("How does pricing work?", "Which plan fits my needs?")
+2. **Visitor asks questions** — the AI answers using only the pricing data you configured (no hallucination)
+3. **AI recommends** either a subscription plan (links to your checkout) or pay-per-use ($5 to try)
+4. **PPU checkout** — visitor clicks "Try for $5", completes Stripe checkout, gets instant access
+5. **Revenue flows** — 85% goes to your Stripe Connect account, 15% is the xpay platform fee
+
+## Configuration Options
+
+### Script Tag Attributes
+
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| `data-xpay-key` | Yes | Your widget API key (starts with `xp_widget_`) |
+| `data-color` | No | Override accent color (hex, e.g., `#6366f1`) |
+| `data-position` | No | Widget position: `right` (default) or `left` |
+
+### Content Security Policy (CSP)
+
+If your site uses CSP headers, add these directives:
+
+```
+script-src 'self' widget.xpay.sh;
+connect-src 'self' *.xpay.sh *.execute-api.us-east-1.amazonaws.com;
+```
+
+## Revenue Model
+
+| Party | Share | Notes |
+|-------|-------|-------|
+| SaaS company (you) | 85% | Paid via Stripe Connect |
+| xpay platform | 15% | Covers AI, checkout, infrastructure |
+
+Payouts are processed via Stripe Connect Express. Set up payouts in your dashboard under **Revenue > Payout Settings**.
+
+## Analytics
+
+Track your widget's performance in the dashboard:
+
+- **Conversion funnel**: Visitors shown → Widget opened → Messages sent → PPU offered → PPU purchased → Subscription clicked
+- **Daily breakdown**: Event counts per day for charting
+- **Conversion rates**: Open rate, chat rate, PPU conversion rate
+
+## AI Discoverability Files
+
+The widget dashboard auto-generates three files that make your product visible to AI agents:
+
+### agents.txt
+
+Machine-readable format describing your product, pricing plans, and pay-per-use availability.
+
+### llms.txt
+
+Human-readable (but LLM-optimized) product overview with pricing tiers in plain language.
+
+### .well-known/ai-pricing.json
+
+Structured JSON with:
+- Plan names, prices, and features
+- PPU availability and checkout URL
+- Provider metadata
+
+Deploy these to your domain's root. AI agents searching for solutions in your category will find your product.
+
+## FAQ
+
+**Does the widget slow down my page?**
+No. The script loads asynchronously and defers execution. It adds ~15KB (gzipped) to your page, less than a typical analytics script.
+
+**Can I customize what the AI says?**
+Yes. The AI only uses the product description, pricing text, and FAQ you provide in the dashboard. It never invents features or prices.
+
+**What happens if a visitor's needs exceed PPU?**
+The AI will recommend a subscription plan instead and link to your checkout URL.
+
+**Do I need Stripe?**
+Yes, for receiving payouts. During setup, you'll connect your Stripe account via Stripe Connect Express.
