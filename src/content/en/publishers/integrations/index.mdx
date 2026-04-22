@@ -1,0 +1,72 @@
+# CDN Integrations
+
+Redirect AI bot traffic from your main website to your xpay portal, so bots pay for content instead of scraping it for free.
+
+import { Callout, Cards, Card } from 'nextra/components'
+
+## How It Works
+
+```
+AI bot → your-site.com/article → CDN detects bot User-Agent
+   → 302 redirect to xpay.your-site.com/article
+   → xpay portal checks auth (API key, x402, or none)
+   → Serves content (paid) or returns 402 with payment options
+```
+
+Your CDN acts as the **bouncer** — it detects AI bots and redirects them. xpay is the **business layer** — it handles pricing, authentication, MCP protocol, payouts, and analytics.
+
+<Callout type="info">
+**Search engines are never redirected.** Googlebot, BingBot, and other search crawlers pass through to your main site normally. Only AI-specific bots (GPTBot, ClaudeBot, PerplexityBot, etc.) are redirected.
+</Callout>
+
+## What Your CDN Can't Do (Our Value)
+
+CDN-level bot blocking can only Allow or Block (403). It cannot:
+
+- **Freemium pricing** — search free, full articles paid
+- **Per-section pricing** — drug data $0.10, articles $0.01
+- **API key management** and metering
+- **MCP protocol support** — standard agent interface
+- **x402 payments** — direct wallet-to-wallet, no account needed
+- **Revenue sharing** and payouts via Stripe Connect
+- **Widget and affiliate commerce**
+- **Per-query analytics** by tool, agent, and publisher
+
+That's why we redirect to xpay instead of just blocking.
+
+## Available Integrations
+
+<Cards>
+  <Card title="Cloudflare" href="/en/publishers/integrations/cloudflare">
+    Redirect Rules (all plans) or Workers. Most publishers use this.
+  </Card>
+  <Card title="Fastly" href="/en/publishers/integrations/fastly">
+    VCL-based bot detection and redirect.
+  </Card>
+  <Card title="Akamai" href="/en/publishers/integrations/akamai">
+    Edge Redirector / Cloudlets for bot routing.
+  </Card>
+  <Card title="AWS CloudFront" href="/en/publishers/integrations/aws-cloudfront">
+    WAF rules + CloudFront Functions for bot detection.
+  </Card>
+</Cards>
+
+## Prerequisites
+
+Before setting up CDN integration, ensure:
+
+1. **Your xpay portal is live** — sign up at [app.xpay.sh](https://app.xpay.sh) and your content is indexed
+2. **CNAME record added** — point `xpay.your-domain.com` to Vercel (`88c9f95bf3ca4d4d.vercel-dns-016.com`)
+3. **Portal loads** — visit `https://xpay.your-domain.com` and confirm it shows your branded portal
+
+## After Setup
+
+Once your CDN is redirecting bots:
+
+1. **Host discovery files** on your main site — download from [Account Config](https://app.xpay.sh/dashboard/charge-per-use/account-config/) and upload `llms.txt`, `agents.txt`, `robots.txt` additions, `.well-known/mcp.json`, and `skill.md`
+2. **Monitor traffic** in your CDN dashboard to see which bots are being redirected
+3. **Check revenue** at [app.xpay.sh/dashboard](https://app.xpay.sh/dashboard) for query analytics and earnings
+
+<Callout type="warning">
+**Don't skip the discovery files.** They tell AI agents where to find your paid content endpoint. Without them, agents won't know your content is available via API — they'll just see a 403 block.
+</Callout>

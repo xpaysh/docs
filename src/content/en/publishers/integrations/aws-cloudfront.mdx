@@ -1,0 +1,67 @@
+# AWS CloudFront Integration
+
+Redirect AI bot traffic from your CloudFront distribution to your xpay portal using WAF rules and CloudFront Functions.
+
+import { Callout } from 'nextra/components'
+
+<Callout type="warning">
+This guide is under development. Check back soon for detailed step-by-step instructions.
+</Callout>
+
+## Architecture
+
+```
+AI bot → your-site.com → CloudFront + WAF detects bot User-Agent
+   → CloudFront Function redirects to xpay.your-site.com
+   → xpay portal: auth check → content or 402
+
+Human visitor → your-site.com → passes through normally
+Search engine → your-site.com → passes through normally
+```
+
+## Approach
+
+AWS uses a two-layer approach: **WAF** for bot detection and **CloudFront Functions** for the redirect.
+
+### Steps Overview
+
+1. **Create a Web ACL** in AWS WAF & Shield (CloudFront scope)
+2. **Associate** your CloudFront distribution with the Web ACL
+3. **Add a WAF rule** that matches the 22 AI bot User-Agents — set action to "Allow" with a custom header `x-amzn-waf-bot` inserted
+4. **Create a CloudFront Function** (viewer-request stage) that checks for the `x-amzn-waf-bot` header and returns a 302 redirect to `xpay.your-domain.com`
+
+### Why two layers?
+
+CloudFront Functions alone can't inspect request headers with complex matching. WAF handles the detection and tags the request. The CloudFront Function handles the lightweight redirect based on the tag.
+
+### Bot list
+
+The same 22 AI bot User-Agents used across all CDN integrations — see the [full bot list](/en/publishers/integrations/cloudflare#ai-bot-user-agents) in the Cloudflare guide.
+
+### Search engines excluded
+
+Googlebot, BingBot, Applebot (search), YandexBot, and DuckDuckBot are never redirected.
+
+## Prerequisites
+
+1. Your xpay portal is live at `xpay.your-domain.com`
+2. CNAME record added and verified
+3. CloudFront distribution configured for your domain
+
+## Alternative: ALB-based Setup
+
+If you're using an Application Load Balancer (ALB) instead of CloudFront, you can use **ALB Listener Rules** with User-Agent conditions to redirect bot traffic. This is simpler but only works for ALB-fronted origins.
+
+## Testing
+
+```bash
+# Should redirect (302):
+curl -A "GPTBot/1.0" -I https://your-site.com/some-article
+
+# Should NOT redirect (200):
+curl -A "Googlebot/2.1" -I https://your-site.com/some-article
+```
+
+## Need Help?
+
+Contact us at [support@xpay.sh](mailto:support@xpay.sh) if you need assistance with AWS configuration.

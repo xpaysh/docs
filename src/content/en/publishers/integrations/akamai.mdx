@@ -1,0 +1,63 @@
+# Akamai Integration
+
+Redirect AI bot traffic from your Akamai-powered site to your xpay portal using Edge Redirector (Cloudlets).
+
+import { Callout } from 'nextra/components'
+
+<Callout type="warning">
+This guide is under development. Check back soon for detailed step-by-step instructions.
+</Callout>
+
+## Architecture
+
+```
+AI bot → your-site.com → Akamai edge detects bot User-Agent
+   → 302 redirect to xpay.your-site.com (same path preserved)
+   → xpay portal: auth check → content or 402
+
+Human visitor → your-site.com → passes through normally
+Search engine → your-site.com → passes through normally
+```
+
+## Approach
+
+Akamai uses **Edge Redirector** (part of Cloudlets) for conditional redirects based on request headers.
+
+### Steps Overview
+
+1. **Create an Edge Redirector Policy** in Akamai Control Center
+2. **Configure matching rule** on the `User-Agent` header using the AI bot list with "is one of" operator (case-insensitive)
+3. **Set redirect URL** to `https://xpay.your-site.com/\2` where `\2` preserves the original request path
+4. **Activate** in staging first, then production
+
+### Bot list
+
+The same 22 AI bot User-Agents used across all CDN integrations — see the [full bot list](/en/publishers/integrations/cloudflare#ai-bot-user-agents) in the Cloudflare guide.
+
+### Search engines excluded
+
+Googlebot, BingBot, Applebot (search), YandexBot, and DuckDuckBot are never redirected.
+
+## Prerequisites
+
+1. Your xpay portal is live at `xpay.your-domain.com`
+2. CNAME record added and verified
+3. Akamai property configured with Cloudlets enabled
+
+## Testing
+
+```bash
+# Should redirect (302):
+curl -A "GPTBot/1.0" -I https://your-site.com/some-article
+
+# Should NOT redirect (200):
+curl -A "Googlebot/2.1" -I https://your-site.com/some-article
+```
+
+<Callout type="info">
+**Always test in Akamai's staging environment first.** Edge Redirector rules intercept live traffic — verify behavior before activating in production.
+</Callout>
+
+## Need Help?
+
+Contact us at [support@xpay.sh](mailto:support@xpay.sh) if you need assistance with Akamai configuration.

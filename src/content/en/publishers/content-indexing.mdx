@@ -20,39 +20,22 @@ Content live at {slug}.mcp.xpay.sh
 Every 6 hours: contentRefresher detects new articles
 ```
 
-## DynamoDB Schema
+## What Gets Indexed
 
-**Table:** `xpay-content-server-index-{stage}`
+Each article stored in the index includes:
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `serverId` (PK) | String | The MCP server ID this content belongs to |
-| `articleId` (SK) | String | SHA-256 hash of the article URL (first 16 chars) |
+| Field | Description |
+|-------|-------------|
+| URL | Original article URL on your site |
+| Title | Article headline |
+| Description | Plain text excerpt (up to 500 characters) |
+| Content | Full article as clean markdown (up to 50KB) |
+| Published date | When the article was originally published |
+| Author | Byline/author name |
+| Categories | Topic tags from your feed |
+| Source | Whether it came from RSS or sitemap |
 
-### Attributes
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `url` | String | Original article URL |
-| `title` | String | Article title |
-| `description` | String | Plain text description (max 500 chars) |
-| `content` | String | Full article as markdown (max 50KB) |
-| `publishedAt` | Number | Unix timestamp (ms) of publish date |
-| `author` | String | Author name |
-| `categories` | List | Category tags from feed |
-| `lastIndexed` | Number | When this article was last indexed |
-| `source` | String | `"rss"` or `"sitemap"` |
-| `titleLower` | String | Lowercase title for keyword search |
-| `descriptionLower` | String | Lowercase description for keyword search |
-
-### GSI: PublishedAtIndex
-
-| Key | Type | Description |
-|-----|------|-------------|
-| `serverId` (PK) | String | Partition by server |
-| `publishedAt` (SK) | Number | Sort by publish date |
-
-Used by `list-recent` tool to query articles sorted by date.
+Articles are deduplicated by URL — re-indexing the same feed won't create duplicates.
 
 ## Feed Refresh (Scheduled)
 

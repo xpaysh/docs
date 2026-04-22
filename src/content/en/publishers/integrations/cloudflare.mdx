@@ -1,0 +1,297 @@
+# Cloudflare Integration
+
+Redirect AI bot traffic from your Cloudflare-protected site to your xpay portal using Redirect Rules (free plan) or AI Crawl Control.
+
+import { Callout, Steps, Tabs } from 'nextra/components'
+
+## Architecture
+
+```
+AI bot → your-site.com → Cloudflare detects bot User-Agent
+   → 302 redirect to xpay.your-site.com (same path preserved)
+   → xpay portal: auth check → content or 402
+
+Human visitor → your-site.com → passes through normally
+Search engine → your-site.com → passes through normally
+```
+
+Cloudflare is the **bouncer** (detects and redirects AI bots). xpay is the **business** (pricing, freemium, MCP, payouts, analytics).
+
+## Option 1: Redirect Rules (Recommended)
+
+This is the simplest approach. Works on **all Cloudflare plans including Free** (10 rules on free plan). No code required.
+
+<Steps>
+
+### Create the Redirect Rule
+
+1. Log into your Cloudflare dashboard
+2. Select your domain
+3. Go to **Rules > Overview** in the sidebar
+4. Click **Create Rule** → select **Redirect Rule**
+
+### Configure the expression
+
+Switch to **"Edit expression"** and paste:
+
+```
+(http.user_agent contains "GPTBot") or
+(http.user_agent contains "ChatGPT-User") or
+(http.user_agent contains "OAI-SearchBot") or
+(http.user_agent contains "ClaudeBot") or
+(http.user_agent contains "Claude-SearchBot") or
+(http.user_agent contains "Claude-User") or
+(http.user_agent contains "CCBot") or
+(http.user_agent contains "PerplexityBot") or
+(http.user_agent contains "Perplexity-User") or
+(http.user_agent contains "Bytespider") or
+(http.user_agent contains "Meta-ExternalAgent") or
+(http.user_agent contains "Meta-ExternalFetcher") or
+(http.user_agent contains "FacebookBot") or
+(http.user_agent contains "Google-CloudVertexBot") or
+(http.user_agent contains "Google-Extended") or
+(http.user_agent contains "Amazonbot") or
+(http.user_agent contains "Applebot-Extended") or
+(http.user_agent contains "DuckAssistBot") or
+(http.user_agent contains "MistralAI-User") or
+(http.user_agent contains "Manus Bot") or
+(http.user_agent contains "PetalBot") or
+(http.user_agent contains "TikTok Spider")
+```
+
+### Set the redirect
+
+- **Type:** Dynamic
+- **Expression:** `concat("https://xpay.your-domain.com", http.request.uri.path)`
+- **Status code:** 302 (Temporary Redirect)
+- **Preserve query string:** Yes
+
+Replace `your-domain.com` with your actual domain.
+
+### Deploy
+
+Click **Deploy**. The rule takes effect immediately.
+
+</Steps>
+
+{/* Screenshot placeholder */}
+{/* ![Cloudflare Redirect Rule setup](/img/publishers/cloudflare-redirect-rule.png) */}
+
+### What this does
+
+Any AI bot hitting `your-site.com/health/diabetes/` gets 302 redirected to `https://xpay.your-site.com/health/diabetes/`. The xpay portal then:
+- Returns the article as markdown if the agent has a valid API key
+- Returns 402 with payment options if no auth is provided
+- Lets the agent pay directly via x402 (no account needed)
+
+### What it does NOT redirect
+
+| Crawler | Why it passes through |
+|---------|----------------------|
+| Googlebot | Search engine — your SEO is unaffected |
+| BingBot | Search engine |
+| Applebot (search) | Siri/Spotlight search (not AI training) |
+| Human browsers | No bot User-Agent match |
+
+<Callout type="info">
+**`Google-Extended`** IS redirected — it's Google's AI training crawler (Gemini), which is different from Googlebot search. **`Applebot-Extended`** IS redirected — it's Apple Intelligence training, different from regular Applebot.
+</Callout>
+
+### Why 302 and not 301?
+
+- **301** (permanent) gets cached by bots and browsers — hard to undo
+- **302** (temporary) gives you flexibility to change the redirect target later
+- AI bots follow both 302 and 301 redirects
+
+## Option 2: AI Crawl Control + robots.txt
+
+If you prefer to **block** bots (403) rather than redirect them, use Cloudflare's native AI Crawl Control. Then point bots to your xpay MCP endpoint via `robots.txt`.
+
+<Steps>
+
+### Block AI crawlers
+
+1. Go to **AI Crawl Control > Crawlers** in the Cloudflare sidebar
+2. **Block** all AI crawlers — they'll receive 403 Forbidden
+3. **Allow** search engine crawlers (Googlebot, BingBot, Applebot)
+
+### Update robots.txt
+
+Append to your site's `robots.txt`:
+
+```
+# AI Agents: Access content via paid API
+# MCP Server: https://your-slug.mcp.xpay.sh/mcp
+# Portal: https://xpay.your-domain.com
+# Get API key: https://xpay.your-domain.com/account/keys
+#
+# Searching and listing articles is FREE (API key required).
+# Reading full articles in markdown is charged per query.
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-SearchBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Perplexity-User
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Google-CloudVertexBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: Meta-ExternalFetcher
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+```
+
+</Steps>
+
+### Flow after setup
+
+```
+AI bot → your-site.com → Cloudflare blocks (403)
+AI bot → reads robots.txt → sees MCP endpoint
+AI bot → your-slug.mcp.xpay.sh/mcp
+       → search-content("diabetes") → FREE
+       → get-article(url) → pays per query → gets full markdown
+```
+
+<Callout type="warning">
+**AI Crawl Control only blocks — it cannot redirect or price.** The redirect approach (Option 1) is better because bots land directly on your xpay portal page for that article, where they see pricing and access options.
+</Callout>
+
+## AI Bot User-Agents
+
+Complete list of AI bots to redirect or block:
+
+| Bot | Operator | Category |
+|-----|----------|----------|
+| GPTBot | OpenAI | AI Crawler |
+| ChatGPT-User | OpenAI | AI Assistant (live browsing) |
+| OAI-SearchBot | OpenAI | AI Search |
+| ClaudeBot | Anthropic | AI Crawler |
+| Claude-SearchBot | Anthropic | AI Search |
+| Claude-User | Anthropic | AI Assistant |
+| PerplexityBot | Perplexity | AI Search |
+| Perplexity-User | Perplexity | AI Assistant |
+| Bytespider | ByteDance | AI Crawler |
+| TikTok Spider | ByteDance | AI Crawler |
+| Meta-ExternalAgent | Meta | AI Crawler |
+| Meta-ExternalFetcher | Meta | AI Assistant |
+| FacebookBot | Meta | AI Crawler |
+| Google-CloudVertexBot | Google | AI Crawler (Vertex AI) |
+| Google-Extended | Google | AI Training (Gemini) |
+| Amazonbot | Amazon | AI Crawler |
+| Applebot-Extended | Apple | AI Training |
+| DuckAssistBot | DuckDuckGo | AI Assistant |
+| MistralAI-User | Mistral | AI Assistant |
+| Manus Bot | Manus | AI Assistant |
+| CCBot | Common Crawl | AI Training |
+| PetalBot | Huawei | AI Crawler |
+
+**NOT redirected (search engines):** Googlebot, BingBot, Applebot (search), Terracotta Bot, YandexBot, DuckDuckBot
+
+## Testing
+
+After deploying the rule, test with curl:
+
+```bash
+# Should redirect (302):
+curl -A "GPTBot/1.0" -I https://your-site.com/some-article
+# Expected: HTTP/1.1 302, Location: https://xpay.your-site.com/some-article
+
+# Should NOT redirect (200):
+curl -A "Googlebot/2.1" -I https://your-site.com/some-article
+# Expected: HTTP/1.1 200 OK
+
+curl -A "Mozilla/5.0 (Macintosh)" -I https://your-site.com/some-article
+# Expected: HTTP/1.1 200 OK
+```
+
+## Header Spoofing
+
+All major AI companies (OpenAI, Anthropic, Google, Meta, Perplexity) send honest User-Agent headers — they need to be identifiable for `robots.txt` compliance.
+
+For additional protection against malicious scrapers that spoof headers:
+- **Cloudflare Free:** Managed challenges via Security settings
+- **Cloudflare Pro** ($20/month): Super Bot Fight Mode with behavioral bot detection
+- **Cloudflare Enterprise:** Full Bot Management with bot scores
+
+## Phased Rollout
+
+| Phase | Action | Timeline |
+|-------|--------|----------|
+| 1 | Add CNAME for `xpay.your-domain.com` | Day 1 |
+| 2 | Verify portal loads at `xpay.your-domain.com` | Day 1 |
+| 3 | Deploy Redirect Rule | Day 1 |
+| 4 | Host discovery files on your site | Day 2 |
+| 5 | Monitor Cloudflare Analytics for 1 week | Week 1 |
+| 6 | Review bot traffic data, adjust bot list if needed | Week 2 |
+
+## Alternative: Snippets
+
+If you need more control than Redirect Rules offer (e.g., conditional logic, logging), use **Cloudflare Snippets** (available on Pro/Business/Enterprise plans):
+
+```javascript
+const AI_BOTS = [
+  'GPTBot', 'ChatGPT-User', 'OAI-SearchBot',
+  'ClaudeBot', 'Claude-SearchBot', 'Claude-User',
+  'CCBot', 'PerplexityBot', 'Perplexity-User',
+  'Bytespider', 'Meta-ExternalAgent', 'Meta-ExternalFetcher',
+  'FacebookBot', 'Google-CloudVertexBot', 'Google-Extended',
+  'Amazonbot', 'Applebot-Extended', 'DuckAssistBot',
+  'MistralAI-User', 'Manus Bot', 'PetalBot', 'TikTok Spider'
+];
+
+const SEARCH_ENGINES = ['Googlebot', 'BingBot', 'Slurp', 'DuckDuckBot', 'YandexBot'];
+
+const ua = request.headers.get('User-Agent') || '';
+
+if (SEARCH_ENGINES.some(b => ua.includes(b))) {
+  // Search engines pass through
+} else if (AI_BOTS.some(b => ua.includes(b))) {
+  const url = new URL(request.url);
+  url.hostname = 'xpay.your-domain.com';
+  return new Response(null, {
+    status: 302,
+    headers: { 'Location': url.toString() }
+  });
+}
+```
+
+<Callout type="warning">
+**Do not use Workers for this.** Workers is a full compute platform with usage-based billing — designed for apps, not simple redirects. Redirect Rules or Snippets are the correct tools.
+</Callout>
+
+## For Non-Cloudflare Publishers
+
+If your site is on Hostinger, Bluehost, or another host without Cloudflare:
+- Start with **robots.txt** + **discovery files** (no CDN integration needed)
+- For WordPress: use a PHP snippet or `.htaccess` rewrite to redirect bot User-Agents
+- Consider adding Cloudflare's free plan in front of your existing host for bot management
+
+See the [WordPress Plugin](/en/publishers/wordpress-plugin) page for WordPress-specific setup.

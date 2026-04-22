@@ -1,0 +1,60 @@
+# Fastly Integration
+
+Redirect AI bot traffic from your Fastly-powered site to your xpay portal using VCL snippets.
+
+import { Callout } from 'nextra/components'
+
+<Callout type="warning">
+This guide is under development. Check back soon for detailed step-by-step instructions.
+</Callout>
+
+## Architecture
+
+```
+AI bot → your-site.com → Fastly edge detects bot User-Agent
+   → 302 redirect to xpay.your-site.com (same path preserved)
+   → xpay portal: auth check → content or 402
+
+Human visitor → your-site.com → passes through normally
+Search engine → your-site.com → passes through normally
+```
+
+## Approach
+
+Fastly uses **VCL (Varnish Configuration Language)** for request handling. The integration requires two VCL snippets:
+
+### 1. Bot Detection (`vcl_recv`)
+
+A snippet in `vcl_recv` that checks the `User-Agent` header against the AI bot list. When a match is found, it rewrites the hostname to `xpay.your-domain.com` and triggers a synthetic redirect.
+
+### 2. Redirect Response (`vcl_error`)
+
+A snippet in `vcl_error` that converts the synthetic error into an HTTP 302 redirect with the `Location` header pointing to the xpay portal.
+
+### Bot list
+
+The same 22 AI bot User-Agents used across all CDN integrations — see the [full bot list](/en/publishers/integrations/cloudflare#ai-bot-user-agents) in the Cloudflare guide.
+
+### Search engines excluded
+
+Googlebot, BingBot, Applebot (search), YandexBot, and DuckDuckBot are never redirected.
+
+## Prerequisites
+
+1. Your xpay portal is live at `xpay.your-domain.com`
+2. CNAME record added and verified
+3. Fastly service configured for your domain
+
+## Testing
+
+```bash
+# Should redirect (302):
+curl -A "GPTBot/1.0" -I https://your-site.com/some-article
+
+# Should NOT redirect (200):
+curl -A "Googlebot/2.1" -I https://your-site.com/some-article
+```
+
+## Need Help?
+
+Contact us at [support@xpay.sh](mailto:support@xpay.sh) if you need assistance with Fastly configuration.
