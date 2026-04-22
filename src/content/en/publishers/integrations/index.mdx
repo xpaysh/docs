@@ -2,7 +2,7 @@
 
 Redirect AI bot traffic from your main website to your xpay portal, so bots pay for content instead of scraping it for free.
 
-import { Callout, Cards, Card } from 'nextra/components'
+import { Callout } from 'nextra/components'
 
 ## How It Works
 
@@ -36,20 +36,12 @@ That's why we redirect to xpay instead of just blocking.
 
 ## Available Integrations
 
-<Cards>
-  <Card title="Cloudflare" href="/en/publishers/integrations/cloudflare">
-    Redirect Rules (all plans) or Workers. Most publishers use this.
-  </Card>
-  <Card title="Fastly" href="/en/publishers/integrations/fastly">
-    VCL-based bot detection and redirect.
-  </Card>
-  <Card title="Akamai" href="/en/publishers/integrations/akamai">
-    Edge Redirector / Cloudlets for bot routing.
-  </Card>
-  <Card title="AWS CloudFront" href="/en/publishers/integrations/aws-cloudfront">
-    WAF rules + CloudFront Functions for bot detection.
-  </Card>
-</Cards>
+| Platform | Method | Status |
+|----------|--------|--------|
+| [**Cloudflare**](/en/publishers/integrations/cloudflare) | Redirect Rules (all plans, no code) | Full guide |
+| [**Fastly**](/en/publishers/integrations/fastly) | VCL-based bot detection and redirect | Under development |
+| [**Akamai**](/en/publishers/integrations/akamai) | Edge Redirector / Cloudlets | Under development |
+| [**AWS CloudFront**](/en/publishers/integrations/aws-cloudfront) | WAF rules + CloudFront Functions | Under development |
 
 ## Prerequisites
 
