@@ -5,6 +5,7 @@ export default {
   "products": "Products",
   "hub": { title: "xpay✦ Hub", display: "hidden" },
   "publishers": "Publishers (Agent-Ready)",
+  "merchants": "Merchants",
   "tools": "xpay✦ Tools",
   "integrations": "Integrations",
   "developer-resources": "Developer Resources",

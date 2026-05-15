@@ -1,0 +1,26 @@
+# Merchants
+
+Put your storefront catalog inside ChatGPT, Claude, Gemini and Perplexity. Buyers see your live prices and stock; the purchase completes through your existing checkout.
+
+import { Cards } from 'nextra/components';
+
+## Choose your platform
+
+<Cards>
+  <Cards.Card title="xpay for WooCommerce" href="/merchants/woocommerce" />
+</Cards>
+
+More platforms coming: Shopify, BigCommerce, Magento, custom storefronts. If you're not on one of the supported platforms yet, email **merchants@xpay.sh** with your stack.
+
+## What every merchant integration does
+
+- **Publishes an agent-readable product feed** on xpay's CDN — AI shoppers read it directly.
+- **Adds Schema.org JSON-LD** (Product, Offer, BuyAction, ItemList) so AI shoppers see your live prices and stock.
+- **Serves `/llms.txt` and `/.well-known/agentic-commerce.json`** on your domain — the discovery files AI shoppers look for.
+- **Allows the right bots** in robots.txt — GPTBot, ChatGPT-User, ClaudeBot, PerplexityBot, OAI-SearchBot and friends.
+- **Cart deeplink** — agents mint a one-click "Buy" link that lands the buyer on your existing checkout, pre-filled.
+- **Non-custodial** — payment runs through your existing gateway (Stripe / WooPayments / PayPal / Square / etc.). xpay never touches checkout or sees buyer PII.
+
+## Pricing
+
+Free until your first AI-attributable sale. After that, pricing starts at 1% of attributable order value. See [www.xpay.sh/pricing/?tab=agentic-commerce](https://www.xpay.sh/pricing/?tab=agentic-commerce).

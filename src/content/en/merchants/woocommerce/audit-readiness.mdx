@@ -11,8 +11,8 @@ import { Callout } from 'nextra/components';
 | 1 | **AI can read your full catalogue** | The CDN feed at `agent-feed.xpay.sh/catalog/{slug}.json` returns `product_count > 0` | Store isn't connected yet, or catalog sync hasn't completed. Wait 60s and reload. |
 | 2 | **Live prices visible to AI** | JSON-LD `Product` + `Offer` injected on PDPs | The schema injector detected an existing `Product` schema from Yoast / Rank Math; we yield to it. Not a problem. |
 | 3 | **Plain-text guide for AI assistants** | `/llms.txt` returns 200 with body | Rewrite rules not flushed. Go to **Settings → Permalinks → Save Changes** once. |
-| 4 | **AI assistants know where to send a buyer** | `/.well-known/agentic-commerce.json` returns 200 with body | Same as above — flush permalinks. If your host blocks `/.well-known/`, see the well-known-blocked section in [Troubleshooting](/products/woocommerce/troubleshooting). |
-| 5 | **AI shoppers are allowed in** | `robots.txt` doesn't block GPTBot / ClaudeBot / PerplexityBot / OAI-SearchBot | A physical `robots.txt` file in your web root is overriding WordPress. See the physical-robots-txt section in [Troubleshooting](/products/woocommerce/troubleshooting). |
+| 4 | **AI assistants know where to send a buyer** | `/.well-known/agentic-commerce.json` returns 200 with body | Same as above — flush permalinks. If your host blocks `/.well-known/`, see the well-known-blocked section in [Troubleshooting](/merchants/woocommerce/troubleshooting). |
+| 5 | **AI shoppers are allowed in** | `robots.txt` doesn't block GPTBot / ClaudeBot / PerplexityBot / OAI-SearchBot | A physical `robots.txt` file in your web root is overriding WordPress. See the physical-robots-txt section in [Troubleshooting](/merchants/woocommerce/troubleshooting). |
 | 6 | **Direct buy link signals** | `BuyAction` JSON-LD on every PDP | Same as row 2 — yielding to existing schema. |
 | 7 | **AI shoppers can buy without leaving the chat** | The cart deeplink handler is registered and the merchant slug is set | Connection didn't complete — go back to **Connect store**. |
 | 8 | **Stock & price kept current** | Webhooks registered + at least one successful resync recorded | Catalog sync hasn't fired yet. Edit any product (change price by 1¢ and revert) to force a webhook, or click **Re-run my audit**. |
@@ -38,5 +38,5 @@ Your store is fully discoverable by ChatGPT, Claude, Gemini and Perplexity. They
 
 ## What's next
 
-- → [Troubleshooting](/products/woocommerce/troubleshooting) if rows stay yellow
-- → [Privacy & telemetry](/products/woocommerce/privacy-telemetry) for the consent model
+- → [Troubleshooting](/merchants/woocommerce/troubleshooting) if rows stay yellow
+- → [Privacy & telemetry](/merchants/woocommerce/privacy-telemetry) for the consent model

@@ -27,7 +27,7 @@ Click **Activate**. You'll be redirected to **Settings → xpay**.
 
 ### Connect store
 
-See [Connecting your store](/products/woocommerce/connecting).
+See [Connecting your store](/merchants/woocommerce/connecting).
 
 </Steps>
 
@@ -54,7 +54,7 @@ Click **Activate Plugin**. You'll be redirected to **Settings → xpay**.
 
 ### Connect store
 
-See [Connecting your store](/products/woocommerce/connecting).
+See [Connecting your store](/merchants/woocommerce/connecting).
 
 </Steps>
 
@@ -81,7 +81,7 @@ In order:
 1. The plugin registers two rewrite rules — `/llms.txt` and `/.well-known/agentic-commerce.json`.
 2. It schedules a one-time rewrite-rule flush on the next `init` hook.
 3. It marks itself as "ever activated" so the first-time-only welcome flow happens once.
-4. It surfaces the [first-activation consent notice](/products/woocommerce/privacy-telemetry) asking whether you want to share anonymous lifecycle telemetry. Default: **off**.
+4. It surfaces the [first-activation consent notice](/merchants/woocommerce/privacy-telemetry) asking whether you want to share anonymous lifecycle telemetry. Default: **off**.
 5. It redirects you to **Settings → xpay** (skipped if you bulk-activated multiple plugins together).
 
 The plugin **does not** contact xpay's servers at activation. The first network call only happens when you click **Connect store**.
@@ -101,4 +101,4 @@ If the `curl` checks fail with 404, go to **Settings → Permalinks → Save Cha
 
 ## What's next
 
-→ [Generate your WooCommerce REST API keys](/products/woocommerce/rest-api-keys) (required for the connect step)
+→ [Generate your WooCommerce REST API keys](/merchants/woocommerce/rest-api-keys) (required for the connect step)

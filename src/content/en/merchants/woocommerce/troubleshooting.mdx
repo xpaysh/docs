@@ -16,7 +16,7 @@ The plugin guards against the common case (no WooCommerce installed) with a frie
 
 Same as above — check your PHP error log. Common root causes:
 
-- PHP version below 7.4 — see [System requirements](/products/woocommerce/installing#system-requirements)
+- PHP version below 7.4 — see [System requirements](/merchants/woocommerce/installing#system-requirements)
 - Memory limit too low (< 128 MB) — `define( 'WP_MEMORY_LIMIT', '256M' );` in `wp-config.php`
 - Conflicting plugin emitting `Xpay_Plugin` class — rename ours, or report which plugin conflicts
 
@@ -143,7 +143,7 @@ If a static `robots.txt` exists in your web root, WordPress doesn't get to add o
 | Likely cause | Fix |
 |---|---|
 | Store has no published products (e.g. fresh install) | Add at least one product. Or import the [WooCommerce sample CSV](https://install.xpay.sh/woocommerce/sample-products.csv). |
-| WC REST key has wrong permission | Regenerate with **Read** permission ([guide](/products/woocommerce/rest-api-keys)). |
+| WC REST key has wrong permission | Regenerate with **Read** permission ([guide](/merchants/woocommerce/rest-api-keys)). |
 | All products are unpublished / draft / private | xpay only publishes products with `status=publish` and `catalog_visibility=visible`. |
 
 ### Feed shows stale prices/stock
