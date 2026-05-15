@@ -1,0 +1,119 @@
+# Yoast SEO (WordPress) Integration
+
+Auto-append your xpay agent-payment block to Yoast's generated `llms.txt` without breaking Yoast's auto-updates.
+
+import { Callout, Steps } from 'nextra/components'
+
+## The problem
+
+Yoast SEO (v27+) auto-generates `llms.txt` at your WordPress root. It's regenerated every time you publish, edit, or delete a post.
+
+If you edit that file directly via the WordPress media manager or FTP, WordPress saves it as a **static file**, which **overrides** Yoast's auto-generated version. Yoast keeps regenerating in the background, but the static file wins — so your `llms.txt` freezes on the day you edited it.
+
+This means a naive "paste the xpay block at the bottom" approach is incompatible with Yoast.
+
+## The fix
+
+A small, single-file WordPress plugin that:
+
+1. Hooks into the same `save_post` / `deleted_post` events Yoast uses.
+2. Runs a delayed append (~60s after the post change) so it always runs **after** Yoast finishes regenerating.
+3. Reads `llms.txt`, strips any prior xpay block (using hidden markers), and appends a fresh copy at the end.
+4. Idempotent — re-running never duplicates.
+
+The xpay block is configurable in WP admin (Settings → xpay llms.txt), so you can paste any block you generate from your dashboard.
+
+## Setup
+
+<Steps>
+
+### Download the plugin
+
+- Installable ZIP: [`xpay-yoast-llms-append.zip`](https://files.xpay.sh/setup/plugins/xpay-yoast-llms-append.zip)
+- Source for inspection: [`xpay-yoast-llms-append.php`](https://files.xpay.sh/setup/plugins/xpay-yoast-llms-append.php) (~150 lines, MIT)
+
+### Install in WordPress
+
+In WP admin:
+
+1. **Plugins → Add New → Upload Plugin**
+2. Choose `xpay-yoast-llms-append.zip`
+3. Click **Install Now**, then **Activate**
+
+### Paste your xpay block
+
+1. Open your dashboard at [Account Config → Discovery Files](https://app.xpay.sh/dashboard/charge-per-use/account-config).
+2. Copy the xpay block from `llms.txt` preview (the `## Agent Payments` section onwards — anything you want appended to the end of Yoast's file).
+3. In WP admin: **Settings → xpay llms.txt**.
+4. Paste into the textarea, click **Save block**.
+
+### Run the append
+
+- **Immediate:** Click **Run append now** on the same Settings page.
+- **Automatic:** Publish or update any post — the plugin runs ~60 seconds later.
+
+### Verify
+
+Visit `https://your-domain.com/llms.txt`. You should see:
+
+- Yoast's auto-generated content (your articles, pages, custom post types) at the top
+- An `<!-- xpay:block:start -->` marker
+- Your xpay agent-payment block
+- An `<!-- xpay:block:end -->` marker
+
+</Steps>
+
+## How it works
+
+```
+You publish a post
+   ↓
+WordPress fires save_post
+   ↓ (Yoast also listens here)
+Yoast regenerates llms.txt → writes static file at WP root
+   ↓
+Plugin schedules a single WP-Cron event 60s in the future
+   ↓
+Cron fires → reads llms.txt → strips old xpay block (between markers)
+                            → appends fresh xpay block + markers
+                            → writes back atomically
+```
+
+The 60-second delay avoids racing Yoast's file write. The marker-based strip-and-replace makes the operation idempotent — running it ten times produces the same file as running it once.
+
+## Safety guarantees
+
+The plugin only operates if **all** of the following are true:
+
+- The xpay block setting is non-empty
+- `llms.txt` exists at the resolved path (respects Yoast's `wpseo_llmstxt_filesystem_path` filter if you've set a custom location)
+- The file is writable
+- The file contains the string `Yoast SEO` — a guard so the plugin refuses to touch files Yoast didn't generate
+
+If any check fails, the plugin silently bails. It will never overwrite a non-Yoast `llms.txt` or destroy unrelated content.
+
+## Uninstall
+
+Deactivating the plugin clears its scheduled cron events. Your `llms.txt` will retain whatever the last append produced — the next time Yoast regenerates (after a post change), the static file will be replaced with a fresh Yoast-only version, and the xpay block will be gone.
+
+To remove the xpay block immediately:
+
+1. Deactivate the plugin
+2. Either edit/republish any post (forces Yoast to regenerate without the xpay block), or
+3. Delete `llms.txt` at your WP root and let Yoast regenerate it on the next post save
+
+<Callout type="info">
+This plugin only solves the **discovery file** half of the integration. To monetize agent traffic, you also need bot deflection — see your CDN-specific guide ([Cloudflare](/en/publishers/integrations/cloudflare), [Fastly](/en/publishers/integrations/fastly), [Akamai](/en/publishers/integrations/akamai)) or contact onboarding for help with WordPress-only deflection setups.
+</Callout>
+
+## Compatibility
+
+- **Yoast SEO:** v27.0+
+- **WordPress:** 6.0+
+- **PHP:** 7.4+
+- **Hosting:** any (works behind Cloudflare, Hostinger Cache, Ezoic JS-Integration, etc. — operates at the WordPress origin, before any CDN)
+
+## Source code
+
+The plugin is a single PHP file, MIT-licensed. View or fork:
+[files.xpay.sh/setup/plugins/xpay-yoast-llms-append.php](https://files.xpay.sh/setup/plugins/xpay-yoast-llms-append.php)

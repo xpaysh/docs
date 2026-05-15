@@ -3,5 +3,6 @@ export default {
   "cloudflare": "Cloudflare",
   "fastly": "Fastly",
   "akamai": "Akamai",
-  "aws-cloudfront": "AWS CloudFront"
+  "aws-cloudfront": "AWS CloudFront",
+  "yoast-wordpress": "Yoast (WordPress)"
 }
