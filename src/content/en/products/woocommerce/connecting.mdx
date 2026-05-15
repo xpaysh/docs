@@ -1,0 +1,96 @@
+# Connecting your store
+
+The five-minute handshake that puts your catalog inside ChatGPT, Claude, Gemini and Perplexity.
+
+import { Callout, Steps } from 'nextra/components';
+
+## Prerequisites
+
+- ✅ Plugin [installed and activated](/products/woocommerce/installing)
+- ✅ A WooCommerce REST API key with **Read** scope ([how to generate](/products/woocommerce/rest-api-keys))
+
+## The handshake
+
+<Steps>
+
+### Open Settings → xpay
+
+In WordPress admin, **Settings → xpay**.
+
+If you just activated the plugin, you're already there (post-activation redirect).
+
+### Click "Connect store"
+
+The blue "Connect store →" button opens **`app.xpay.sh/onboard/woocommerce`** in a new tab, passing your site URL and a one-time nonce in the URL.
+
+### Sign in or sign up on xpay
+
+If you have an xpay account, sign in. If not, you can create one with the same email; verification is instant.
+
+### Paste your WooCommerce REST API key
+
+The onboarding page shows a form with two fields:
+
+- **Consumer key** — paste your `ck_…`
+- **Consumer secret** — paste your `cs_…`
+
+Click **Approve & Connect**.
+
+### Backend handshake (under the hood — automatic)
+
+Behind the scenes:
+
+1. xpay validates your nonce against the one the plugin pre-registered.
+2. xpay mints a `merchant_slug` (derived from your site domain) and an API key for the plugin.
+3. xpay writes the encrypted credentials to its database and bootstraps an empty catalog feed at `https://agent-feed.xpay.sh/catalog/{slug}.json`.
+4. xpay POSTs back to your site at `/wp-json/xpay/v1/finalize` with the merchant slug + API key.
+5. The plugin stores these locally and kicks off an immediate catalog sync.
+6. Within ~30 seconds, your catalog feed shows your real products.
+
+### Verify
+
+Switch back to your WordPress admin → **Settings → xpay**.
+
+The "Connect your store" card should now be a **"Connected"** card showing:
+
+- Merchant slug (e.g. `yourstore-com`)
+- A clickable Catalog feed URL
+- "Last sync: ~30 seconds ago"
+
+Scroll down — the **Audit readiness** table should now show all 8 rows as **✓ Ready** in green.
+
+</Steps>
+
+## What's now public
+
+Once connected, three things are live for AI shoppers:
+
+| URL | What it is |
+|---|---|
+| `https://yourstore.com/llms.txt` | Plain-text guide for AI assistants. Points at your shop, sitemap, and the discovery file below. |
+| `https://yourstore.com/.well-known/agentic-commerce.json` | Structured handoff descriptor. Tells AI shoppers where your catalog feed lives and where to send a buyer. |
+| `https://agent-feed.xpay.sh/catalog/<your-slug>.json` | The ACP-shaped JSON feed of your products. AI shoppers read this directly. |
+
+These three files together are what makes you discoverable in AI chat.
+
+## Behind the curtain — the cart deeplink
+
+When an AI agent (ChatGPT, Claude, etc.) wants to send a buyer to you with a pre-filled cart, it calls our backend at `agent-commerce.xpay.sh/v1/<slug>/cart` with the items it wants in the cart. We:
+
+1. Validate the SKUs against your cached catalog (must be in stock, must match a real product on your site).
+2. Sign a short-lived (15-min TTL) JWT containing the cart contents + your merchant slug.
+3. Return a URL of the form `https://yourstore.com/?xpay_cart=<token>`.
+4. The agent renders that URL as a "Buy" button.
+5. The buyer clicks → lands on your store → the plugin verifies the JWT → populates `WC()->cart` → redirects to your existing `wc_get_checkout_url()`.
+6. From here on, **your existing checkout is in charge.** xpay sees nothing.
+7. After the buyer completes checkout, the WC order is tagged with `_xpay_agent_attribution` so you can report on AI-driven revenue using your existing WooCommerce reporting.
+
+## Reconnecting / rotating keys
+
+If you regenerated your WC REST API key, click **Disconnect** under Settings → xpay, then **Connect store** again with the new credentials. The connect flow is idempotent — your merchant slug is preserved, the api key rotates in place, and your catalog feed URL doesn't change.
+
+## What's next
+
+- → [Privacy & telemetry](/products/woocommerce/privacy-telemetry) — opt in / opt out of anonymous lifecycle events
+- → [Audit readiness checklist](/products/woocommerce/audit-readiness) — what each of the 8 ✓ rows means
+- → [Troubleshooting](/products/woocommerce/troubleshooting) — if something stayed yellow

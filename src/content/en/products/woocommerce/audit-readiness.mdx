@@ -1,0 +1,42 @@
+# Audit readiness checklist
+
+Settings → xpay shows an 8-row checklist mirroring the eight checks our [seller audit](https://www.xpay.sh/sellers/audit) runs against every WooCommerce store. Once connected, every row should be **✓ Ready** in green.
+
+import { Callout } from 'nextra/components';
+
+## What each row means
+
+| # | Check | What it verifies | If yellow ⚠ |
+|---|---|---|---|
+| 1 | **AI can read your full catalogue** | The CDN feed at `agent-feed.xpay.sh/catalog/{slug}.json` returns `product_count > 0` | Store isn't connected yet, or catalog sync hasn't completed. Wait 60s and reload. |
+| 2 | **Live prices visible to AI** | JSON-LD `Product` + `Offer` injected on PDPs | The schema injector detected an existing `Product` schema from Yoast / Rank Math; we yield to it. Not a problem. |
+| 3 | **Plain-text guide for AI assistants** | `/llms.txt` returns 200 with body | Rewrite rules not flushed. Go to **Settings → Permalinks → Save Changes** once. |
+| 4 | **AI assistants know where to send a buyer** | `/.well-known/agentic-commerce.json` returns 200 with body | Same as above — flush permalinks. If your host blocks `/.well-known/`, see the well-known-blocked section in [Troubleshooting](/products/woocommerce/troubleshooting). |
+| 5 | **AI shoppers are allowed in** | `robots.txt` doesn't block GPTBot / ClaudeBot / PerplexityBot / OAI-SearchBot | A physical `robots.txt` file in your web root is overriding WordPress. See the physical-robots-txt section in [Troubleshooting](/products/woocommerce/troubleshooting). |
+| 6 | **Direct buy link signals** | `BuyAction` JSON-LD on every PDP | Same as row 2 — yielding to existing schema. |
+| 7 | **AI shoppers can buy without leaving the chat** | The cart deeplink handler is registered and the merchant slug is set | Connection didn't complete — go back to **Connect store**. |
+| 8 | **Stock & price kept current** | Webhooks registered + at least one successful resync recorded | Catalog sync hasn't fired yet. Edit any product (change price by 1¢ and revert) to force a webhook, or click **Re-run my audit**. |
+
+## Re-running the audit
+
+Click **Re-run my audit** in the Settings → xpay status panel. This calls our backend's audit Lambda, which:
+
+1. Visits your live URL
+2. Re-checks every one of the 8 rows
+3. Returns a fresh 0-100 score
+4. Stores the result in your `xpay_wc_last_audit` option for display
+
+The result usually shows up within 30 seconds.
+
+## When all 8 are green
+
+Your store is fully discoverable by ChatGPT, Claude, Gemini and Perplexity. They can read your catalog, see live prices, and mint cart deeplinks back into your existing checkout. There's nothing more to do — sit back and watch the orders come in.
+
+<Callout type="info">
+**Want a public audit score for your homepage?** When connected, your audit score appears at `https://www.xpay.sh/audits/{your-slug}/` as a publicly shareable scorecard you can link from your store's footer or social profiles. This is shipping in a future release.
+</Callout>
+
+## What's next
+
+- → [Troubleshooting](/products/woocommerce/troubleshooting) if rows stay yellow
+- → [Privacy & telemetry](/products/woocommerce/privacy-telemetry) for the consent model

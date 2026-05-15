@@ -1,0 +1,104 @@
+# Installing the plugin
+
+Two ways to install: from the WordPress.org plugin directory once we're approved (recommended), or by uploading the zip from `install.xpay.sh` (works today).
+
+import { Callout, Steps, Tabs } from 'nextra/components';
+
+<Tabs items={['From WordPress.org', 'From the install.xpay.sh zip']}>
+  <Tabs.Tab>
+
+<Steps>
+
+### Open the Plugins page
+
+In your WordPress admin, in the left sidebar, hover **Plugins** → click **Add New Plugin**.
+
+### Search for the plugin
+
+In the search box on the top right, type `xpay for WooCommerce`.
+
+### Install
+
+Click **Install Now** on the card that shows our banner + icon.
+
+### Activate
+
+Click **Activate**. You'll be redirected to **Settings → xpay**.
+
+### Connect store
+
+See [Connecting your store](/products/woocommerce/connecting).
+
+</Steps>
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+
+<Steps>
+
+### Download the zip
+
+Visit [install.xpay.sh/woocommerce/latest.zip](https://install.xpay.sh/woocommerce/latest.zip). The file downloads as `xpay_woocommerce_plugin_latest.zip`. Some browsers may show a "this file may be unsafe" warning for any plugin zip — that's standard, click **Keep**.
+
+### Open the upload form
+
+In wp-admin, hover **Plugins** → click **Add New Plugin** → click **Upload Plugin** at the top.
+
+### Upload
+
+Click **Choose File**, pick the zip you downloaded, then **Install Now**.
+
+### Activate
+
+Click **Activate Plugin**. You'll be redirected to **Settings → xpay**.
+
+### Connect store
+
+See [Connecting your store](/products/woocommerce/connecting).
+
+</Steps>
+
+<Callout type="info">
+**Auto-updates** still work for the zip install. The plugin reads a manifest at [install.xpay.sh/woocommerce/manifest.json](https://install.xpay.sh/woocommerce/manifest.json) and offers updates the normal WordPress way.
+</Callout>
+
+  </Tabs.Tab>
+</Tabs>
+
+## System requirements
+
+| Component | Minimum | Tested up to |
+|---|---|---|
+| WordPress | 6.2 | 6.7 |
+| WooCommerce | 7.0 | 9.4 |
+| PHP | 7.4 | 8.3 |
+| SSL (`https://`) | required | — |
+
+## What happens on activation
+
+In order:
+
+1. The plugin registers two rewrite rules — `/llms.txt` and `/.well-known/agentic-commerce.json`.
+2. It schedules a one-time rewrite-rule flush on the next `init` hook.
+3. It marks itself as "ever activated" so the first-time-only welcome flow happens once.
+4. It surfaces the [first-activation consent notice](/products/woocommerce/privacy-telemetry) asking whether you want to share anonymous lifecycle telemetry. Default: **off**.
+5. It redirects you to **Settings → xpay** (skipped if you bulk-activated multiple plugins together).
+
+The plugin **does not** contact xpay's servers at activation. The first network call only happens when you click **Connect store**.
+
+## Verifying the install
+
+After activation, check these in any order:
+
+| Check | What you should see |
+|---|---|
+| **Plugins** list | "xpay for WooCommerce" with version `0.1.7+` and status "Active" |
+| **Settings → xpay** | Big "Connect your store" card + an "Audit readiness" table with some yellow ⚠ Pending rows |
+| `curl https://yourstore.com/llms.txt` | HTTP 200, plain text starting with `# <your site name>` |
+| `curl https://yourstore.com/.well-known/agentic-commerce.json` | HTTP 200, valid JSON |
+
+If the `curl` checks fail with 404, go to **Settings → Permalinks → Save Changes** once (forces a rewrite flush) and retry.
+
+## What's next
+
+→ [Generate your WooCommerce REST API keys](/products/woocommerce/rest-api-keys) (required for the connect step)

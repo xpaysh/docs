@@ -1,0 +1,120 @@
+# Privacy & telemetry
+
+Anonymous lifecycle telemetry is **opt-in** and **off by default**. On first activation, the plugin asks once — you can change your choice any time.
+
+import { Callout, FileTree } from 'nextra/components';
+
+## What we never see
+
+The plugin is non-custodial by design. xpay **never** sees:
+
+- Your customers' names, emails, addresses, IPs
+- Their payment cards, tokens, or any payment data
+- Your order line items, totals, refunds
+- Your tax or shipping data
+- Login credentials
+- Any free-text fields from your shoppers
+
+Payment runs through your existing WooCommerce gateway (Stripe / WooPayments / PayPal / Square / etc.). xpay never touches checkout.
+
+## The three data paths
+
+### 1. Catalog sync (required after Connect)
+
+When you click **Connect store** and submit your WooCommerce REST API key, xpay's backend uses it to fetch your **public product fields** and republish them at `agent-feed.xpay.sh/catalog/{your-slug}.json`.
+
+Per product, exactly:
+
+- Name
+- Description
+- Price + currency
+- Stock state (in stock / out of stock)
+- Image URLs
+- Categories
+- SKU
+
+No customer data. No order data.
+
+To stop: click **Disconnect** under **Settings → xpay**.
+
+### 2. Anonymous lifecycle telemetry (opt-in, OFF by default)
+
+On first activation, the plugin shows a single admin notice:
+
+> **xpay for WooCommerce — help us improve onboarding**
+>
+> May we send anonymous lifecycle events (plugin activated, store connected, audit re-run, sync errors) to help us catch broken onboarding flows? No PII or customer data is ever sent. You can change this any time under Settings → xpay.
+>
+> [ Enable anonymous telemetry ] [ No thanks ]
+
+Pick **No thanks** → the plugin **never** contacts our backend for analytics. The notice never reappears.
+
+Pick **Enable** → the plugin sends one of these 14 event names on lifecycle moments:
+
+```
+plugin_activated         plugin_deactivated
+settings_viewed          connect_screen_viewed
+connect_clicked          finalize_received
+finalize_success         finalize_error
+audit_rerun_clicked      audit_rerun_success
+audit_rerun_error        disconnected
+resync_success           resync_error
+```
+
+Each event payload contains exactly:
+
+| Field | Example | Why |
+|---|---|---|
+| `event` | `plugin_activated` | Lifecycle stage |
+| `site_url` | `https://yourstore.com` | Group your events |
+| `plugin_version` | `0.1.7` | Detect bugs by version |
+| `wp_version` | `6.7` | Detect WP-version-specific bugs |
+| `wc_version` | `9.4` | Detect WC-version-specific bugs |
+| `php_version` | `8.1.27` | Detect PHP-version-specific bugs |
+| `locale` | `en_US` | Translation prioritisation |
+| `ts` | unix timestamp | Ordering |
+| `props` | `{first_time: true}` | Event-specific context (small, primitives only) |
+
+Retention: 90 days, then auto-deleted by DynamoDB TTL.
+
+#### Opt out after you already enabled it
+
+Three ways:
+
+1. **UI:** Settings → xpay → **Privacy** → **Turn off**.
+2. **System-wide hard kill** (sysadmins): add to `wp-config.php`:
+   ```php
+   define( 'XPAY_WC_TELEMETRY', false );
+   ```
+   This overrides any UI choice. The plugin will never send telemetry from this site regardless of the saved option.
+3. Disconnect the store entirely (stops everything, including the required catalog sync).
+
+### 3. Cart deeplink token (handled stateless)
+
+When an AI agent mints a cart deeplink, the items briefly live in a signed JWT for at most 15 minutes (token expiry). We never store the token anywhere. After the buyer either clicks through or the token expires, nothing remains.
+
+We never see who the buyer is, what they paid, or whether they refunded.
+
+## Source of truth
+
+Every byte described here corresponds to specific files in the plugin source. Verify yourself:
+
+| Code | What it does |
+|---|---|
+| [`includes/class-xpay-telemetry.php`](https://github.com/xpaysh/xpay-for-woocommerce/blob/main/includes/class-xpay-telemetry.php) | Telemetry payload + opt-in gate |
+| [`includes/class-xpay-consent.php`](https://github.com/xpaysh/xpay-for-woocommerce/blob/main/includes/class-xpay-consent.php) | First-activation consent UI |
+| [`includes/class-xpay-client.php`](https://github.com/xpaysh/xpay-for-woocommerce/blob/main/includes/class-xpay-client.php) | JWT verify for cart deeplinks |
+| [`includes/class-xpay-cart.php`](https://github.com/xpaysh/xpay-for-woocommerce/blob/main/includes/class-xpay-cart.php) | Cart deeplink handler |
+
+## Data deletion requests
+
+Email **privacy@xpay.sh** from the admin email attached to your merchant slug, with the slug in the subject. We process deletion within 7 business days and reply with confirmation. Includes:
+
+- Merchant row in DynamoDB
+- Catalog feed in S3
+- Every event row in the telemetry table
+
+## Legal links
+
+- **Privacy disclosure** — [install.xpay.sh/woocommerce/privacy.html](https://install.xpay.sh/woocommerce/privacy.html)
+- **Terms of use** — [install.xpay.sh/woocommerce/terms.html](https://install.xpay.sh/woocommerce/terms.html)

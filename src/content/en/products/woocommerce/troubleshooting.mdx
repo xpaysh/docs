@@ -1,0 +1,186 @@
+# Troubleshooting
+
+Specific symptoms, specific fixes. If your issue isn't here, email **merchants@xpay.sh** or open a [GitHub issue](https://github.com/xpaysh/xpay-for-woocommerce/issues).
+
+import { Callout } from 'nextra/components';
+
+## Activation issues
+
+### Fatal error on activation (white screen of death)
+
+Capture the error from your server's PHP error log (or enable WP_DEBUG_LOG in `wp-config.php`) and email it to merchants@xpay.sh. Don't continue — file a bug.
+
+The plugin guards against the common case (no WooCommerce installed) with a friendly admin notice; a fatal at activation indicates a real bug.
+
+### "Plugin could not be activated because it triggered a fatal error"
+
+Same as above — check your PHP error log. Common root causes:
+
+- PHP version below 7.4 — see [System requirements](/products/woocommerce/installing#system-requirements)
+- Memory limit too low (< 128 MB) — `define( 'WP_MEMORY_LIMIT', '256M' );` in `wp-config.php`
+- Conflicting plugin emitting `Xpay_Plugin` class — rename ours, or report which plugin conflicts
+
+## Connect-store issues
+
+### "Missing parameters" on `app.xpay.sh/onboard/woocommerce`
+
+The connect link expects `?site=…&nonce=…` query params. If the URL has neither, the nonce never got registered with the xpay backend. Click **Connect store** again — the link is regenerated each time.
+
+### "Connection failed: Failed to fetch"
+
+The xpay onboarding page failed to reach the backend. Diagnoses:
+
+| Likely cause | Fix |
+|---|---|
+| Your network is blocking `agent-commerce.xpay.sh` | Allow outbound HTTPS to `*.xpay.sh` |
+| Browser extension blocking the request | Disable in incognito / a different browser |
+| Backend is genuinely down | Check [status.xpay.sh](https://status.xpay.sh) (coming soon); email merchants@xpay.sh |
+
+### "Connection failed: xpay returned 500"
+
+Open a terminal and `curl` the finalize endpoint directly with your nonce + WC keys to capture the exact error from our backend:
+
+```bash
+curl -X POST https://agent-commerce.xpay.sh/v1/onboard/woocommerce/finalize \
+  -H 'Content-Type: application/json' \
+  -d '{"nonce":"YOUR_NONCE","wc_consumer_key":"ck_…","wc_consumer_secret":"cs_…"}'
+```
+
+Send the response to merchants@xpay.sh.
+
+### Connection "succeeded" on app.xpay.sh but Settings → xpay still shows the Connect screen
+
+The backend processed your submission but the callback to your WP site at `/wp-json/xpay/v1/finalize` failed. Verify the route exists:
+
+```bash
+curl -sI https://yourstore.com/wp-json/xpay/v1/finalize
+# Should be HTTP/2 200 or 405 (Method Not Allowed for GET — POST is what's accepted).
+```
+
+If 404, the REST API rewrite isn't registered. Go to **Settings → Permalinks → Save Changes** to force a flush.
+
+## Discovery files issues
+
+### `/llms.txt` returns 404
+
+The rewrite rule didn't register. Fix:
+
+1. Go to **Settings → Permalinks** in wp-admin → click **Save Changes** (with no actual changes — this triggers a flush)
+2. Retry: `curl -i https://yourstore.com/llms.txt`
+
+If still 404, your host might have hard-coded its own `/llms.txt` handler. Add this to `.htaccess` (Apache) at the top:
+
+```apache
+RewriteEngine On
+RewriteRule ^llms\.txt$ index.php?xpay_route=llms [L,QSA]
+```
+
+For nginx:
+
+```nginx
+rewrite ^/llms\.txt$ /?xpay_route=llms last;
+```
+
+### Well-known path returns HTML instead of JSON
+
+Your host (or a CDN like Cloudflare) is intercepting `/.well-known/*` before WordPress sees it. This is common because hosts use that path for SSL certificate validation (ACME challenges).
+
+**Workaround** — the plugin always serves the same content at:
+
+```
+https://yourstore.com/?xpay_route=acp
+```
+
+AI shoppers that respect the `Link` header on your home page automatically find this fallback.
+
+**Permanent fix** — ask your host to allow `/.well-known/agentic-commerce.json` to fall through to WordPress. For most shared hosts, this is a support-ticket-shaped request.
+
+### Physical robots.txt overriding the plugin
+
+If a static `robots.txt` exists in your web root, WordPress doesn't get to add our agent-allow rules. The Settings → xpay page shows a yellow warning when this happens. Fix:
+
+- Delete the static `robots.txt`, **or**
+- Manually add these lines to it:
+  ```
+  User-agent: GPTBot
+  Allow: /
+
+  User-agent: ChatGPT-User
+  Allow: /
+
+  User-agent: OAI-SearchBot
+  Allow: /
+
+  User-agent: ClaudeBot
+  Allow: /
+
+  User-agent: Claude-User
+  Allow: /
+
+  User-agent: Claude-SearchBot
+  Allow: /
+
+  User-agent: PerplexityBot
+  Allow: /
+
+  User-agent: Perplexity-User
+  Allow: /
+
+  User-agent: Google-Extended
+  Allow: /
+
+  User-agent: Applebot-Extended
+  Allow: /
+
+  User-agent: CCBot
+  Allow: /
+  ```
+
+## Catalog feed issues
+
+### Feed shows `"product_count": 0`
+
+| Likely cause | Fix |
+|---|---|
+| Store has no published products (e.g. fresh install) | Add at least one product. Or import the [WooCommerce sample CSV](https://install.xpay.sh/woocommerce/sample-products.csv). |
+| WC REST key has wrong permission | Regenerate with **Read** permission ([guide](/products/woocommerce/rest-api-keys)). |
+| All products are unpublished / draft / private | xpay only publishes products with `status=publish` and `catalog_visibility=visible`. |
+
+### Feed shows stale prices/stock
+
+The plugin uses webhooks debounced 30s + an hourly safety-net poll. If prices are more than 60 seconds stale:
+
+1. Edit a product (change price by 1¢ and revert, click Update) to force a `woocommerce_update_product` webhook
+2. Wait 30 seconds
+3. Reload the feed URL
+
+If still stale, the webhook isn't firing. Check **WooCommerce → Settings → Advanced → Webhooks** — there should be no xpay-related webhooks here (we use action hooks, not Webhooks tab). If a third-party plugin disabled WC action hooks, escalate.
+
+## Cart-deeplink issues
+
+### "This shopping link has expired" 410
+
+Cart-deeplink JWTs expire 15 minutes after issuance. The AI agent should regenerate. If the agent is producing stale links consistently, it's misbehaving — email merchants@xpay.sh with the surface (ChatGPT / Claude / etc.) and we can escalate to them.
+
+### "None of the items in this shopping link are available"
+
+Buyer clicked a deeplink referencing items that have since gone out of stock. Plugin correctly refuses to add unavailable items. Buyer should retry or pick something else.
+
+### Cart deeplink lands on a 503 page
+
+The plugin throws 503 when the store isn't connected to xpay anymore (e.g. you clicked Disconnect after the agent generated the link). Reconnect and the existing tokens become valid again.
+
+## Uninstall verification
+
+To confirm uninstall is clean:
+
+```bash
+wp option list | grep xpay
+```
+
+Should return zero rows. If any `xpay_wc_*` options remain, that's a bug — email merchants@xpay.sh with the option names.
+
+## Still stuck?
+
+- Email **merchants@xpay.sh** with: your site URL, plugin version, WC version, WP version, PHP version, exact symptom, anything in the server PHP error log.
+- Or open a [GitHub issue](https://github.com/xpaysh/xpay-for-woocommerce/issues).

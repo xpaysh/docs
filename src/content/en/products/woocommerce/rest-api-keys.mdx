@@ -1,0 +1,88 @@
+# WooCommerce REST API keys
+
+To publish your catalog to AI surfaces, xpay's backend needs a **read-only** WooCommerce REST API key. You generate it in your WooCommerce admin — xpay never asks for your WordPress password.
+
+import { Callout, Steps, FileTree } from 'nextra/components';
+
+<Callout type="info">
+**TL;DR:** WooCommerce → Settings → Advanced → REST API → **Add key** → Permissions: Read → Generate. Paste the Consumer key + Consumer secret into the xpay onboarding page.
+</Callout>
+
+## Why we need it
+
+xpay's backend reads your product catalog from `https://yourstore.com/wp-json/wc/v3/products` so it can republish a clean, AI-shopper-friendly JSON feed at `agent-feed.xpay.sh/catalog/{your-slug}.json`. That feed is what ChatGPT, Claude, Gemini and Perplexity actually consume.
+
+The key we ask for has **read-only** scope. We never write orders, products, or customers. You can verify the scope on the keys list at any time and revoke instantly without affecting your store.
+
+## Creating a new key (5 minutes)
+
+<Steps>
+
+### Open the REST API settings
+
+In your WordPress admin, navigate to **WooCommerce → Settings**.
+
+Click the **Advanced** tab at the top, then **REST API** in the sub-nav.
+
+### Click "Add key"
+
+If you've never generated a key before, you'll see an "Add key" button. Click it.
+
+If you already have keys for other integrations, you'll see them in a list — click **Add key** at the top.
+
+### Fill in the form
+
+| Field | What to enter |
+|---|---|
+| **Description** | `xpay` (so you remember which integration owns this key) |
+| **User** | Pick the admin user you're logged in as. xpay impersonates this user's read permissions. |
+| **Permissions** | **Read** — that's all we need. Don't grant Write or Read/Write. |
+
+Click **Generate API key**.
+
+### Copy the keys *immediately*
+
+WooCommerce displays the **Consumer key** (`ck_…`) and **Consumer secret** (`cs_…`) **exactly once**, on this screen, right after generation.
+
+If you navigate away, you cannot retrieve the secret again — you'd have to revoke and regenerate.
+
+<Callout type="warning">
+**Copy both to a temporary scratch space (a notes app, sticky note, terminal) right now.** You'll paste them into xpay's onboarding form in the next step. Discard the scratch copy as soon as you've pasted them; xpay's backend stores them encrypted, you don't need a local copy after the connect step completes.
+</Callout>
+
+### Continue to the xpay onboarding page
+
+→ [Connecting your store](/products/woocommerce/connecting)
+
+</Steps>
+
+## If you already have a key for xpay
+
+If you previously connected and want to **rotate** or **reuse** the key:
+
+- **To rotate** (recommended every 90 days for security): revoke the existing `xpay` key in the WooCommerce REST API list, then create a new one following the steps above. Reconnect under **Settings → xpay → Connect store**.
+- **To reuse**: you can't view the secret again, so reuse isn't practical. Always regenerate.
+
+## Revoking xpay's access
+
+You can pull the plug at any time, two ways:
+
+| Where | What happens |
+|---|---|
+| **wp-admin → Settings → xpay → Disconnect** | Plugin deletes the local copy. xpay's backend marks the merchant as `inactive` within seconds. Catalog feed is removed from `agent-feed.xpay.sh` within minutes. |
+| **WooCommerce → Settings → Advanced → REST API → Revoke (next to the xpay row)** | Even faster. xpay's backend immediately starts seeing 401 errors trying to fetch your catalog, and the merchant row is auto-marked inactive within 5 minutes. |
+
+You can also email `privacy@xpay.sh` to request hard deletion of the catalog data from our CDN.
+
+## Common mistakes
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| "Connection failed" on the onboarding page | Pasted `ck_…` as secret or vice-versa | Re-check; `ck_` is the **key** (longer), `cs_` is the **secret** |
+| Catalog feed shows `"product_count": 0` after connect | Permissions set to "Write" only | Regenerate with **Read** permission |
+| Feed is empty but you have products | Sample-data-only template (e.g. fresh InstaWP without products) | Import sample products — [WooCommerce sample CSV](https://install.xpay.sh/woocommerce/sample-products.csv) |
+| "Invalid signature" 401 | Trailing slash mismatch on Site URL | xpay normalizes URLs; this should be auto-handled. If it persists, email merchants@xpay.sh with the slug. |
+
+## What's next
+
+→ [Connect your store](/products/woocommerce/connecting)

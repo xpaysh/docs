@@ -1,0 +1,69 @@
+# xpay for WooCommerce
+
+Put your WooCommerce catalog inside **ChatGPT, Claude, Gemini, and Perplexity** in five minutes. AI shoppers see your live prices and stock; the purchase completes through your existing WooCommerce gateway.
+
+import { Callout, Cards } from 'nextra/components';
+
+<Callout type="info">
+**Latest version:** v0.1.7 · **Free** until first AI-attributable sale · [Download zip](https://install.xpay.sh/woocommerce/latest.zip) · [Source on GitHub](https://github.com/xpaysh/xpay-for-woocommerce)
+</Callout>
+
+## What this plugin does
+
+| Capability | What it gives your store |
+|---|---|
+| **Public agent-readable catalog** | A live, ACP-shaped JSON feed of your products at `agent-feed.xpay.sh/catalog/{slug}.json`. AI shoppers (ChatGPT, Claude, Gemini, Perplexity) read it directly. |
+| **Schema.org JSON-LD on every PDP** | `Product` + `Offer` + `BuyAction` + `ItemList` injected automatically. Detects existing Yoast / Rank Math / WC core schema and only fills the gaps. |
+| **`/llms.txt` + `/.well-known/agentic-commerce.json`** | The two discovery files every modern AI shopper checks, served on your domain. |
+| **robots.txt allow rules** | GPTBot, ChatGPT-User, OAI-SearchBot, ClaudeBot, Claude-User, Claude-SearchBot, PerplexityBot, Perplexity-User, Google-Extended, Applebot-Extended, CCBot. Never overrides your existing blocks. |
+| **Cart deeplink** | AI agents mint a one-click "Buy" link. Buyer lands on your existing WooCommerce cart pre-filled, completes checkout on your existing gateway. Orders tagged `_xpay_agent_attribution` so you can attribute AI-driven revenue in your existing reporting. |
+| **Live inventory** | Webhook-driven catalog refresh on every product/stock change (debounced 30s), plus an hourly safety-net poll. |
+
+## What this plugin doesn't do
+
+- It **doesn't touch your checkout**. Stripe / WooPayments / PayPal / Square — payment runs through whatever you already use, unchanged.
+- It **doesn't see your customers**. No buyer PII, no order data, no payment data ever passes through xpay.
+- It **doesn't require a new account** to start. Free until your first AI-attributable sale. [Pricing](https://www.xpay.sh/pricing/?tab=agentic-commerce).
+- It **doesn't slow down your site**. The JSON-LD block is tiny and cached; the catalog feed is hosted on xpay's CDN.
+
+## Start here
+
+<Cards>
+  <Cards.Card title="Installing the plugin" href="/products/woocommerce/installing" />
+  <Cards.Card title="WooCommerce REST API keys" href="/products/woocommerce/rest-api-keys" />
+  <Cards.Card title="Connecting your store" href="/products/woocommerce/connecting" />
+  <Cards.Card title="Privacy & telemetry" href="/products/woocommerce/privacy-telemetry" />
+  <Cards.Card title="Audit readiness checklist" href="/products/woocommerce/audit-readiness" />
+  <Cards.Card title="Troubleshooting" href="/products/woocommerce/troubleshooting" />
+</Cards>
+
+## At a glance
+
+- **Compatibility:** WooCommerce 7.0+ · WordPress 6.2+ · PHP 7.4+ · HPOS-compatible · Cart/Checkout Blocks compatible
+- **License:** GPLv2-or-later
+- **Source:** [github.com/xpaysh/xpay-for-woocommerce](https://github.com/xpaysh/xpay-for-woocommerce)
+- **Issue tracker:** [GitHub Issues](https://github.com/xpaysh/xpay-for-woocommerce/issues)
+- **Pricing:** [xpay.sh/pricing/?tab=agentic-commerce](https://www.xpay.sh/pricing/?tab=agentic-commerce)
+- **Support email:** merchants@xpay.sh
+
+## What's in the box
+
+```text
+xpay-for-woocommerce/
+├── xpay-for-woocommerce.php        Main plugin file (Plugin header + bootstrap)
+├── readme.txt                       WordPress.org listing copy
+├── uninstall.php                    Removes all options on delete
+├── includes/
+│   ├── class-xpay-plugin.php       Singleton + lifecycle
+│   ├── class-xpay-settings.php     Settings → xpay admin page
+│   ├── class-xpay-consent.php      First-activation opt-in notice
+│   ├── class-xpay-rest.php         /llms.txt + /.well-known/agentic-commerce.json
+│   ├── class-xpay-schema.php       JSON-LD injection (PDP / shop / home)
+│   ├── class-xpay-robots.php       robots.txt allowlist
+│   ├── class-xpay-cart.php         ?xpay_cart=<JWT> handler
+│   ├── class-xpay-webhooks.php     woocommerce_update_product hooks
+│   ├── class-xpay-widget.php       Optional [xpay-buy] shortcode + Gutenberg block (OFF by default)
+│   ├── class-xpay-client.php       HTTP client + JWT verify
+│   └── class-xpay-telemetry.php    Opt-in lifecycle events
+└── languages/xpay-for-woocommerce.pot
+```
