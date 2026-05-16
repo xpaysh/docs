@@ -81,11 +81,12 @@ Reference verifiers ship in both `js-sdk` and `python-sdk` in the UCP org.
 
 - **[PR #443](https://github.com/Universal-Commerce-Protocol/ucp/pull/443)** — closes [Issue #412](https://github.com/Universal-Commerce-Protocol/ucp/issues/412), shared-type centralization for capability pages. The issue was filed by `@igrigorik` (Shopify, Tech Council) and seconded by `@wry-ry` (top committer). One-file change in `main.py`; capability pages no longer re-render `types/...` field tables inline, linking to `reference.md` instead.
 
-Scoped for follow-up: a proposal to add an **x402 payment-method binding** so UCP carts can settle in USDC via the existing payment-method abstraction. Not yet filed upstream — open a thread in the UCP discussions if you'd like to co-design it.
+Scoped for follow-up: a proposal to add **stablecoin payment-method bindings** (via [x402](https://x402.org) and [MPP](https://mpp.dev)) so UCP carts can settle in USDC alongside existing card and ACH rails — same payment-method abstraction, more options for buyers. Not yet filed upstream — open a thread in the UCP discussions if you'd like to co-design it.
 
 ## See also
 
 - [Comparison page →](/agentic-commerce-protocols/comparison)
-- [ACP](/agentic-commerce-protocols/acp)
-- [AP2](/agentic-commerce-protocols/ap2)
-- [xpay facilitator](/x402-protocol/facilitator) — the x402 settlement layer UCP can call into
+- [ACP](/agentic-commerce-protocols/acp) · [AP2](/agentic-commerce-protocols/ap2)
+- [UCP overview on xpay.sh](https://www.xpay.sh/protocols/ucp/)
+- Payment rails — [MPP](https://mpp.dev), [x402](/x402-protocol), cards & stablecoins
+- For merchants — [xpay.sh/merchants](https://www.xpay.sh/merchants/) · [Shopify](https://www.xpay.sh/merchants/shopify) · [WooCommerce](/merchants/woocommerce)

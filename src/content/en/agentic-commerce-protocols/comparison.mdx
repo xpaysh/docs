@@ -128,11 +128,11 @@ Not "merge them," just things each could borrow from the others:
 | B2B procurement, multi-vendor | **UCP** | Vendor-neutral governance, RFC 9421 integrity, refunds/disputes |
 | Voice / Gemini agent commerce | **AP2** | A2A is the native transport for Google Agent Builder |
 | Content monetization, per-call | **x402 directly** | Skip the commerce protocol; you only need a payment rail |
-| Hybrid (cart-aware agent that pays in stablecoin) | **UCP + x402** | UCP for cart semantics, x402 for settlement underneath |
+| Hybrid (cart-aware agent paying in stablecoin / fiat / both) | **UCP + the rail of your choice** | UCP for cart semantics; layer MPP, x402, or card rails underneath as fits |
 
 ## xpay✦ engagement
 
-xpay✦ runs a [public x402 facilitator](/x402-protocol/facilitator) and is contributing upstream to both ACP and UCP on minor-improvement-track items first, with a longer-running interest in landing RFC 9421 adoption in ACP (citing UCP precedent).
+xpay✦ is rail-agnostic by design — we integrate with MPP, x402, cards, and stablecoin rails, and we contribute upstream to ACP and UCP so the commerce layer above those rails stays open. Current upstream work is on minor-improvement-track items first, with a longer-running interest in landing RFC 9421 adoption in ACP (citing UCP precedent).
 
 Current upstream work (snapshot 2026-05-16):
 
@@ -152,4 +152,6 @@ Current upstream work (snapshot 2026-05-16):
 - NVIDIA `Retail-Agentic-Commerce` — https://github.com/NVIDIA-AI-Blueprints/Retail-Agentic-Commerce
 - **RFC 9421 — HTTP Message Signatures** — https://datatracker.ietf.org/doc/rfc9421/
 - MCP spec — https://modelcontextprotocol.io
-- x402 — https://x402.org
+- Payment rails — [MPP](https://mpp.dev), [x402](https://x402.org), cards / stablecoins
+- xpay.sh protocol pages — [ACP](https://www.xpay.sh/protocols/acp/) · [UCP](https://www.xpay.sh/protocols/ucp/) · [AP2](https://www.xpay.sh/protocols/ap2/)
+- For merchants — [xpay.sh/merchants](https://www.xpay.sh/merchants/) · [Shopify](https://www.xpay.sh/merchants/shopify) · [WooCommerce](https://www.xpay.sh/merchants/woocommerce/)

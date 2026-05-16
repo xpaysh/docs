@@ -13,7 +13,7 @@ This section documents each protocol on its own terms, then puts them side-by-si
 - **[ACP vs UCP vs AP2 — Technical Comparison →](/agentic-commerce-protocols/comparison)**
 
 <Callout type="info">
-xpay✦ ships an [x402 facilitator](/x402-protocol/facilitator) for stablecoin settlement, an [MCP server](/tools), and contributes upstream to both ACP and UCP. The protocols below sit *above* x402 in the stack: ACP/UCP/AP2 describe the cart-and-checkout semantics, x402 describes the payment rail, and MCP is the transport that lets agents discover and invoke either one.
+xpay✦ contributes upstream to ACP and UCP, runs an [MCP server](/tools) for tool discovery, and integrates with multiple payment rails so merchants aren't locked into one. The commerce protocols below are rail-agnostic by design — pick the cart/checkout semantics that fit, then plug in whatever payment rail your buyers use.
 </Callout>
 
 ## How the layers fit
@@ -22,25 +22,33 @@ xpay✦ ships an [x402 facilitator](/x402-protocol/facilitator) for stablecoin s
 flowchart TB
     Agent[AI Agent]
     MCP[MCP Transport]
-    ACP[ACP / UCP / AP2 — Commerce semantics]
-    X402[x402 — HTTP payment rail]
-    Chain[Stablecoin settlement]
+    Commerce[ACP / UCP / AP2 — Commerce semantics]
+    Rails[Payment rails — MPP, x402, cards, stablecoins]
+    Settle[Settlement]
 
     Agent --> MCP
-    MCP --> ACP
-    ACP --> X402
-    X402 --> Chain
+    MCP --> Commerce
+    Commerce --> Rails
+    Rails --> Settle
 ```
 
 - **MCP** is how agents *discover and call* tools.
 - **ACP / UCP / AP2** define *what those tools mean* (a cart, a checkout, an order).
-- **x402** is *how the agent pays* once a checkout returns a price.
+- **Payment rails** are *how the agent pays* once a checkout returns a price. Rail choice is independent of the commerce protocol: cards, stablecoins via [x402](/x402-protocol), Stripe's [MPP](https://mpp.dev), Adyen, ACH, whatever fits the merchant.
 
-You can mix and match. ACP today assumes server-side payment processors (Stripe, Adyen). UCP's MCP binding makes it natural to layer x402 underneath. AP2 leans on Google's A2A transport but is payment-rail agnostic.
+Mix and match freely. ACP today assumes server-side processors (Stripe, Adyen). UCP's MCP binding composes cleanly with any rail. AP2 leans on Google's A2A transport and is itself rail-agnostic.
+
+## For merchants
+
+Just want to accept agent-driven purchases without picking a protocol yourself?
+
+- [xpay.sh/merchants](https://www.xpay.sh/merchants/) — overview for retailers
+- [Shopify](https://www.xpay.sh/merchants/shopify) — drop-in for Shopify stores
+- [WooCommerce](https://www.xpay.sh/merchants/woocommerce/) — landing page · [setup guide in these docs](/merchants/woocommerce)
 
 ## Where to go next
 
 - New to all three? Start with the **[comparison page](/agentic-commerce-protocols/comparison)**.
-- Building against OpenAI's `Buy It in ChatGPT` surface? See **[ACP](/agentic-commerce-protocols/acp)**.
-- Building a multi-vendor agent? See **[UCP](/agentic-commerce-protocols/ucp)**.
-- Targeting Google Agent Builder or Gemini agents? See **[AP2](/agentic-commerce-protocols/ap2)**.
+- Building against OpenAI's `Buy It in ChatGPT` surface? See **[ACP](/agentic-commerce-protocols/acp)** (or the [xpay.sh/protocols/acp](https://www.xpay.sh/protocols/acp/) overview).
+- Building a multi-vendor agent? See **[UCP](/agentic-commerce-protocols/ucp)** (or [xpay.sh/protocols/ucp](https://www.xpay.sh/protocols/ucp/)).
+- Targeting Google Agent Builder or Gemini agents? See **[AP2](/agentic-commerce-protocols/ap2)** (or [xpay.sh/protocols/ap2](https://www.xpay.sh/protocols/ap2/)).
