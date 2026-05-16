@@ -10,14 +10,15 @@ import { Cards } from 'nextra/components';
   <Cards.Card title="xpay for WooCommerce" href="/merchants/woocommerce" />
 </Cards>
 
-More platforms coming: Shopify, BigCommerce, Magento, custom storefronts. If you're not on one of the supported platforms yet, email **merchants@xpay.sh** with your stack.
+More platforms coming: Shopify, BigCommerce, commercetools, Magento, Salesforce Commerce, and a long-tail of community plugins. See the **[agentic commerce overview](/merchants/agentic-commerce)** for the full roadmap. Not on a supported platform yet? Email **merchants@xpay.sh** with your stack.
 
 ## What every merchant integration does
 
 - **Publishes an agent-readable product feed** on xpay's CDN — AI shoppers read it directly.
-- **Adds Schema.org JSON-LD** (Product, Offer, BuyAction, ItemList) so AI shoppers see your live prices and stock.
-- **Serves `/llms.txt` and `/.well-known/agentic-commerce.json`** on your domain — the discovery files AI shoppers look for.
-- **Allows the right bots** in robots.txt — GPTBot, ChatGPT-User, ClaudeBot, PerplexityBot, OAI-SearchBot and friends.
+- **Adds Schema.org JSON-LD** (Product, Offer, BuyAction, ItemList) on PDPs and listings — so AI shoppers see your live prices and stock.
+- **Serves `/llms.txt`** ([llmstxt.org](https://llmstxt.org)) on your domain — the Markdown discovery file AI agents and LLMs look for.
+- **Allows the right bots** in `robots.txt` — `GPTBot`, `ChatGPT-User`, `ClaudeBot`, `Google-Extended`, `PerplexityBot`, `CCBot`, `OAI-SearchBot`, `Amazonbot`.
+- **Implements the agentic commerce protocols you opt into** — ACP per-session checkout endpoints, UCP OAuth Identity Linking with RFC 9421 signed requests, AP2 mandate acceptance. Pick one or all; they compose.
 - **Cart deeplink** — agents mint a one-click "Buy" link that lands the buyer on your existing checkout, pre-filled.
 - **Non-custodial** — payment runs through your existing gateway (Stripe / WooPayments / PayPal / Square / etc.). xpay never touches checkout or sees buyer PII.
 

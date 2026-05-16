@@ -1,0 +1,81 @@
+import { Callout, Cards } from 'nextra/components'
+
+# Agentic Commerce — Platform Roadmap
+
+xpay✦ ships open-source plugins that expose your eCommerce storefront to AI-agent buyers — without locking you into a single protocol or payment rail. Every plugin in the [`agentic-commerce-for-*`](https://github.com/xpaysh?q=agentic-commerce-for-) family implements **ACP, UCP, and AP2** out of the box and works with your existing payment gateway.
+
+<Callout type="info">
+New to the protocols? Start with the [ACP vs UCP vs AP2 comparison](/agentic-commerce-protocols/comparison). It's a side-by-side technical breakdown of how the three open standards differ on governance, transport, request integrity, and capability coverage.
+</Callout>
+
+## Platforms
+
+<Cards>
+  <Cards.Card title="WooCommerce" href="/merchants/woocommerce" />
+</Cards>
+
+### Live
+
+- **[WooCommerce](/merchants/woocommerce)** — WordPress plugin. Open-source ([xpaysh/agentic-commerce-for-woocommerce](https://github.com/xpaysh/agentic-commerce-for-woocommerce), GPLv2, v0.1.7+).
+
+### In flight (Phase B)
+
+The next five first-party plugins, ordered by engineering cost ascending so cheap wins land first and the template + schema packages reuse compounds:
+
+| Platform | Repo | Target |
+|---|---|---|
+| BigCommerce | `xpaysh/agentic-commerce-for-bigcommerce` | Phase B-1 |
+| commercetools | `xpaysh/agentic-commerce-for-commercetools` | Phase B-2 |
+| Magento / Adobe Commerce | `xpaysh/agentic-commerce-for-magento` | Phase B-3 |
+| Shopify (App Store) | `xpaysh/agentic-commerce-for-shopify-app` | Phase B-4 |
+| Salesforce Commerce Cloud | `xpaysh/agentic-commerce-for-salesforce-commerce` | Phase B-5 |
+
+The Shopify play is intentionally a **Shopify App** rather than a plugin — a multi-protocol, multi-rail layer on top of Shopify's UCP-native flow. It composes with Shopify's own agentic toolkit rather than competing with it.
+
+### Phase C — long-tail, template + community
+
+PrestaShop, Saleor (multi-protocol port of the official Saleor MCP), OpenCart, Shopware, Spree, Sylius, nopCommerce, Drupal Commerce, Ecwid. Most are community-PR-driven against the shared [plugin template](https://github.com/xpaysh/agentic-commerce-plugin-template). A contributor guide and bounty program will land alongside the template release.
+
+## What every plugin does (real standards, no invented files)
+
+The plugin family is built on **only externally-verifiable discovery standards**. We do not emit invented `/.well-known/` URIs.
+
+| File / standard | Action |
+|---|---|
+| `/llms.txt` ([llmstxt.org](https://llmstxt.org)) | Emit. Markdown, lists product API + checkout flow + OAuth + terms. |
+| `schema.org` JSON-LD (`Product`, `Offer`, `AggregateOffer`, `BreadcrumbList`) | Emit on PDPs and listing pages. |
+| `robots.txt` with explicit allow/disallow for real AI crawlers (`GPTBot`, `ClaudeBot`, `Google-Extended`, `PerplexityBot`, `CCBot`, `Amazonbot`) | Honor via opt-in allowlist. |
+| `/.well-known/agent-card.json` ([A2A 1.0](https://a2a-protocol.org/), IANA-registered) | Watchlist — feature-flagged. |
+| `/.well-known/oauth-protected-resource` ([RFC 9728](https://datatracker.ietf.org/doc/rfc9728/)) | Use for UCP OAuth Identity Linking. |
+
+### Protocol endpoints (real, not discovery files)
+
+ACP, UCP, and AP2 don't define a `/.well-known/` discovery file — each handles discovery differently:
+
+- **ACP** — per-session capability negotiation inside `POST /checkout_sessions`.
+- **UCP** — out-of-band OAuth Identity Linking, then RFC 9421 signed requests.
+- **AP2** — signed mandates accepted alongside the merchant's existing checkout.
+
+The plugin implements all three real surfaces; each merchant's `/llms.txt` documents which are exposed.
+
+## Why open-source
+
+- **No protocol lock-in.** Every plugin speaks ACP + UCP + AP2 from day one — you're not betting on which spec wins.
+- **No rail lock-in.** Cards, [Stripe MPP](https://mpp.dev), [x402](https://x402.org), stablecoins — pick the rail your buyers use.
+- **Two-mode operation.** Run standalone (zero xpay backend, discovery-only) or commercial (connect to xpay backend for catalog hosting, analytics, multi-region).
+- **GPLv2 / Apache-2.0.** No surprises; community-PR-friendly.
+
+## Curated index of the ecosystem
+
+The **[awesome-agentic-commerce](https://github.com/xpaysh/awesome-agentic-commerce)** registry tracks every plugin in the family plus vendor-built and community-built siblings (Shopify-AI-Toolkit, Saleor MCP, Forter TACP, NVIDIA Retail-Agentic-Commerce blueprint, etc.). Star-velocity and last-push-date are auto-updated.
+
+## Contribute a plugin
+
+Building for a platform we haven't covered? The [plugin template](https://github.com/xpaysh/agentic-commerce-plugin-template) is the starting point. PRs welcome on every repo in the family.
+
+## See also
+
+- [ACP vs UCP vs AP2 — Technical Comparison](/agentic-commerce-protocols/comparison)
+- [WooCommerce setup guide](/merchants/woocommerce)
+- [xpay.sh — merchants overview](https://www.xpay.sh/merchants/)
+- [xpay.sh — Shopify](https://www.xpay.sh/merchants/shopify/) · [WooCommerce](https://www.xpay.sh/merchants/woocommerce/)
