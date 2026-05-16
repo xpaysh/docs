@@ -1,0 +1,91 @@
+import { Callout } from 'nextra/components'
+
+# UCP — Universal Commerce Protocol
+
+**Maintainer:** Tech Council + Governance Council (vendor-neutral) &middot; **Repo:** [`universal-commerce-protocol/ucp`](https://github.com/universal-commerce-protocol/ucp) &middot; **Release model:** dated revisions (`spec/YYYY-MM-DD.md`)
+
+UCP is a vendor-neutral commerce specification. Its differentiators are (a) **HTTP Message Signatures (RFC 9421)** as a normative request-integrity layer, (b) first-class **MCP, A2A, and embedded transport bindings**, and (c) a fully open multi-language SDK story.
+
+<Callout type="info">
+For a side-by-side technical breakdown against ACP and AP2, see the [comparison page](/agentic-commerce-protocols/comparison).
+</Callout>
+
+## Capabilities
+
+- **Cart** — create, update, line items, taxes
+- **Checkout** — initiate, confirm, capture, void
+- **Order lifecycle** — multi-stage states (created → paid → fulfilled → completed)
+- **Catalog / product feed** — normative product feed format
+- **Refunds** — full and partial
+- **Disputes** — draft, behind a feature flag
+- **Request integrity** — RFC 9421 signatures, required for production deployments
+
+## Governance
+
+Spec changes flow through PRs tagged `TC review`; the Tech Council approves them. The Governance Council oversees process (charter changes, maintainer additions, conflicts). No single vendor has a veto, and the dated-release model means implementers can pin to a specific revision regardless of what main looks like.
+
+## MCP binding (the differentiator)
+
+UCP publishes binding docs that map its HTTP surface onto MCP tool calls. Conceptually a `cart-mcp` tool exposes UCP cart operations as named MCP tools an agent can invoke directly:
+
+```jsonc
+// Example MCP tool exposed by a UCP-compliant merchant.
+{
+  "name": "ucp.cart.create",
+  "description": "Create a new cart for the buyer",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "items": {
+        "type": "array",
+        "items": { "type": "object", "properties": {
+          "sku": { "type": "string" },
+          "quantity": { "type": "integer", "minimum": 1 }
+        }}
+      }
+    },
+    "required": ["items"]
+  }
+}
+```
+
+Combined with RFC 9421 signing, an agent can invoke `ucp.cart.create` over MCP and the merchant can verify the call originated from an authorized agent — without inventing a bespoke auth scheme.
+
+## RFC 9421 in practice
+
+A UCP-signed request looks like:
+
+```http
+POST /ucp/carts HTTP/1.1
+Host: merchant.example.com
+Content-Type: application/json
+Content-Digest: sha-256=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:
+Signature-Input: sig1=("@method" "@path" "content-digest");\
+  created=1715000000;keyid="agent-key-1";alg="ed25519"
+Signature: sig1=:base64sig...:
+
+{"items":[{"sku":"WIDGET-001","quantity":1}]}
+```
+
+Reference verifiers ship in both `js-sdk` and `python-sdk` in the UCP org.
+
+## Reference implementations & tooling
+
+- [`Universal-Commerce-Protocol/js-sdk`](https://github.com/Universal-Commerce-Protocol/js-sdk) — TypeScript client + server
+- [`Universal-Commerce-Protocol/python-sdk`](https://github.com/Universal-Commerce-Protocol/python-sdk) — Python client + server
+- [`Universal-Commerce-Protocol/ucp-schema`](https://github.com/Universal-Commerce-Protocol/ucp-schema) — Rust validator
+- [`Universal-Commerce-Protocol/conformance`](https://github.com/Universal-Commerce-Protocol/conformance) — conformance suite
+- [`Universal-Commerce-Protocol/samples`](https://github.com/Universal-Commerce-Protocol/samples) — sample agents and merchants
+
+## xpay✦ contributions to UCP
+
+- **[PR #443](https://github.com/Universal-Commerce-Protocol/ucp/pull/443)** — closes [Issue #412](https://github.com/Universal-Commerce-Protocol/ucp/issues/412), shared-type centralization for capability pages. The issue was filed by `@igrigorik` (Shopify, Tech Council) and seconded by `@wry-ry` (top committer). One-file change in `main.py`; capability pages no longer re-render `types/...` field tables inline, linking to `reference.md` instead.
+
+Scoped for follow-up: a proposal to add an **x402 payment-method binding** so UCP carts can settle in USDC via the existing payment-method abstraction. Not yet filed upstream — open a thread in the UCP discussions if you'd like to co-design it.
+
+## See also
+
+- [Comparison page →](/agentic-commerce-protocols/comparison)
+- [ACP](/agentic-commerce-protocols/acp)
+- [AP2](/agentic-commerce-protocols/ap2)
+- [xpay facilitator](/x402-protocol/facilitator) — the x402 settlement layer UCP can call into

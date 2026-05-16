@@ -1,0 +1,88 @@
+import { Callout } from 'nextra/components'
+
+# ACP — Agentic Commerce Protocol
+
+**Maintainers:** OpenAI, Stripe, Meta (Founding Maintainers / TSC) &middot; **Repo:** [`agentic-commerce-protocol/agentic-commerce-protocol`](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol) &middot; **Stable revision:** `spec/2026-04-17/`
+
+ACP is the open spec behind OpenAI's `Buy It in ChatGPT` surface. It defines how a buyer's AI agent transacts with a merchant — cart, checkout, fulfillment, delegated payment — and integrates natively with Stripe (and any other PSP that ships an ACP handler).
+
+<Callout type="info">
+For a side-by-side technical breakdown against UCP and AP2, see the [comparison page](/agentic-commerce-protocols/comparison).
+</Callout>
+
+## Capabilities
+
+- **Cart** — create, update, line-item adjustments
+- **Checkout** — initiate, confirm, capture
+- **Discounts & promotions** — rich `price_adjustment` model (richest of the three protocols)
+- **Fulfillment** — shipping options, address validation
+- **Delegated payments** — agent acts on behalf of buyer via platform bearer token
+
+What's *not* in ACP today: catalog/product feed, refunds, disputes, normative request signing. See [Issue #4](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/issues/4) for the explicit out-of-scope decision on request integrity.
+
+## Integration sketch
+
+A minimal `delegate_payment` + `checkout` flow. Endpoints below use the example pattern from the spec; replace with your merchant's actual ACP endpoint.
+
+```ts
+// 1. Agent obtains a delegated payment authorization for the buyer.
+const delegation = await fetch('https://merchant.example.com/acp/delegate_payment', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${PLATFORM_TOKEN}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    buyer_id: 'buyer_123',
+    max_amount: { value: '49.99', currency: 'USD' },
+    valid_until: '2026-05-17T00:00:00Z',
+  }),
+}).then(r => r.json())
+
+// 2. Create a cart.
+const cart = await fetch('https://merchant.example.com/acp/carts', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${PLATFORM_TOKEN}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    items: [{ sku: 'WIDGET-001', quantity: 1 }],
+  }),
+}).then(r => r.json())
+
+// 3. Complete checkout using the delegation.
+const order = await fetch(`https://merchant.example.com/acp/carts/${cart.id}/checkout`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${PLATFORM_TOKEN}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    payment: { delegation_id: delegation.id },
+    shipping_address: { /* ... */ },
+  }),
+}).then(r => r.json())
+```
+
+The `Bearer` token is platform-issued (typically by OpenAI for ChatGPT-originated traffic, or by the merchant directly). There is no spec-level request signing — verifying that a given call really came from the named agent is currently a platform concern.
+
+## Reference implementations
+
+- [`vercel/acp-handler`](https://github.com/vercel/acp-handler) — Next.js/Vercel handler
+- [`locus-technologies/acp-demo`](https://github.com/locus-technologies/agentic-commerce-protocol-demo) — reference implementation
+- [`NVIDIA-AI-Blueprints/Retail-Agentic-Commerce`](https://github.com/NVIDIA-AI-Blueprints/Retail-Agentic-Commerce) — NVIDIA blueprint covering both ACP and UCP
+
+## xpay✦ contributions to ACP
+
+- **[PR #251](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/pull/251)** — README's Repo Structure section was missing `changelog/2026-01-16.md` (the file exists on disk alongside the other dated changelogs). Small minor-improvement fix.
+
+Longer-term: scoping a SEP to adopt **[RFC 9421 (HTTP Message Signatures)](https://datatracker.ietf.org/doc/rfc9421/)** at the spec level, citing UCP's reference verifier as precedent. The aim is a single normative request-integrity story instead of N per-platform bearer schemes — see [Issue #4](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/issues/4) for the existing out-of-scope discussion.
+
+Also tracking [Issue #97](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/issues/97) (Idempotency-Key TTL guidance) — a Stripe TSC member has signalled willingness to sponsor.
+
+## See also
+
+- [Comparison page →](/agentic-commerce-protocols/comparison)
+- [UCP](/agentic-commerce-protocols/ucp)
+- [AP2](/agentic-commerce-protocols/ap2)

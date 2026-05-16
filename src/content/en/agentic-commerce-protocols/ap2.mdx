@@ -1,0 +1,47 @@
+import { Callout } from 'nextra/components'
+
+# AP2 — Agent Payments Protocol (Google)
+
+**Maintainer:** Google &middot; **Repo:** [`google-agentic-commerce/AP2`](https://github.com/google-agentic-commerce/AP2) &middot; **Status:** Draft / preview
+
+<Callout type="warning">
+This page is a working draft. Verify all claims against the latest Google docs at the AP2 repo before quoting — AP2 is moving quickly and Google's published materials are the canonical source.
+</Callout>
+
+AP2 is Google's Agent Payments Protocol. Unlike ACP and UCP, which describe full commerce surfaces (cart, checkout, order), AP2 is intentionally narrower: it defines how an agent **proves it is authorized to pay** on behalf of a user, and how that authorization travels with a transaction.
+
+## Core concept — mandates
+
+The central artifact in AP2 is a **mandate**: a signed, verifiable credential that says "this agent may spend up to $X with merchant Y, valid until time Z." The mandate travels with each transaction; merchants and payment processors verify it against the issuer's public key (typically the user's wallet, identity provider, or device).
+
+This is a strict superset of the bearer-token model used by ACP and complementary to the per-request HTTP signing in UCP. A mandate authorizes *intent*; an RFC 9421 signature authorizes *this specific request*.
+
+## Capabilities (current public surface)
+
+- **Mandate issuance** — sample agents demonstrate mandate creation
+- **Mandate verification** — reference verifier for issuer signatures
+- **A2A transport** — primary surface; AP2 messages flow between Google Agent Builder agents
+- **MCP exposure** — available through Google Agent Builder
+
+What's **not** in AP2: cart semantics, catalog, refunds, disputes. AP2 expects to compose *underneath* a commerce protocol (ACP or UCP), supplying the payment-authorization layer.
+
+## Integration sketch
+
+TODO: produce a verified sketch from the AP2 sample agents in [`google-agentic-commerce/AP2`](https://github.com/google-agentic-commerce/AP2). The pseudo-shape is:
+
+```text
+1. User issues mandate → signed VC stored in agent wallet
+2. Agent presents mandate alongside commerce request
+3. Merchant / processor verifies mandate signature against issuer key
+4. Merchant settles via its existing payment rail (Stripe, x402, etc.)
+```
+
+## xpay✦ engagement
+
+No active xpay✦ contributions to AP2 as of **2026-05-15**. The mandate model is interesting as a possible auth mode for both ACP and UCP — see the [comparison page](/agentic-commerce-protocols/comparison#cross-pollination-opportunities) for that discussion.
+
+## See also
+
+- [Comparison page →](/agentic-commerce-protocols/comparison)
+- [ACP](/agentic-commerce-protocols/acp)
+- [UCP](/agentic-commerce-protocols/ucp)

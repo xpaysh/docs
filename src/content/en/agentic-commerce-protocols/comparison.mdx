@@ -1,0 +1,155 @@
+import { Callout } from 'nextra/components'
+
+# ACP vs UCP vs AP2 — Technical Comparison
+
+Side-by-side technical comparison of the three open agentic-commerce specifications. Aimed at engineers picking one to integrate against or contributing upstream. Last reviewed **2026-05-16**.
+
+Spotted something stale or wrong? File an issue on the docs repo and we'll correct it ahead of other doc work.
+
+## TL;DR
+
+| | **ACP** | **UCP** | **AP2** |
+|---|---|---|---|
+| Full name | Agentic Commerce Protocol | Universal Commerce Protocol | Agent Payments Protocol |
+| Sponsor org(s) | OpenAI + Stripe | Vendor-neutral (Tech Council + Governance Council) | Google |
+| Public launch | 2025-09-29 (repo created) | 2025-Q4 | 2025-Q4 |
+| Repo | [`agentic-commerce-protocol/agentic-commerce-protocol`](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol) | [`universal-commerce-protocol/ucp`](https://github.com/universal-commerce-protocol/ucp) | [`google-agentic-commerce/AP2`](https://github.com/google-agentic-commerce/AP2) |
+| Governance | SEP process + TSC + Founding-Maintainer veto | Tech Council + Governance Council; `TC review` label | Maintained inside Google; community PRs accepted |
+| Primary surface | Cart + checkout | Cart, checkout, order, catalog, refunds, disputes | Payment mandates, A2A messages |
+| Transports | HTTP+JSON only | HTTP, **MCP**, A2A, embedded | A2A, MCP (via Google Agent Builder) |
+| Request integrity | Bearer token per platform (Issue [#4](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/issues/4) — explicitly out-of-scope at spec level) | **HTTP Message Signatures (RFC 9421)** — `Signature`, `Signature-Input`, `Content-Digest` | Mandate signatures (verifiable credentials style) |
+| Spec status | Production-ready for ChatGPT `Buy It` surface | Draft, dated releases | Draft / preview |
+| Conformance tooling | `validate:all` stub in-repo | Separate `conformance` repo + `python-sdk` + `js-sdk` + `ucp-schema` (Rust validator) | Sample agents in repo |
+
+<Callout type="warning">
+Repo statistics below were captured **2026-05-15**. Star counts and issue counts will drift — re-check via `gh api repos/<owner>/<repo>` before quoting.
+</Callout>
+
+| Repo | Stars | Open issues | Created |
+|---|---:|---:|---|
+| `agentic-commerce-protocol/agentic-commerce-protocol` | 1,389 | 105 | 2025-09-29 |
+| `universal-commerce-protocol/ucp` | 2,959 | 104 | 2025-Q4 |
+| `google-agentic-commerce/AP2` | 2,999 | 101 | 2025-Q4 |
+
+## Governance models
+
+### ACP
+
+ACP runs a SEP (Spec Enhancement Proposal) process with a Technical Steering Committee. The **Founding Maintainers** (OpenAI, Stripe, Meta) hold a documented veto for neutrality/security; in practice most breaking changes are pre-aligned before a public PR lands. Fast and coherent; less open to outside steering. A separate Forter-led [`trusted-agentic-commerce-protocol`](https://github.com/forter/trusted-agentic-commerce-protocol) fork (177★) exists alongside it — read their README for their stated motivation rather than ours.
+
+### UCP
+
+UCP runs a two-council model: a 16-person Tech Council approves spec changes (the `TC review` label is the green-light signal), and a Governance Council oversees process. No single vendor holds veto. Slower per PR than ACP, but no founding-maintainer can unilaterally block. Dated releases (`docs/specification/2026-04-08/...`) give implementers a pin point.
+
+### AP2
+
+AP2 lives under Google's `google-agentic-commerce` org. Community PRs are accepted, but stewardship is effectively single-vendor. The framing as *payments* rather than *commerce* keeps the surface small enough that single-vendor stewardship is workable; that would be harder to sustain for a full commerce spec.
+
+## Spec surface — what each repo actually publishes
+
+| Artifact | ACP | UCP | AP2 |
+|---|---|---|---|
+| OpenAPI / JSON Schema | Yes (per-endpoint JSON Schema) | Yes (OpenAPI + JSON Schema, per dated release) | Partial (sample schemas) |
+| MCP binding | No (TODO: confirm — community proposals exist) | Yes (`cart-mcp.md`-style binding docs) | Yes (Agent Builder integration) |
+| A2A binding | No | Yes | Yes (primary surface) |
+| Reference impl | Stripe + Shopify partner-only | `js-sdk`, `python-sdk` (open) | Sample agents (open) |
+| Conformance suite | `validate:all` stub | Separate `conformance` repo | Sample tests |
+
+## Transport bindings
+
+- **ACP** — HTTP+JSON only. Discovery is out-of-band (you must already know the merchant endpoint). There is no MCP binding in the spec as of 2026-05-15.
+- **UCP** — HTTP is canonical, but the repo also publishes binding docs for MCP, A2A, and embedded (in-app) transports. The MCP binding is the most actively iterated; it maps `cart.create` / `cart.update` / `checkout.complete` directly onto MCP tool calls.
+- **AP2** — Built around A2A. MCP is reachable through Google Agent Builder. HTTP-only consumers are second-class.
+
+## Authentication & request integrity
+
+This is the single biggest spec-level divergence.
+
+### ACP
+
+Bearer tokens, sourced per platform. The spec explicitly defers request integrity to the implementer — see [Issue #4](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/issues/4) where the maintainers scope request signing out of the protocol. Pragmatic for shipping, but every integrator builds (or skips) signing themselves.
+
+### UCP
+
+UCP requires **HTTP Message Signatures ([RFC 9421](https://datatracker.ietf.org/doc/rfc9421/))** — `Signature`, `Signature-Input`, `Content-Digest`. Reference verifiers ship in `js-sdk` and `python-sdk`. Strongest request-integrity story of the three by a clear margin.
+
+### AP2
+
+Signed **mandates** — short verifiable credentials describing what the agent is allowed to spend on behalf of the user. The mandate travels with each transaction; verification is against the issuer's public key (user wallet or identity provider). Stronger than ACP's bearer model; orthogonal to UCP's per-request signing — the two could coexist.
+
+## Commerce surface coverage
+
+| | ACP | UCP | AP2 |
+|---|:---:|:---:|:---:|
+| Cart create / update | Yes | Yes | Implicit |
+| Checkout | Yes | Yes | Yes |
+| Order lifecycle | Partial | Yes | Partial |
+| Catalog / product feed | No (out-of-band) | Yes | No |
+| Refunds | No (TODO) | Yes | Out-of-scope |
+| Disputes | No | Draft | Out-of-scope |
+| Discounts / promotions | Yes (rich) | Partial | No |
+| Fulfillment / shipping | Yes | Yes | No |
+| Payment authorization | Yes (via Stripe-style intents) | Yes (signature-based) | **Yes (primary surface)** |
+
+ACP wins on **discount/promotion** semantics (price adjustments, coupon stacking, line-item overrides — see [PR #192](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/pull/192) which shipped the Promotions API in `spec/2026-04-17`). UCP wins on **post-purchase** (refunds, disputes, multi-stage order states). AP2 is narrower by design.
+
+## Conformance & tooling
+
+- **ACP** ships a `validate:all` stub that exercises JSON Schema against a small fixture set. No language SDKs in the canonical repo as of 2026-05-15.
+- **UCP** ships a separate `conformance` repo, plus `python-sdk`, `js-sdk`, and `ucp-schema` (a Rust validator). Multi-language coverage is the most complete of the three.
+- **AP2** ships sample agents and a small test harness. SDK story is TODO — verify against latest Google docs.
+
+## Versioning & release cadence
+
+- **ACP** uses dated revisions (most recent: `2026-04-17` as of writing — TODO: verify against `RELEASES.md`). Breaking changes are flagged in the changelog; the cherry-pick workflow is informal.
+- **UCP** uses strict dated specs (`spec/YYYY-MM-DD.md`) with a formal cherry-pick workflow between draft and stable branches.
+- **AP2** uses semver-ish tags; release cadence is irregular.
+
+## Maturity signals (2026-05-15)
+
+- **Throughput** — all three sit around 100 open issues with active weekly merges. ACP merges community PRs but at lower velocity than internal ones; UCP's `TC review` label is the single best signal of "maintainers want this." TODO: pull time-to-merge numbers with `gh pr list --state merged --json mergedAt,createdAt`.
+- **Stars are a vanity metric.** AP2 and UCP both crossed 2,900 within months on brand pull alone; ACP's 1,400 with two big sponsors and a working production integration is the more interesting number.
+- **Production footprint** — ACP is live via OpenAI's `Buy It in ChatGPT` and Stripe's reference handler (Vercel ships a [community port](https://github.com/vercel/acp-handler)). UCP has NVIDIA's [Retail-Agentic-Commerce](https://github.com/NVIDIA-AI-Blueprints/Retail-Agentic-Commerce) blueprint plus early Shopify integrations. AP2 production deployments — none we can verify; if you have one, tell us and we'll cite it.
+
+## Cross-pollination opportunities
+
+Not "merge them," just things each could borrow from the others:
+
+- **ACP could adopt RFC 9421** from UCP. Issue #4 is the obvious site; the result is one normative request-integrity story instead of N per-platform schemes.
+- **UCP could borrow ACP's promotion/discount model.** ACP's `price_adjustment` semantics (post #192) are richer than UCP's current draft and slot cleanly into UCP's cart object.
+- **AP2's mandate model could plug into both** as an additional auth mode. A signed mandate strictly subsumes "this agent may spend $X with merchant Y"; ACP and UCP could accept mandates without giving up their own auth.
+- **One MCP transport binding for all three.** The MCP tool-call shape for `cart.create` / `cart.update` / `checkout.complete` is nearly identical across the three specs. A shared binding would let a single MCP client target all of them with one code path — and would let UCP's existing binding work serve the other two with light edits.
+
+## When to choose which
+
+| Use case | Best fit | Why |
+|---|---|---|
+| B2C retail, ChatGPT-driven | **ACP** | Direct path to OpenAI `Buy It` surface and Stripe processing |
+| B2B procurement, multi-vendor | **UCP** | Vendor-neutral governance, RFC 9421 integrity, refunds/disputes |
+| Voice / Gemini agent commerce | **AP2** | A2A is the native transport for Google Agent Builder |
+| Content monetization, per-call | **x402 directly** | Skip the commerce protocol; you only need a payment rail |
+| Hybrid (cart-aware agent that pays in stablecoin) | **UCP + x402** | UCP for cart semantics, x402 for settlement underneath |
+
+## xpay✦ engagement
+
+xpay✦ runs a [public x402 facilitator](/x402-protocol/facilitator) and is contributing upstream to both ACP and UCP on minor-improvement-track items first, with a longer-running interest in landing RFC 9421 adoption in ACP (citing UCP precedent).
+
+Current upstream work (snapshot 2026-05-16):
+
+- **ACP** — [PR #251](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/pull/251) — README changelog listing fix (minor-improvement track). Tracking [Issue #97](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/issues/97) (Idempotency-Key TTL) as a near-term SEP candidate with a Stripe TSC sponsor.
+- **UCP** — [PR #443](https://github.com/Universal-Commerce-Protocol/ucp/pull/443) — shared-type centralization against [Issue #412](https://github.com/Universal-Commerce-Protocol/ucp/issues/412) (endorsed by `@igrigorik` and `@wry-ry`).
+- **AP2** — watching; no active PRs.
+
+## References
+
+- ACP repo — https://github.com/agentic-commerce-protocol/agentic-commerce-protocol
+- ACP Issue #4 (request integrity scope) — https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/issues/4
+- UCP repo — https://github.com/universal-commerce-protocol/ucp
+- UCP conformance — https://github.com/Universal-Commerce-Protocol/conformance
+- AP2 repo — https://github.com/google-agentic-commerce/AP2
+- Forter's `trusted-agentic-commerce-protocol` — https://github.com/forter/trusted-agentic-commerce-protocol
+- Vercel `acp-handler` — https://github.com/vercel/acp-handler
+- NVIDIA `Retail-Agentic-Commerce` — https://github.com/NVIDIA-AI-Blueprints/Retail-Agentic-Commerce
+- **RFC 9421 — HTTP Message Signatures** — https://datatracker.ietf.org/doc/rfc9421/
+- MCP spec — https://modelcontextprotocol.io
+- x402 — https://x402.org
