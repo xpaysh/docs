@@ -1,0 +1,85 @@
+# Troubleshooting
+
+The five issues we see most often, and the fix for each.
+
+import { Callout } from 'nextra/components';
+
+## "Connecting to WordPress…" spins forever
+
+**Symptom.** You clicked **Connect site** in WordPress admin. A new tab opened at `app.xpay.sh/onboard/publisher` and shows "Connecting to WordPress…" forever.
+
+**Cause.** Almost always one of:
+1. You weren't signed in to xpay (Privy session expired or never started) — the page is waiting for auth that won't come
+2. Browser blocked the popup or a third-party cookie required by Privy
+
+**Fix.**
+- Sign in to xpay at `app.xpay.sh` in a normal tab first, confirm you see the dashboard, then go back to wp-admin and click **Connect site** again
+- If you use cookie-blocking extensions (uBlock Origin, Privacy Badger, Ghostery), temporarily disable them for `xpay.sh` and `privy.io` during the connect step
+
+## FAB shows up but clicking it does nothing
+
+**Symptom.** The bottom-right FAB renders with the orbit animation, but clicking it doesn't open the panel.
+
+**Cause.** Your site has a Content Security Policy that blocks iframes from `widget.xpay.sh`. Common with strict-CSP themes (Astra Pro, GeneratePress Premium) or security plugins (Wordfence with custom CSP, iThemes Security Pro).
+
+**Fix.** Add `widget.xpay.sh` to your CSP's `frame-src` directive. Example:
+
+```text
+Content-Security-Policy: frame-src 'self' https://widget.xpay.sh;
+```
+
+If you don't manage CSP directly, add this to your theme's `functions.php` or a snippet plugin:
+
+```php
+add_filter( 'wp_headers', function( $headers ) {
+    if ( isset( $headers['Content-Security-Policy'] ) ) {
+        $headers['Content-Security-Policy'] = preg_replace(
+            '/frame-src ([^;]+);/',
+            'frame-src $1 https://widget.xpay.sh;',
+            $headers['Content-Security-Policy']
+        );
+    }
+    return $headers;
+});
+```
+
+## Footer drawer doesn't appear (only FAB shows)
+
+**Symptom.** FAB renders; footer drawer (the sticky chip bar at the viewport bottom) doesn't.
+
+**Cause.** Older plugin versions defaulted to `data-surfaces="fab"`. Fixed in 0.3.2.
+
+**Fix.** Upgrade to 0.3.4 from the WordPress.org listing or [install.xpay.sh/wordpress-publishers/latest.zip](https://install.xpay.sh/wordpress-publishers/latest.zip). After upgrade, hard-refresh any frontend page (Cmd+Shift+R / Ctrl+Shift+R) to bust the `widget.js` cache.
+
+## Auto-inject doesn't render anything below my posts
+
+**Symptom.** Plugin is connected, FAB and drawer work, but the inline cards below the post body don't appear.
+
+**Possible causes + fixes.**
+
+1. **The post body already contains `[xpay_recs]` or the Recommendations block.** Auto-inject skips when manual placement is detected. Either remove the manual placement or accept that you only get one inline location.
+2. **The post type is not `'post'`.** Auto-inject only fires on `is_singular('post')`. Custom post types (e.g. WooCommerce products, Easy Digital Downloads, custom-built post types) are skipped. Place the shortcode manually in your custom template.
+3. **Your theme overrides `the_content`.** Some themes (especially old Avada / Bridge / Enfold builds with inline shortcode rendering) intercept `the_content` and emit pre-rendered HTML, bypassing the filter chain. Test with a default theme (Twenty Twenty-Five) — if it renders there, the issue is your theme. Use `[xpay_recs]` manually as a workaround.
+4. **`asp_auto_inject` is off.** Check Settings → Where the widget appears → toggle on.
+
+## "Connected ✓" but the widget doesn't fetch any recommendations
+
+**Symptom.** The widget iframe loads but stays empty or shows the loading skeletons forever.
+
+**Diagnostics.** Open browser DevTools → Network tab → reload the page. Look for the call to `publisher-api.xpay.sh/storefront/decide`.
+
+| Response | Cause | Fix |
+|---|---|---|
+| `200 OK` with `components: []` and `debug: { reason: "site_not_registered" }` | The widget was loaded on a different host than the one you registered — e.g. you registered `yoursite.com` but the page is being served from `www.yoursite.com` or a CDN/staging URL | Re-register from the correct hostname, or update your WordPress Site URL in Settings → General to match |
+| `200 OK` with `components: []` and `debug: { reason: "site_suspended" }` | xpay has suspended your account or site (rare) | Email publishers@xpay.sh |
+| `200 OK` with `components: []` and **no debug field** | Genuinely no recommendations match this page's context — the analyzer's classification confidence is low, or your excluded categories filter out all matches | Try a different page on your site; if every page returns empty, reduce your exclude lists or click "Re-analyze site" in Settings |
+| `404` or `502` | Backend incident (very rare) | Check [status.xpay.sh](https://status.xpay.sh) |
+| **CORS error** | Your browser blocked the request due to a misconfigured CSP `connect-src` | Add `publisher-api.xpay.sh` to your CSP's `connect-src` directive |
+
+## Still stuck
+
+Open an issue with a screenshot + the URL of the page where the problem shows up:
+
+→ [github.com/xpaysh/agentic-storefront-for-publishers/issues](https://github.com/xpaysh/agentic-storefront-for-publishers/issues)
+
+Or email [publishers@xpay.sh](mailto:publishers@xpay.sh) — include your `site_id` (visible on Settings → Agentic Storefront).

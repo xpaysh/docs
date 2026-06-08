@@ -5,7 +5,7 @@ export default {
   "agentic-commerce-protocols": "Agentic Commerce Protocols",
   "products": "Products",
   "hub": { title: "xpay✦ Hub", display: "hidden" },
-  "publishers": "Publishers (Agent-Ready)",
+  "publishers": "Publishers",
   "merchants": "Merchants",
   "tools": "xpay✦ Tools",
   "integrations": "Integrations",

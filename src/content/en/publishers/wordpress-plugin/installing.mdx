@@ -1,0 +1,115 @@
+# Installing the plugin
+
+Two ways to install: from the [WordPress.org plugin directory](https://wordpress.org/plugins/agentic-storefront-for-publishers/) once approval lands, or by uploading the zip from `install.xpay.sh` (works today).
+
+import { Callout, Steps, Tabs } from 'nextra/components';
+
+<Tabs items={['From the install.xpay.sh zip', 'From WordPress.org (pending approval)']}>
+  <Tabs.Tab>
+
+<Steps>
+
+### Download the zip
+
+Visit [install.xpay.sh/wordpress-publishers/latest.zip](https://install.xpay.sh/wordpress-publishers/latest.zip). The file is ~30 KB and downloads as `agentic-storefront-for-publishers.zip`. Some browsers may show a "this file may be unsafe" notice — that's standard for any plugin zip, click **Keep**.
+
+### Open the upload form
+
+In wp-admin, hover **Plugins** → click **Add New Plugin** → click **Upload Plugin** at the top of the page.
+
+### Upload
+
+Click **Choose File**, pick the zip you just downloaded, then **Install Now**.
+
+### Activate
+
+Click **Activate Plugin**. You'll be redirected to **Settings → Agentic Storefront**.
+
+### Connect site
+
+See [Connecting your site](/publishers/wordpress-plugin/connecting).
+
+</Steps>
+
+<Callout type="info">
+**Auto-updates** work for zip installs. The plugin reads a manifest at [install.xpay.sh/wordpress-publishers/manifest.json](https://install.xpay.sh/wordpress-publishers/manifest.json) and offers updates through the normal WordPress **Plugins → Updates** flow.
+</Callout>
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+
+<Steps>
+
+### Open the Plugins page
+
+In your WordPress admin, in the left sidebar, hover **Plugins** → click **Add New Plugin**.
+
+### Search
+
+Search for `Agentic Storefront for Publishers`.
+
+### Install
+
+Click **Install Now** on the card with our banner + icon.
+
+### Activate
+
+Click **Activate**. You'll be redirected to **Settings → Agentic Storefront**.
+
+### Connect site
+
+See [Connecting your site](/publishers/wordpress-plugin/connecting).
+
+</Steps>
+
+<Callout type="warning">
+The WordPress.org listing is currently in review. Until it goes live, use the install.xpay.sh zip path on the left.
+</Callout>
+
+  </Tabs.Tab>
+</Tabs>
+
+## System requirements
+
+| Component | Minimum | Tested up to |
+|---|---|---|
+| WordPress | 6.2 | 7.0 |
+| PHP | 7.4 | 8.3 |
+| WooCommerce | not required | n/a |
+| SSL (`https://`) | required for the agent storefront endpoint | — |
+
+The plugin is **fully compatible with**: classic themes, block themes (Gutenberg-native), the major ad networks (Mediavine, Raptive, Ezoic, AdThrive, MonetizeMore — recommendations are contextual editorial, not banner inventory), Yoast SEO / Rank Math / AIOSEO (the `llms.txt` and `/.well-known/*` emitters detect existing files and refuse to overwrite), and the WP Consent API.
+
+## What happens on activation
+
+In order, the plugin:
+
+1. Registers the `[xpay_recs]` shortcode and the **Recommendations** Gutenberg block.
+2. Hooks `the_content` at priority 20 for the auto-inject path (default ON).
+3. Hooks `wp_footer` at priority 50 for the FAB + footer drawer script enqueue.
+4. Schedules a one-time rewrite-rule flush so the `/.well-known/agent-storefront.json` route is reachable when the emitter is enabled.
+5. Redirects you to **Settings → Agentic Storefront**.
+
+The plugin **does not** contact xpay's servers at activation. The first network call only happens when you click **Connect site**.
+
+## Verifying the install
+
+After activation, check these in any order:
+
+| Check | What you should see |
+|---|---|
+| **Plugins** list | "Agentic Storefront for Publishers" with version `0.3.4+` and status "Active" |
+| **Settings → Agentic Storefront** | A "Connect site" card (or already-connected status if you've signed in before) inside a sandboxed iframe |
+| `curl https://yoursite.com/wp-json/asp/v1/status` | HTTP 200 JSON with `connected: false` (until you connect) |
+| Plugin Check (`wp plugin-check agentic-storefront-for-publishers`) | Zero errors, zero warnings |
+
+If the Plugin Check command isn't installed:
+
+```bash
+wp plugin install plugin-check --activate
+wp plugin-check agentic-storefront-for-publishers
+```
+
+## What's next
+
+→ [Connecting your site](/publishers/wordpress-plugin/connecting) (3-step handshake)

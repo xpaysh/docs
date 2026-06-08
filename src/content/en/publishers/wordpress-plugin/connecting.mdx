@@ -1,0 +1,78 @@
+# Connecting your site
+
+The Connect handshake mints a `site_id` for your WordPress install and binds it to your xpay account. About 15 seconds end-to-end.
+
+import { Callout, Steps } from 'nextra/components';
+
+## Before you start
+
+You need:
+- The plugin **installed and activated** (see [Installing](/publishers/wordpress-plugin/installing))
+- Access to your WordPress admin
+- A browser tab where you'll sign in to xpay (Google sign-in via Privy, or email magic link)
+
+That's it. No API keys to generate. No DNS to change. No theme edits.
+
+## The 3 steps
+
+<Steps>
+
+### Click "Connect site"
+
+In WordPress admin: **Settings → Agentic Storefront**. You'll see a "Connect this site to xpay" card with a button. Click **Connect site**.
+
+A new browser tab opens at `app.xpay.sh/onboard/publisher?site_url=...&return=...&email=...`. The `return` URL is your wp-admin settings page; an open-redirect guard ensures the host matches your site.
+
+### Sign in to xpay (if not already)
+
+Privy will prompt for sign-in (Google OAuth or email magic link) on first connect. Subsequent connects on the same browser skip this — your session persists.
+
+### Watch the 4-phase analyzer
+
+xpay's analyzer runs in sequence with live status updates:
+
+1. **Site reachable** — fetches your homepage, reads the `<head>` for title, description, language, CMS generator, RSS-feed presence.
+2. **Walking sitemap** — finds your sitemap.xml (root, `sitemap_index.xml`, or Yoast/Rank Math/AIOSEO), counts URLs, samples up to 5 recent post URLs.
+3. **Classifying** — fetches the 5 sample posts, runs them through a content classifier to determine site category (food / tech / lifestyle / pets / etc.) and themes.
+4. **Saving** — writes the site row to xpay's backend with a freshly-minted `site_id`, returns control to wp-admin via the `return` URL with `?asp_site_id=...&asp_connected=1`.
+
+You'll see a 3-second countdown then auto-redirect back to wp-admin. The Settings page now shows "Connected ✓" with your site_id.
+
+</Steps>
+
+## What gets sent during connect
+
+| Sent | Why |
+|---|---|
+| **Your site URL** | So we can fetch it |
+| **Your admin email** (if you opted in to email reports during onboard) | For the weekly revenue summary; never sold, never shared |
+| **The 5 sample post URLs and titles** | For content classification — same data Google sees in your HTML |
+| **CMS hints** from `<meta name="generator">` | So the platform-aware install dialog can give you the right instructions for any other sites you connect later |
+
+What's **never** sent: visitor data of any kind, your WordPress login credentials, any password, your wp-admin URL, your database contents.
+
+## Already connected? The plugin recognizes this
+
+If you click **Connect site** on a WordPress install whose host is already connected to your xpay account, the analyzer is **skipped entirely**. You'll see a brief "Already connected ✓" card, a 3-second countdown, and the same `?asp_site_id=...&asp_connected=1` return — no duplicate site row, no re-analysis, no wasted seconds.
+
+This happens automatically — you don't have to do anything.
+
+## What the persona system does
+
+xpay's dashboard supports three roles: **merchant**, **publisher**, and **agent-builder**. Connecting a WordPress site through this plugin sets your active persona to **publisher** automatically. You'll land on the affiliate dashboard wearing the right nav chrome, not the merchant one.
+
+If your account already has merchant or agent-builder enabled, those personas are preserved — the publisher one is added, not substituted.
+
+## Connecting more than one site
+
+The same xpay account can hold many sites. From WP plugin admin on each site, click **Connect site** and complete the same handshake — each install gets its own `site_id`, all of them roll up into one dashboard at `app.xpay.sh/dashboard/earn/affiliate/overview`.
+
+<Callout type="info">
+**Sites you've never visited from this browser** still connect cleanly — Privy uses email-based account linkage. Sign in with the same email you used the first time and your account resolves correctly.
+</Callout>
+
+## What's next
+
+→ [Placing the widget](/publishers/wordpress-plugin/using) — auto-inject vs. manual shortcode vs. Gutenberg block
+
+→ [Settings reference](/publishers/wordpress-plugin/settings) — Amazon tag, exclude lists, emitter toggles

@@ -1,0 +1,96 @@
+# Agentic Storefront for Publishers — WordPress plugin
+
+Drop a single plugin into WordPress and your posts start surfacing **contextual product recommendations** — your existing affiliate links plus an xpay-curated merchant catalog — without fighting your ad network. Five-minute install. No theme edits.
+
+import { Callout, Cards } from 'nextra/components';
+
+<Callout type="info">
+**Latest version:** v0.3.4 · **Free for publishers** (xpay earns from merchant catalog clicks; you keep 100% of your own Amazon Associates revenue) · [Download zip](https://install.xpay.sh/wordpress-publishers/latest.zip) · [Source on GitHub](https://github.com/xpaysh/agentic-storefront-for-publishers) · [WP.org listing](https://wordpress.org/plugins/agentic-storefront-for-publishers/) *(pending approval)*
+</Callout>
+
+## What this plugin does
+
+| Capability | What it gives your site |
+|---|---|
+| **Contextual recommendations on every post** | Auto-injects a recommendation widget below the body of every single-post page. Reads the post's title + categories + tags and surfaces 1–3 relevant products with affiliate-link buy buttons. |
+| **Three reader surfaces** | Bottom-right FAB (orbit animation on first paint), sticky footer drawer ("Picked for you" chips), and the inline below-post block. Configurable. |
+| **Your existing affiliate links keep working** | On register, the analyzer scans your in-content links to Amazon / Skimlinks / ShareASale / etc. and treats them as preferred inventory. Nothing replaced, nothing rewritten. |
+| **Amazon Associates per-site tag** | Set your tag once. Every `amazon.com` URL the widget surfaces gets `?tag=<yours>` appended. Amazon pays you directly. |
+| **`/.well-known/agent-storefront.json`** | An agent-readable list of products contextually relevant to your site, signed against your `site_id`. AI shoppers (ChatGPT, Claude, Gemini, Perplexity) can discover and recommend products from your articles. |
+| **Optional `llms.txt` augmentation** | Append a clearly-delimited block to your `llms.txt` — only when you opt in, never replaces an existing one. |
+| **Privacy-first** | No third-party cookies. No tracking pixels. No visitor identifiers leave WordPress. Iframe sandbox isolation. WP Consent API integration. Full clean uninstall. |
+
+## What this plugin doesn't do
+
+- It **doesn't replace your ad network.** Recommendations behave like Skimlinks- or Sovrn-style contextual affiliate widgets, sitting alongside Mediavine / Raptive / Ezoic without conflict.
+- It **doesn't see your visitors.** No cookies, no fingerprint, no IP-linked identifier. Only the page's public URL + title + categories + tags are sent.
+- It **doesn't change your theme or posts.** Nothing edited. Auto-inject runs at render time via `the_content` filter and is a single toggle to disable.
+- It **doesn't require a merchant store.** This is the publisher rail. Pure-content WordPress installs are first-class — no WooCommerce dependency.
+
+## Start here
+
+<Cards>
+  <Cards.Card title="Installing the plugin" href="/publishers/wordpress-plugin/installing" />
+  <Cards.Card title="Connecting your site" href="/publishers/wordpress-plugin/connecting" />
+  <Cards.Card title="Placing the widget" href="/publishers/wordpress-plugin/using" />
+  <Cards.Card title="Settings reference" href="/publishers/wordpress-plugin/settings" />
+  <Cards.Card title="Privacy & data flow" href="/publishers/wordpress-plugin/privacy" />
+  <Cards.Card title="Troubleshooting" href="/publishers/wordpress-plugin/troubleshooting" />
+</Cards>
+
+## At a glance
+
+- **Compatibility:** WordPress 6.2+ · PHP 7.4+ · No WooCommerce dependency · Compatible with Mediavine / Raptive / Ezoic / AdThrive ad networks (verify against your specific agreement before going live)
+- **License:** GPLv2-or-later
+- **WordPress.org:** [wordpress.org/plugins/agentic-storefront-for-publishers](https://wordpress.org/plugins/agentic-storefront-for-publishers/) *(pending approval)*
+- **Direct download:** [install.xpay.sh/wordpress-publishers/latest.zip](https://install.xpay.sh/wordpress-publishers/latest.zip)
+- **Source:** [github.com/xpaysh/agentic-storefront-for-publishers](https://github.com/xpaysh/agentic-storefront-for-publishers)
+- **Issue tracker:** [GitHub Issues](https://github.com/xpaysh/agentic-storefront-for-publishers/issues)
+- **Privacy disclosure:** [install.xpay.sh/wordpress-publishers/privacy.html](https://install.xpay.sh/wordpress-publishers/privacy.html)
+- **Support email:** publishers@xpay.sh
+
+## Architecture in one diagram
+
+```text
+WordPress (your site)                                  xpay backend
+─────────────────────                                  ────────────
+                                                    
+  Reader visits /any-post                           
+    └─ post body                                    
+    └─ <iframe> (auto-injected at the_content+20)   ──► widget.xpay.sh/embed/recs/inline
+         └─ POST /storefront/decide                 ──► publisher-api.xpay.sh
+              ├─ NormalisedCard{ title, slug, ... }      (your own catalog +
+              ├─ Affiliate-network inventory merged       xpay curated merchants +
+              └─ amazon_tag injected (if set)             your existing affiliate links)
+                                                    
+  Reader's first paint of any page                  
+    └─ widget.js (FAB + footer drawer)              
+         └─ POST /storefront/beacon (kind=load)     ──► dashboard install signal
+  
+  WordPress Admin → Settings → Agentic Storefront   
+    └─ <iframe src=widget.xpay.sh/embed/admin/settings>
+         └─ postMessage SAVE → wp-json/asp/v1/settings
+              └─ asp_auto_inject + amazon_tag + emitters
+```
+
+## What's in the box
+
+```text
+agentic-storefront-for-publishers/
+├── agentic-storefront-for-publishers.php   Main plugin file (header + bootstrap)
+├── readme.txt                              WordPress.org listing copy
+├── uninstall.php                           Removes all wp_options on delete
+├── includes/
+│   ├── class-asp-plugin.php                Singleton + lifecycle
+│   ├── class-asp-rest.php                  REST endpoints (settings, status)
+│   ├── class-asp-settings.php              Settings page (iframe host)
+│   ├── class-asp-shortcode.php             [xpay_recs] shortcode
+│   ├── class-asp-block.php                 Recommendations Gutenberg block
+│   ├── class-asp-auto-inject.php           the_content filter (default ON)
+│   ├── class-asp-loader.php                wp_footer script enqueue
+│   └── class-asp-consent.php               WP Consent API gate
+└── languages/                              (intentionally empty —
+                                            WordPress.org translation infra)
+```
+
+Auto-updates work for the install.xpay.sh distribution too — the plugin reads [the manifest](https://install.xpay.sh/wordpress-publishers/manifest.json) and offers updates the normal WordPress way.

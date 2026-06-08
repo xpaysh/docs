@@ -1,0 +1,98 @@
+# Placing the widget
+
+Three ways the widget appears on your site. All three render the same MUI-styled recommendation cards from the same `/storefront/decide` backend — pick whichever fits your editorial flow.
+
+import { Callout, Tabs } from 'nextra/components';
+
+## Three surfaces
+
+| Surface | Where it appears | Default | Controlled by |
+|---|---|---|---|
+| **Below post content** | Bottom of every single-post page | ON | `asp_auto_inject` toggle in Settings |
+| **Bottom-right FAB** | Floating action button on every connected-site page | ON | Connection state + WP Consent API |
+| **Footer drawer** | Sticky bar pinned to the bottom of every page (collapsed peek with chips, expands to horizontal card row) | ON | Connection state + WP Consent API |
+
+The inline-below-content surface is the only one tied to a specific page type (single posts). The FAB and footer drawer mount globally on connected sites — they're part of the `wp_footer` script enqueue.
+
+## Manual placement (optional)
+
+If you want full control over where the inline cards appear in a post body, turn off **Auto-inject below post content** in Settings and use one of:
+
+<Tabs items={['Shortcode', 'Gutenberg block', 'Theme template']}>
+  <Tabs.Tab>
+
+```text
+[xpay_recs]
+```
+
+Drop the shortcode anywhere in a post body — mid-article, in a sidebar widget area, in a custom field rendered by your theme — and the recommendation iframe renders at that spot.
+
+The shortcode reads its parent page's URL, title, categories, and tags automatically. No attributes needed.
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+
+In the Gutenberg block editor, click **+** → search **"Recommendations"** → insert the **Agentic Storefront — Recommendations** block. Same rendering as the shortcode; just easier for visual editors.
+
+The block has no editable options — it picks up the page context the same way the shortcode does.
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+
+For theme developers placing the widget in a custom location (e.g. between two post-content sections):
+
+```php
+<?php echo do_shortcode( '[xpay_recs]' ); ?>
+```
+
+The shortcode handler is registered on plugin init, so you can call it from any theme template (`single.php`, `archive.php`, a custom block template, etc.) after `wp_loaded`.
+
+  </Tabs.Tab>
+</Tabs>
+
+## Auto-inject in detail
+
+The auto-inject path is the recommended default — most publishers don't want to think about placement.
+
+**Behavior:**
+- Hooks `the_content` filter at priority 20 (after WordPress's own `wpautop`, oEmbed, and most theme content filters).
+- Only fires when `is_singular('post')` AND `in_the_loop()` AND `is_main_query()`. Skips archives, search results, taxonomy pages, custom post types, REST responses, AJAX, embeds.
+- Skips when the post body already contains `[xpay_recs]` or the Gutenberg block — no double-render.
+- Skips when the site isn't connected, or when WP Consent API hard-denies marketing consent.
+- Delegates to `do_shortcode('[xpay_recs]')` so the inline iframe path is the same as manual placement.
+
+**To disable globally:** Settings → Agentic Storefront → **Where the widget appears** → toggle **Auto-inject below post content** off. The shortcode and block continue to work for manual placement.
+
+## The FAB and footer drawer
+
+These two surfaces live in `widget.xpay.sh/widget/v1/widget.js`, which the plugin enqueues via `wp_footer` at priority 50. They mount once per page and are visible on:
+
+- Every connected-site page (single posts, pages, archives, home, search)
+- When the site is connected (status = `connected`)
+- When WP Consent API doesn't hard-deny
+
+**FAB** — bottom-right corner. On first paint, three product avatars orbit out, confetti pops, then they retract at 10 seconds and the FAB sits calm. Click it → a 440 × 540 panel slides up from the corner with the recommendation cards. Click again or hit close to dismiss.
+
+**Footer drawer** — sticky at viewport bottom. Collapsed shows "Picked for you" + 3 chips. Click → expands upward to a horizontal-scrolling row of full product cards. Dismiss with the X button.
+
+Both surfaces are independent — closing one doesn't dismiss the other. Both share the same context-aware product recommendations.
+
+## What gets recommended
+
+For every page render, the iframe POSTs to `publisher-api.xpay.sh/storefront/decide` with the page's public URL, title, categories, and tags. The backend merges three inventory rails:
+
+1. **Your existing scanned affiliate links** — from your in-content links to Amazon, Skimlinks, ShareASale, etc. The analyzer found these on connect and scores them as preferred inventory.
+2. **xpay's curated merchant catalog** — for slots where no existing link covers the context.
+3. **Amazon tag injection** — if you set your Amazon Associates tag in Settings, every `amazon.com` URL the widget surfaces gets `?tag=<yours>` appended. Amazon pays you directly.
+
+The cards display title, image, price (when available), merchant domain, and a buy button. Click attribution is tracked via the beacon endpoint so you see CTR per host in the dashboard — no visitor identifiers used or stored.
+
+<Callout type="info">
+**Skipping merchant categories you don't want.** Use the **Exclude categories** and **Exclude domains** lists in Settings to drop any vendor or category from your widget. Useful for brand-safety on a parenting blog ("no alcohol", "no firearms") or a food blog ("no diet pills").
+</Callout>
+
+## What's next
+
+→ [Settings reference](/publishers/wordpress-plugin/settings) — every toggle and field explained
+
+→ [Privacy & data flow](/publishers/wordpress-plugin/privacy)

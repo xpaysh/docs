@@ -1,0 +1,112 @@
+# Settings reference
+
+Every field and toggle on the **Settings → Agentic Storefront** page.
+
+import { Callout } from 'nextra/components';
+
+The Settings page is a sandboxed iframe loaded from `widget.xpay.sh/embed/admin/settings`. It holds no credentials — your edits postMessage back to the WordPress admin shell, which saves them to your `wp_options` via the plugin's REST endpoint at `/wp-json/asp/v1/settings`. WordPress nonces guard the write; user input is sanitised on the way in.
+
+## Where the widget appears
+
+**Auto-inject below post content** *(boolean, default ON)*
+
+Toggles the `the_content` filter that appends the recommendation widget to every single-post page. Off → only the shortcode and block render.
+
+When auto-inject is on AND the shortcode or block is already present in the post body, the auto-inject path is skipped for that post — no double-render.
+
+WordPress option key: `asp_auto_inject`
+
+## Amazon Associates
+
+**Amazon Associates tag** *(text, default empty)*
+
+Your Amazon Associates tag. Format: `myname-20` (or `myname-21`, etc. — the standard 2 to 4-digit country suffix is required). Validated against the regex `^[a-z0-9][a-z0-9-]{1,28}-\d{2,4}$/i`.
+
+When set, every `amazon.com` URL the widget surfaces has `?tag=<yours>` appended. xpay strips any pre-existing `?tag=`, `&linkCode=`, and `&ascsubtag=` parameters first so your tag is the only attribution.
+
+You keep **100%** of Amazon's commission on these clicks — xpay does not share in Amazon revenue per the Amazon Associates Operating Agreement.
+
+WordPress option key: `asp_amazon_tag`
+
+<Callout type="info">
+**Don't have a tag yet?** Sign up at [affiliate-program.amazon.com](https://affiliate-program.amazon.com/) (or your country's equivalent). The first sale you generate auto-qualifies the account.
+</Callout>
+
+## Brand-safety controls
+
+**Exclude categories** *(comma-separated list, default empty)*
+
+Product categories that should never appear in your widget. Match is case-insensitive substring against the merchant catalog's category tags.
+
+Common entries: `alcohol`, `tobacco`, `firearms`, `gambling`, `weight loss`, `dating`, `adult`.
+
+WordPress option key: `asp_exclude_categories`
+
+**Exclude domains** *(comma-separated list, default empty)*
+
+Merchant domains that should never appear. Match is exact-hostname (strip `www.`).
+
+Common entries: any competitor you'd rather not promote, any merchant you've had a bad customer experience with, any domain your specific ad-network agreement disallows.
+
+WordPress option key: `asp_exclude_domains`
+
+## Discovery emitters
+
+**Emit `/.well-known/agent-storefront.json`** *(boolean, default ON)*
+
+Publishes a signed agent-readable JSON list of products contextually relevant to your site. AI assistants (ChatGPT, Claude, Gemini, Perplexity) read this endpoint to discover products from your articles.
+
+The plugin **will not** overwrite an existing `/.well-known/agent-storefront.json` file — if one is detected at activation, the emitter is disabled until you remove the conflict. This avoids stepping on other plugins or any custom server config.
+
+WordPress option key: `asp_emit_agent_storefront`
+
+**Augment `/llms.txt`** *(boolean, default OFF)*
+
+Optionally appends a clearly-delimited block to your `/llms.txt` file. The block tells LLM web crawlers about your site's agent-readable storefront endpoint.
+
+When off (default), `llms.txt` is left exactly as you have it. When on, the plugin detects whether an `llms.txt` already exists (from Yoast SEO AI, Rank Math AI, AIOSEO, or the `llms-txt` plugin) and **appends** xpay's section without replacing anything. If there's no existing `llms.txt`, the plugin creates one.
+
+WordPress option key: `asp_emit_llms_augment`
+
+## Personalization consent
+
+**Enable personalization** *(boolean, default OFF)*
+
+When on, the widget uses your visitor's browser cookie state to personalize the recommendations (e.g. avoid showing a product they've already clicked in this session). When off, recommendations are 100% contextual — based only on the page they're reading.
+
+Even when on, the widget still gates on WP Consent API: if the Consent API is installed and reports a hard "no" for marketing consent, personalization stays off for that visitor.
+
+Default-off because most publishers don't have WP Consent API installed and we don't want to imply something we're not doing.
+
+WordPress option key: `asp_consent_personalization`
+
+## Connection state
+
+The Settings page also displays:
+
+- **Site ID** — your random opaque identifier, used in every backend call. Read-only.
+- **Site host** — the WordPress install's hostname as registered with xpay. Read-only.
+- **Site category + themes** — what the analyzer classified during connect. Re-runnable via the "Re-analyze site" button (which re-walks your sitemap, samples fresh posts, and updates the classification on xpay's backend).
+- **Disconnect** — removes the site row from your xpay account (the `wp_options` entries on your WordPress side are preserved so you can re-connect without re-onboarding).
+
+## What WordPress options the plugin writes
+
+```text
+asp_site_id                  string    Set on connect. The opaque identifier.
+asp_account_id               string    Set on connect. Your Privy DID.
+asp_amazon_tag               string    Set in Settings.
+asp_exclude_categories       string    Comma-separated; sanitised on write.
+asp_exclude_domains          string    Comma-separated; sanitised on write.
+asp_auto_inject              boolean   Default true.
+asp_emit_agent_storefront    boolean   Default true.
+asp_emit_llms_augment        boolean   Default false.
+asp_consent_personalization  boolean   Default false.
+```
+
+All cleared by `uninstall.php` when the plugin is deleted.
+
+## What's next
+
+→ [Privacy & data flow](/publishers/wordpress-plugin/privacy) — what gets sent and when
+
+→ [Troubleshooting](/publishers/wordpress-plugin/troubleshooting)

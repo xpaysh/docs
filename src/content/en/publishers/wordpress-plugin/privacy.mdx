@@ -1,0 +1,96 @@
+# Privacy & data flow
+
+A complete inventory of what this plugin sends, when, and to whom. **No visitor identifiers ever leave WordPress.** Only the public URL, title, categories, and tags of the page being viewed are sent to xpay — the same data Google sees in your site's HTML.
+
+import { Callout } from 'nextra/components';
+
+<Callout type="info">
+**Plain-language privacy disclosure** (HTML, designed to be linked from your site's privacy policy): [install.xpay.sh/wordpress-publishers/privacy.html](https://install.xpay.sh/wordpress-publishers/privacy.html)
+</Callout>
+
+## What gets sent and when
+
+### 1. Recommendation iframe loads (`widget.xpay.sh/embed/recs/*`)
+
+When a reader views a page where the widget renders (auto-inject below content, shortcode, Gutenberg block, FAB, or footer drawer), an iframe loads from `widget.xpay.sh` with these URL parameters:
+
+| Parameter | What |
+|---|---|
+| `siteId` | Your random opaque site identifier (no link to any visitor) |
+| `api` | `https://publisher-api.xpay.sh` |
+| `amazonTag` *(optional)* | Your Amazon Associates tag, if you set one |
+
+The iframe then POSTs to `publisher-api.xpay.sh/storefront/decide` with the page's public URL, title, public categories, and public tags. **No visitor identifier is sent.**
+
+### 2. Load beacon (`publisher-api.xpay.sh/storefront/beacon`)
+
+When the widget mounts on a page, an anonymous "load" event is sent so you can see in your xpay dashboard which of your pages are running the script. Data sent:
+
+- `site_id`, `site_host`, the page URL, and the browser user-agent string
+- **No visitor identifier** — no cookie, no IP-derived ID, no device fingerprint
+
+### 3. Click beacon
+
+When a reader clicks a recommended product card, a "click" event is sent with the click destination's merchant domain. Used for click attribution per host. No visitor identifier.
+
+### 4. Settings iframe (`widget.xpay.sh/embed/admin/settings`)
+
+Only loaded when a logged-in WordPress administrator visits **Settings → Agentic Storefront**. The iframe receives your `site_id`, plugin version, and connection status via URL parameters; it holds no credentials. User edits postMessage back to the WordPress admin shell, which saves them to your `wp_options` via the plugin's REST endpoint at `/wp-json/asp/v1/settings`.
+
+### 5. One-time connect flow
+
+When a publisher clicks **Connect site**, a new tab opens at `app.xpay.sh`. The publisher's email address is collected by Privy (the authentication provider) and stored against the publisher's xpay account. The publisher's email is **not** sent on any subsequent runtime call.
+
+## What is never sent
+
+- Visitor cookies, session IDs, fingerprints, or any persistent identifier
+- IP addresses (the backend Lambda logs IPs for abuse prevention with a 30-day retention; they are never linked to visitor identifiers because no such identifiers exist on this rail)
+- Page content beyond title, public categories, and public tags. **Article body text is not sent.**
+- Form data, search queries, or any data from logged-in WordPress users on your site
+- WordPress login credentials, database contents, or wp-config secrets
+
+## WP Consent API integration
+
+When the [WP Consent API](https://wordpress.org/plugins/wp-consent-api/) plugin is installed and reports a hard "no" for marketing consent on the current request, the recommendation iframes are not rendered at all.
+
+If no Consent API plugin is installed, the iframes still render — they collect no visitor data (see above) and are functionally equivalent to a contextual editorial widget.
+
+## Where data is stored
+
+| Where | What |
+|---|---|
+| **Your WordPress database** (`wp_options`) | `asp_site_id`, `asp_account_id`, `asp_amazon_tag`, `asp_exclude_categories`, `asp_exclude_domains`, `asp_auto_inject`, `asp_consent_personalization`, `asp_emit_agent_storefront`, `asp_emit_llms_augment`. All deleted by `uninstall.php` when the plugin is removed. |
+| **xpay backend** (DynamoDB tables, us-east-1) | The registered site row (site_id, site_url, classification metadata, account_id), per-fetch agent activity logs with 90-day TTL, click attribution rows. |
+
+## How to remove all your data
+
+1. **From WordPress:** Plugins → Agentic Storefront for Publishers → **Deactivate** → **Delete**. WordPress will call `uninstall.php` which removes every `wp_options` row above.
+2. **From xpay:** Log into `app.xpay.sh/dashboard/earn/affiliate/sites` and click **Remove site**. Removes the site row + every associated agent activity log.
+3. **Full account deletion:** Email [privacy@xpay.sh](mailto:privacy@xpay.sh) with the email address tied to your xpay account. We will delete the account and all associated data within 30 days.
+
+## Subprocessors
+
+xpay's backend runs on **Amazon Web Services** (us-east-1). The recommendation widget uses the **Iconify CDN** (`api.iconify.design`) at runtime to render UI icons; this CDN sees only the iframe's user-agent and IP — no `site_id` or any other plugin-managed identifier.
+
+## External services contacted by the plugin
+
+The plugin contacts only these services. Each is documented in detail in the plugin's `readme.txt` "External services" section as required by [WordPress.org plugin guideline #7](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/#7-plugins-may-not-track-users-without-their-consent).
+
+| Service | Purpose | When |
+|---|---|---|
+| `widget.xpay.sh` | UI host (iframes for widget surfaces + settings page) | When a reader loads a page with the widget, or when an admin views Settings |
+| `publisher-api.xpay.sh` | Backend API for decide, beacon, register, status reads | When the widget mounts, when a card is clicked, on connect, on settings page load |
+| `app.xpay.sh` | Publisher dashboard | Only on click of the "Open xpay dashboard" link from Settings |
+| `install.xpay.sh` | Versioned ZIP distribution mirror | Build-time / install-time only — not contacted at WordPress runtime |
+
+## Compliance posture
+
+- **GDPR Art. 6(1)(f)** legitimate interest applies for the contextual recommendation iframe (no visitor data; equivalent to embedded editorial content from a third party)
+- **GDPR Art. 6(1)(a)** explicit consent applies when **Enable personalization** is on (default OFF) — gated via WP Consent API
+- **CCPA / CPRA** — the plugin does not "sell" personal information in the CCPA sense (no visitor data leaves WordPress)
+
+## Contact
+
+Privacy questions: [privacy@xpay.sh](mailto:privacy@xpay.sh)
+Full xpay privacy policy: [xpay.sh/privacy](https://www.xpay.sh/privacy/)
+Terms of service: [xpay.sh/terms](https://www.xpay.sh/terms/)
