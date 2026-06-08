@@ -25,6 +25,6 @@ export const config = {
      * - .well-known (well-known files)
      * - *.txt files in root (IndexNow key files, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|favicon|logo|img|_pagefind|.*\\.xml|robots.txt|llms\\.txt|llms-full\\.txt|skill\\.md|openapi\\.json|\\.well-known|[a-f0-9]{32}\\.txt).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|favicon|logo|img|_pagefind|.*\\.xml|robots.txt|llms\\.txt|llms-full\\.txt|skill\\.md|openapi\\.json|manifest\\.json|\\.well-known|[a-f0-9]{32}\\.txt).*)',
   ],
 }
